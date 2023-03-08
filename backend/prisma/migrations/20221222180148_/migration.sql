@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `workers` ADD COLUMN `payed` DOUBLE NOT NULL DEFAULT 0;

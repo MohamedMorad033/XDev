@@ -1,0 +1,59 @@
+@import "~@blueprintjs/table/lib/css/table.css";
+@import "~@blueprintjs/popover2/lib/css/blueprint-popover2.css";
+@import "~normalize.css";
+@import "~@blueprintjs/core/lib/css/blueprint.css";
+@import "~@blueprintjs/icons/lib/css/blueprint-icons.css";
+.App {
+  text-align: center;
+}
+
+/* 0d1117  */
+
+.App-header {
+  background-color: var(--headercolor);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+.NavContainer{
+  width: 100%;
+  height: 50px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 999;
+  background-color: #000000a8;
+  backdrop-filter: blur(8px);
+  border-bottom: #212121 1px solid;
+}
+
+@media print
+{
+h4 {page-break-before:always}
+}
+
+
+body {
+  background: linear-gradient(112.1deg, var(--firstcolor) 11.4%, var(--seconscolor) 70.2%);
+  	background-size: 400% 400%;
+	animation: gradient 5s ease infinite;
+	height: 100vh;
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+

@@ -1,0 +1,13 @@
+-- CreateTable
+CREATE TABLE `fridgeproducts` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `code` DOUBLE NULL DEFAULT 0,
+    `name` VARCHAR(191) NOT NULL,
+    `quantity` DOUBLE NOT NULL DEFAULT 0,
+    `wayofmesure` DOUBLE NOT NULL DEFAULT 0,
+    `price` DOUBLE NOT NULL DEFAULT 0,
+    `net` DOUBLE NOT NULL DEFAULT 0,
+    `time` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

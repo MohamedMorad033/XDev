@@ -1,0 +1,286 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model inventoryproducts {
+  id          Int      @id @default(autoincrement())
+  code        Float?   @default(0)
+  name        String   @unique
+  quantity    Float    @default(0)
+  wayofmesure Float    @default(0)
+  price       Float    @default(0)
+  net         Float    @default(0)
+  linkid      Int?
+  linkname    String?
+  rate        Float?
+  time        DateTime @default(now())
+}
+
+model clients {
+  id      Int      @id @default(autoincrement())
+  code    Float?
+  name    String   @unique
+  expense Float    @default(0)
+  payment Float    @default(0)
+  type    Float    @default(0)
+  time    DateTime @default(now())
+}
+
+model moneyowner {
+  id      Int    @id @default(autoincrement())
+  code    Float? @default(0)
+  name    String @unique
+  payment Float  @default(0)
+  payed   Float  @default(0)
+  value   Float  @default(0)
+  money   Float  @default(0)
+}
+
+model clientvaulttransaction {
+  id       Int      @id @default(autoincrement())
+  refid    String?  @unique
+  fromid   Float
+  toid     Float
+  fromname String
+  toname   String
+  way      String   @default("in")
+  amount   Float    @default(0)
+  time     DateTime @default(now())
+}
+
+model productoutcome {
+  id          Int      @id @default(autoincrement())
+  refid       String?
+  productid   Float
+  lotid       Float
+  clientid    Float
+  productname String
+  clientname  String
+  totalprice  Float
+  price       Float
+  amount      Float
+  return      Float    @default(0)
+  returnid    String?
+  remaining   Float    @default(0)
+  payed       Boolean
+  payedamount Float    @default(0)
+  time        DateTime @default(now())
+}
+
+model autoproductexports {
+  id          Int      @id @default(autoincrement())
+  refid       String?
+  productid   Float
+  clientid    Float
+  productname String
+  clientname  String
+  totalprice  Float
+  price       Float
+  amount      Float
+  return      Float    @default(0)
+  returnid    String?
+  remaining   Float    @default(0)
+  payed       Boolean
+  payedamount Float    @default(0)
+  time        DateTime @default(now())
+}
+
+model workerpayout {
+  id          Int      @id @default(autoincrement())
+  workerid    Float
+  workername  String
+  totalprice  Float
+  price       Float
+  amount      Float
+  nights      Float
+  return      Float
+  payed       Boolean
+  remaining   Float
+  payedamount Float    @default(0)
+  time        DateTime @default(now())
+}
+
+model fridgeproducts {
+  id         Int      @id @default(autoincrement())
+  refid      String
+  from       String
+  fromid     Float
+  toid       Float
+  to         String
+  amount     Float
+  totalprice Float
+  price      Float
+  return     Float    @default(0)
+  remaining  Float
+  managed    Boolean
+  time       DateTime @default(now())
+}
+
+model productoutcomereturn {
+  id            Int      @id @default(autoincrement())
+  refid         String
+  from          String
+  fromid        Float
+  toid          Float
+  to            String
+  remainigtotal Float    @default(0)
+  amount        Float
+  remaining     Float
+  totalprice    Float
+  price         Float
+  time          DateTime @default(now())
+}
+
+model clientm {
+  id         Int      @id @default(autoincrement())
+  refid      String?
+  clientid   Float
+  clientname String
+  text       String
+  way        String
+  amount     Float    @default(0)
+  time       DateTime @default(now())
+}
+
+model expenses {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  amount             Float    @default(0)
+  refid              String?
+  categeryname       String
+  categoryid         Float
+  nestedcategoryid   Float
+  nestedcategoryname String
+  vaultname          String
+  vaultid            Float
+  time               DateTime @default(now())
+}
+
+model expensescategory {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model expensescategory2 {
+  id       Int    @id @default(autoincrement())
+  name     String
+  linkid   Float
+  linkname String @default("")
+}
+
+model mtransaction {
+  id       Int      @id @default(autoincrement())
+  refid    String?  @unique(map: "MTransaction_refid_key")
+  fromid   Float
+  toid     Float
+  fromname String
+  toname   String
+  bprice1  Float
+  bprice2  Float
+  aprice1  Float
+  aprice2  Float
+  way      String   @default("in")
+  amount   Float    @default(0)
+  time     DateTime @default(now())
+}
+
+model plink {
+  id        Int    @id @unique(map: "Plink_id_key") @default(autoincrement())
+  bigid     Int    @unique(map: "Plink_bigid_key")
+  bigname   String
+  smallid   Int    @unique(map: "Plink_smallid_key")
+  smallname String
+  amount    Float
+}
+
+model productincome {
+  id            Int      @id @default(autoincrement())
+  refid         String
+  from          String
+  fromid        Float
+  toid          Float
+  to            String
+  remainigtotal Float    @default(0)
+  amount        Float
+  remaining     Float
+  totalprice    Float
+  price         Float
+  type          Int      @default(0)
+  time          DateTime @default(now())
+}
+
+model products {
+  id            Int      @id @default(autoincrement())
+  from          String
+  fromid        Float
+  toid          Float
+  to            String
+  amount        Float
+  remaining     Float    @default(0)
+  totalprice    Float
+  remainigtotal Float    @default(0)
+  price         Float
+  refid         String
+  invoiceid     Int      @unique(map: "Products_invoiceid_key")
+  type          Int      @default(0)
+  time          DateTime @default(now())
+}
+
+model transaction {
+  id       Int      @id @default(autoincrement())
+  refid    String?  @unique(map: "Transaction_refid_key")
+  fromid   Float
+  toid     Float
+  fromname String
+  toname   String
+  bprice1  Float
+  bprice2  Float
+  aprice1  Float
+  aprice2  Float
+  amount   Float    @default(0)
+  time     DateTime @default(now())
+}
+
+model users {
+  id       Int    @id @default(autoincrement())
+  email    String @unique(map: "Users_email_key")
+  username String
+  password String
+}
+
+model vault {
+  id    Int    @id @default(autoincrement())
+  code  Float? @default(0)
+  name  String @unique(map: "Vault_name_key")
+  value Float  @default(0)
+}
+
+model workers {
+  id      Int      @id @default(autoincrement())
+  code    Float?
+  name    String
+  payment Float    @default(0)
+  payed   Float    @default(0)
+  time    DateTime @default(now())
+}
+
+model wtransaction {
+  id       Int      @id @default(autoincrement())
+  refid    String?  @unique(map: "WTransaction_refid_key")
+  fromid   Float
+  toid     Float
+  fromname String
+  toname   String
+  bprice1  Float
+  bprice2  Float
+  aprice1  Float
+  aprice2  Float
+  amount   Float    @default(0)
+  time     DateTime @default(now())
+}

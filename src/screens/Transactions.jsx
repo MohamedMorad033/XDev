@@ -76,39 +76,33 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme', 'light')
+            localStorage.setItem('Theme','light')
         }
 }
 
 updatetheme(localStorage.getItem('Theme'))
-function Moneyownertransactions() {
+function Transactions() {
+
+
+    const [dark_theme_en, set_dark_theme_en] = useState('light')
+    const [AccesToken, setAccesToken] = useState([]);
 
 
 
     const columns = [
         {
-            name: 'م',
-            selector: row => row.id,
-            sortable: true,
+            name: 'فاتوره',
+            selector: row => row.refid ? row.refid : 'Na.',
+            sortable: true
         },
         {
-            name: 'فاتوره؟',
-            selector: row => row.refid,
-            sortable: true,
-        },
-        {
-            name: 'وارد/منصرف',
-            selector: row => row.way == 'in' ? 'وارد' : "منصرف",
-            sortable: true,
-        },
-        {
-            name: 'الشريك',
+            name: 'من',
             selector: row => row.fromname,
             sortable: true,
             size: 20
         },
         {
-            name: 'الخزينه',
+            name: 'الى',
             selector: row => row.toname,
             sortable: true,
 
@@ -127,9 +121,6 @@ function Moneyownertransactions() {
 
 
 
-    const [dark_theme_en, set_dark_theme_en] = useState('light')
-    const [AccesToken, setAccesToken] = useState([]);
-
 
 
     const [firstvaultname, setfirstvaultname] = useState('')
@@ -143,9 +134,8 @@ function Moneyownertransactions() {
     const [code, setcode] = useState()
     const [selid, setselid] = useState()
     const [loadrn, setloadrn] = useState(false)
-    const [newsel, setnewsel] = useState('in')
+    const [newsel, setnewsel] = useState('seller')
     const [newname, setnewname] = useState('')
-    const [newexpenses, setnewexpenses] = useState('0')
     const [newpayments, setnewpayments] = useState('0')
     const [newcode, setnewcode] = useState()
     const [newselid, setnewselid] = useState()
@@ -157,27 +147,27 @@ function Moneyownertransactions() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchmoneyowner', { searchtext: text }).then((resp) => {
+        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/Vault').then((resp) => {
-            setnewcode(resp.data.Vault.length + 1);
+        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+            setnewcode(resp.data.vault.length + 1);
         })
-        axios.get('http://192.168.1.20:1024/Moneyownertransactions').then((resp) => {
+        axios.get('http://192.168.1.20:1024/transaction').then((resp) => {
             setrows(resp.data.transaction);
         })
     }, [])
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/Vault').then((resp) => {
-            setnewcode(resp.data.Vault.length + 1);
+        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+            setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchVault', { searchtext: text }).then((resp) => {
+        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -194,7 +184,7 @@ function Moneyownertransactions() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addVault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -208,17 +198,6 @@ function Moneyownertransactions() {
             }
         })
     }
-    const mesures = [
-        {
-            value: 'out',
-            label: 'منصرف',
-        },
-        {
-            value: 'in',
-            label: 'وارد',
-        },
-    ];
-
     const createnew2 = () => {
         if (!name) {
             alert('name cannot be empty')
@@ -229,7 +208,7 @@ function Moneyownertransactions() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addVault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -243,9 +222,6 @@ function Moneyownertransactions() {
             }
         })
     }
-    const [transdate, settransdate] = useState(new Date().toISOString().split('T')[0])
-    const [edittransdate, setedittransdate] = useState()
-
     const createnewtransaction = () => {
         if (!firstvaultname) {
             alert('name cannot be empty')
@@ -255,48 +231,28 @@ function Moneyownertransactions() {
             alert('name cannot be empty')
             return
         }
-        if (expenses == '') {
-            alert('amount cannot be empty')
-            return
-        }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addMoneyownertransactions', { amount: expenses, fromname: firstvaultname, toname: secondvaultname, refid, time: transdate, way: newsel }).then((resp) => {
+        axios.post('http://192.168.1.20:1024/addTransaction', { amount: expenses, fromname: firstvaultdata[0].id, toname: secondvaultdata[0].id, date: newexpenses, refid }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
-                setfirstvaultname('')
-                setsecondvaultname('')
-                setexpenses(0)
-                setrefid(Number(refid) + 1)
-                axios.get('http://192.168.1.20:1024/Moneyownertransactions').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
+                axios.get('http://192.168.1.20:1024/transaction').then((resp) => {
+                    setrows(resp.data.transaction);
+                })
             } else {
                 setloadrn(false)
                 alert('failed')
             }
         })
     }
-
+    const [refid, setrefid] = useState(undefined)
+    const [editrefid, editsetrefid] = useState(undefined)
     const [edittrans, setedittrans] = useState(false)
     const [prt, setprt] = useState(false)
 
 
     const contextActions = () => (
         <>
-            <Button color='error' variant='contained' onClick={() => {
-
-                axios.post('http://192.168.1.20:1024/deleteMoneyownertransactions', { selectedRows }).then((resp) => {
-                    if (resp.data.status == 200) {
-                        console.log(resp.data)
-                        setfirstvaultname('')
-                        setsecondvaultname('')
-                        setexpenses(0)
-                        axios.get('http://192.168.1.20:1024/Moneyownertransactions').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
-                    } else {
-                        setloadrn(false)
-                        alert('failed')
-                    }
-                })
-
-            }}>delete</Button>
+            <Button color='error' variant='contained' onClick={() => { }}>delete</Button>
             <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
                 setprt(true); setTimeout(() => {
                     window.print()
@@ -304,11 +260,98 @@ function Moneyownertransactions() {
             }}>print</Button>
         </>
     );
+    const [newexpenses, setnewexpenses] = useState(new Date().toISOString().split('T')[0])
+    const [date, setdate] = useState(new Date().toISOString().split('T')[0])
+
     const actions = () => (
         <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
+            <TextField
+                margin="dense"
+                label="فاتوره"
+                type="number"
+                value={refid}
+                style={{ margin: 20, width: 200 }}
+                size='small'
+                onChange={(e) => { setrefid(e.currentTarget.value) }}
+                variant="outlined"
+            />
+            <Autocomplete
+                id="free-solo-demo"
+                includeInputInList
+                freeSolo
+                style={{ margin: 20, width: 200 }}
+                value={firstvaultname}
+                onInputChange={(event, newInputValue) => {
+                    setfirstvaultname(newInputValue);
+                    search1(newInputValue)
+                }}
+                onFocus={() => {
+                    axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                        if (resp.data.status == 200) {
+                            setfirstvaultdata(resp.data.vault)
+                        }
+                    })
+                }}
+                onDoubleClick={() => { seteditrn(true); getcode() }}
+                options={firstvaultdata.map((option) => option.name)}
+                renderInput={(params) => <TextField {...params} label="من" />}
+                size='small'
+            />
+            <Autocomplete
+                id="free-solo-demo"
+                label='d'
+                style={{ marginRight: 20, width: 200 }}
 
+                freeSolo
+                value={secondvaultname}
 
+                onInputChange={(event, newInputValue) => {
+                    setsecondvaultname(newInputValue);
+                    search2(newInputValue)
 
+                }}
+                onFocus={() => {
+                    axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                        if (resp.data.status == 200) {
+                            setsecondvaultdata(resp.data.vault)
+                        }
+                    })
+                }}
+                options={secondvaultdata.map((option) => option.name)}
+                size='small'
+
+                renderInput={(params) => <TextField {...params} label="الي" />}
+                onDoubleClick={() => { seteditrn2(true); getcode() }}
+            />
+            <TextField
+                margin="dense"
+                id="expenses"
+                label="المبلغ"
+                type="number"
+                value={expenses}
+                style={{ marginRight: 20, width: 200 }}
+                size='small'
+                onChange={(e) => { setexpenses(e.currentTarget.value) }}
+                variant="outlined"
+            />
+            <TextField
+                style={{ marginRight: 20 }}
+                autoFocus
+                margin="dense"
+                size='small'
+                id="expenses"
+                label="التاريخ"
+                type="date"
+                value={newexpenses}
+                onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
+                variant="outlined"
+            />
+            <Button disabled={false} variant='contained' onClick={() => { createnewtransaction() }}>تأكيد</Button>
+
+            <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
+                setrefreshloading(true);
+                axios.get('http://192.168.1.20:1024/transaction').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
+            }} endIcon={<Refresh />}>Refresh</Button>
         </div>
     );
     const [selectedRows, setselectedRows] = useState([])
@@ -316,7 +359,7 @@ function Moneyownertransactions() {
     const [newdata, setnewdata] = useState({})
 
     const [refreshloading, setrefreshloading] = useState(false)
-    const [editway, seteditway] = useState('in')
+
     const [totalprice, settotalprice] = useState(0)
     const [totalamount, settotalamount] = useState(0)
     const [transfromname, settransfromname] = useState('')
@@ -324,10 +367,8 @@ function Moneyownertransactions() {
 
     const [transtoname, settranstoname] = useState('')
     const [transtodata, settranstodata] = useState([])
-    const [editloading, seteditloading] = useState(false)
+
     const [transval, settransval] = useState(0)
-    const [refid, setrefid] = useState(Math.floor(Math.random() * 1000000))
-    const [editrefid, seteditrefid] = useState('')
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
             <Modal open={prt} onClose={() => { setprt(false) }}>
@@ -358,122 +399,10 @@ function Moneyownertransactions() {
                             </div>
                         </div>
                     </div>
+                    <h1>{totalprice}</h1>
                 </div>
             </Modal>
             <div style={{ width: '100%' }}>
-
-
-
-
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                    <TextField
-                        style={{ margin: 20, width: 200 }}
-                        autoFocus
-                        margin="dense"
-                        size='small'
-                        label="فاتوره"
-                        type="number"
-                        value={refid}
-                        onChange={(e) => { setrefid(e.currentTarget.value) }}
-                        variant="outlined"
-                    />
-                    <Select
-                        variant='outlined'
-                        value={newsel}
-                        size='small'
-                        style={{ margin: 10, width: 150 }}
-                        onChange={(e) => { setnewsel(e.target.value) }}
-                    >
-                        {mesures.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    <Autocomplete
-                        id="free-solo-demo"
-                        includeInputInList
-                        freeSolo
-                        style={{ marginRight: 20, width: 200 }}
-                        value={firstvaultname}
-                        onInputChange={(event, newInputValue) => {
-                            setfirstvaultname(newInputValue);
-                            search1(newInputValue)
-                        }}
-                        onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => {
-                                if (resp.data.status == 200) {
-                                    setfirstvaultdata(resp.data.vault)
-                                }
-                            })
-                        }}
-                        onDoubleClick={() => { seteditrn(true); getcode() }}
-                        options={firstvaultdata.map((option) => option.name)}
-                        renderInput={(params) => <TextField {...params} label="الشريك" />}
-                        size='small'
-                    />
-                    <Autocomplete
-                        id="free-solo-demo"
-                        label='d'
-                        style={{ marginRight: 20, width: 200 }}
-
-                        freeSolo
-                        value={secondvaultname}
-
-                        onInputChange={(event, newInputValue) => {
-                            setsecondvaultname(newInputValue);
-                            search2(newInputValue)
-
-                        }}
-                        onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/Vault').then((resp) => {
-                                if (resp.data.status == 200) {
-                                    setsecondvaultdata(resp.data.vault)
-                                }
-                            })
-                        }}
-                        options={secondvaultdata.map((option) => option.name)}
-                        size='small'
-
-                        renderInput={(params) => <TextField {...params} label="الخزينه" />}
-                        onDoubleClick={() => { seteditrn2(true); getcode() }}
-                    />
-                    <TextField
-                        margin="dense"
-                        id="expenses"
-                        label="المبلغ"
-                        type="number"
-                        value={expenses}
-                        style={{ marginRight: 20, width: 200 }}
-                        size='small'
-                        onChange={(e) => { setexpenses(e.currentTarget.value) }}
-                        variant="outlined"
-                    />
-                    <TextField
-                        style={{ marginRight: 20, width: 200 }}
-                        autoFocus
-                        margin="dense"
-                        size='small'
-                        id="expenses"
-                        label="التاريخ"
-                        type="date"
-                        value={transdate}
-                        onChange={(e) => { settransdate(e.currentTarget.value) }}
-                        variant="outlined"
-                    />
-                    <Button disabled={false} variant='contained' onClick={() => { createnewtransaction() }}>تأكيد</Button>
-
-                    <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
-                        setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/Moneyownertransactions').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
-                    }} endIcon={<Refresh />}>Refresh</Button>
-                </div>
-
-
-
-
-
-
                 <DataTable
                     pagination
                     dense
@@ -484,7 +413,7 @@ function Moneyownertransactions() {
                     highlightOnHover
                     pointerOnHover
                     fixedHeader
-                    fixedHeaderScrollHeight='450px'
+                    fixedHeaderScrollHeight='350px'
                     selectableRowsHighlight
                     direction="rtl"
                     onSelectedRowsChange={(rows) => {
@@ -506,19 +435,10 @@ function Moneyownertransactions() {
                     columns={columns}
                     selectableRows
                     data={rows}
-                    onRowDoubleClicked={(data) => {
-                        setnewdata(data);
-                        settransfromname(data.fromname);
-                        settranstoname(data.toname);
-                        settransval(data.amount);
-                        setedittransdate(data.time.split('T')[0]);
-                        seteditrefid(data.refid)
-                        seteditway(data.way)
-                        setedittrans(true);
-                    }}
+                    onRowDoubleClicked={(data) => { setnewdata(data); settransfromname(data.fromname); settranstoname(data.toname); settransval(data.amount); setedittrans(true); editsetrefid(data.refid); setdate(data.time.split('T')[0]) }}
                 />
             </div>
-            {/* <Dialog open={editrn}>
+            <Dialog open={editrn}>
                 <DialogTitle>اضافه خزنه</DialogTitle>
                 <DialogContent>
 
@@ -599,10 +519,12 @@ function Moneyownertransactions() {
                     <Button onClick={() => { seteditrn2(false) }} >الغاء</Button>
                     <Button disabled={loadrn} variant='contained' onClick={() => { createnew2() }}>اضافه</Button>
                 </DialogActions>
-            </Dialog> */}
+            </Dialog>
             <Dialog open={edittrans} onClose={() => { setedittrans(false) }}>
                 <DialogTitle>تعديل التحويل</DialogTitle>
                 <DialogContent>
+
+
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <TextField
                             margin="dense"
@@ -610,72 +532,58 @@ function Moneyownertransactions() {
                             label="فاتوره"
                             type="number"
                             value={editrefid}
-                            onChange={(e) => { seteditrefid(e.currentTarget.value) }}
-                            style={{ marginTop: 15, width: 400 }}
-                            disabled={editloading}
+                            onChange={(e) => { editsetrefid(e.currentTarget.value) }}
+                            style={{ marginTop: 20, width: 400 }}
                             size={'small'}
                             variant="outlined"
+                            autoFocus
                         />
-                        <Select
-                            variant='outlined'
-                            value={editway}
-                            size='small'
-                            style={{ marginTop: 15, width: 400 }}
-                            onChange={(e) => { seteditway(e.target.value) }}
-                        >
-                            {mesures.map((option) => (
-                                <MenuItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </MenuItem>
-                            ))}
-                        </Select>
                         <Autocomplete
                             id="free-solo-demo"
                             includeInputInList
                             freeSolo
-                            style={{ marginTop: 15, width: 400 }}
+                            style={{ marginTop: 20, width: 400 }}
                             value={transfromname}
                             onInputChange={(event, newInputValue) => {
                                 settransfromname(newInputValue);
-                                axios.post('http://192.168.1.20:1024/searchmoneyowner', { searchtext: newInputValue }).then((resp) => {
+                                axios.post('http://192.168.1.20:1024/searchvault', { searchtext: newInputValue }).then((resp) => {
                                     if (resp.data.status == 200) {
                                         settransfromdata(resp.data.foundproduts)
                                     }
                                 })
                             }}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => {
+                                axios.get('http://192.168.1.20:1024/vault').then((resp) => {
                                     if (resp.data.status == 200) {
                                         settransfromdata(resp.data.vault)
                                     }
                                 })
                             }}
-                            disabled={editloading}
                             fullWidth
                             onDoubleClick={() => { seteditrn(true); getcode() }}
                             options={transfromdata.map((option) => option.name)}
-                            renderInput={(params) => <TextField {...params} label="الشريك" />}
+                            renderInput={(params) => <TextField {...params} label="من" />}
                             size='small'
                         />
                         <Autocomplete
                             fullWidth
                             id="free-solo-demo"
                             label='d'
-                            style={{ marginTop: 15, width: 400 }}
+                            style={{ marginTop: 20, width: 400 }}
 
                             freeSolo
                             value={transtoname}
 
                             onInputChange={(event, newInputValue) => {
                                 settranstoname(newInputValue);
-                                axios.post('http://192.168.1.20:1024/searchVault', { searchtext: newInputValue }).then((resp) => {
+                                axios.post('http://192.168.1.20:1024/searchvault', { searchtext: newInputValue }).then((resp) => {
                                     if (resp.data.status == 200) {
                                         settranstodata(resp.data.foundproduts)
                                     }
                                 })
                             }}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/Vault').then((resp) => {
+                                axios.get('http://192.168.1.20:1024/vault').then((resp) => {
                                     if (resp.data.status == 200) {
                                         settranstodata(resp.data.vault)
                                     }
@@ -683,9 +591,8 @@ function Moneyownertransactions() {
                             }}
                             options={transtodata.map((option) => option.name)}
                             size='small'
-                            disabled={editloading}
 
-                            renderInput={(params) => <TextField {...params} label="الخزنه" />}
+                            renderInput={(params) => <TextField {...params} label="الي" />}
                             onDoubleClick={() => { seteditrn2(true); getcode() }}
                         />
                         <TextField
@@ -695,22 +602,20 @@ function Moneyownertransactions() {
                             type="number"
                             value={transval}
                             onChange={(e) => { settransval(e.currentTarget.value) }}
-                            style={{ marginTop: 15, width: 400 }}
-                            disabled={editloading}
+                            style={{ marginTop: 20, width: 400 }}
                             size={'small'}
                             variant="outlined"
                         />
                         <TextField
-                            style={{ marginTop: 15, width: 400 }}
-                            autoFocus
+                            style={{ marginTop: 20, width: 400 }}
+
                             margin="dense"
                             size='small'
                             id="expenses"
                             label="التاريخ"
                             type="date"
-                            value={edittransdate}
-                            disabled={editloading}
-                            onChange={(e) => { setedittransdate(e.currentTarget.value) }}
+                            value={date}
+                            onChange={(e) => { setdate(e.currentTarget.value) }}
                             variant="outlined"
                         />
                     </div>
@@ -720,29 +625,25 @@ function Moneyownertransactions() {
                 <DialogActions>
                     <Button onClick={() => { setedittrans(false) }} >الغاء</Button>
                     <Button variant='contained' onClick={async () => {
-                        seteditloading(true)
-                        axios.post('http://192.168.1.20:1024/editMoneyownertransactions', { newdata, transfromname, transtoname, transval, editrefid, edittransdate, way : editway }).then(resp => {
-                            setedittrans(false); axios.get('http://192.168.1.20:1024/Moneyownertransactions').then((resp) => {
-                                seteditloading(false)
-                                setrows(resp.data.transaction);
-                            })
-                        })
-                    }}>حفظ</Button>
-                    <Button variant='contained' onClick={async () => {
-                        seteditloading(true)
-                        axios.post('http://192.168.1.20:1024/deleteMoneyownertransaction', { id: newdata.id }).then(resp => {
-                            setedittrans(false); axios.get('http://192.168.1.20:1024/Moneyownertransactions').then((resp) => {
-                                seteditloading(false)
+                        axios.post('http://192.168.1.20:1024/deletetransaction', { id: newdata.id }).then(resp => {
+                            setedittrans(false); axios.get('http://192.168.1.20:1024/transaction').then((resp) => {
                                 setrows(resp.data.transaction);
                             })
                         })
                     }}
                         color='error'
                     >حذف</Button>
+                    <Button variant='contained' onClick={async () => {
+                        axios.post('http://192.168.1.20:1024/edittransaction', { newdata, transfromname, transtoname, transval, date, refid: editrefid }).then(resp => {
+                            setedittrans(false); axios.get('http://192.168.1.20:1024/transaction').then((resp) => {
+                                setrows(resp.data.transaction);
+                            })
+                        })
+                    }}>حفظ</Button>
                 </DialogActions>
             </Dialog>
         </div>
     )
 }
 
-export default Moneyownertransactions
+export default Transactions

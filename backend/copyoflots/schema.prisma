@@ -1,0 +1,275 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  username String
+  password String
+}
+
+model inventoryproducts {
+  id          Int      @id @default(autoincrement())
+  code        Float?   @default(0)
+  name        String   @unique
+  quantity    Float    @default(0)
+  wayofmesure Float    @default(0)
+  price       Float    @default(0)
+  net         Float    @default(0)
+  linkid      Int?
+  linkname    String?
+  rate        Float?
+  time        DateTime @default(now())
+}
+
+model clients {
+  id      Int      @id @default(autoincrement())
+  code    Float?
+  name    String   @unique
+  expense Float    @default(0)
+  payment Float    @default(0)
+  type    Float    @default(0)
+  time    DateTime @default(now())
+}
+
+model moneyowner {
+  id    Int    @id @default(autoincrement())
+  code  Float? @default(0)
+  name  String @unique
+  value Float  @default(0)
+  money Float  @default(0)
+}
+
+model Workers {
+  id      Int      @id @default(autoincrement())
+  code    Float?
+  name    String
+  payment Float    @default(0)
+  payed   Float    @default(0)
+  time    DateTime @default(now())
+}
+
+model vault {
+  id    Int    @id @default(autoincrement())
+  code  Float? @default(0)
+  name  String @unique
+  value Float  @default(0)
+}
+
+model Transaction {
+  id       Int      @id @default(autoincrement())
+  refid    String?  @unique
+  fromid   Float
+  toid     Float
+  fromname String
+  toname   String
+  bprice1  Float
+  bprice2  Float
+  aprice1  Float
+  aprice2  Float
+  amount   Float    @default(0)
+  time     DateTime @default(now())
+}
+
+model MTransaction {
+  id       Int      @id @default(autoincrement())
+  refid    String?  @unique
+  fromid   Float
+  toid     Float
+  fromname String
+  toname   String
+  bprice1  Float
+  bprice2  Float
+  aprice1  Float
+  aprice2  Float
+  amount   Float    @default(0)
+  time     DateTime @default(now())
+}
+
+model WTransaction {
+  id       Int      @id @default(autoincrement())
+  refid    String?  @unique
+  fromid   Float
+  toid     Float
+  fromname String
+  toname   String
+  bprice1  Float
+  bprice2  Float
+  aprice1  Float
+  aprice2  Float
+  amount   Float    @default(0)
+  time     DateTime @default(now())
+}
+
+model Expensescategory {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model Expensescategory2 {
+  id       Int    @id @default(autoincrement())
+  name     String
+  linkid   Float
+  linkname String @default("")
+}
+
+model Expenses {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  amount             Float    @default(0)
+  refid              String?
+  categeryname       String
+  categoryid         Float
+  nestedcategoryid   Float
+  nestedcategoryname String
+  vaultname          String
+  vaultid            Float
+  time               DateTime @default(now())
+}
+
+model Productincome {
+  id            Int      @id @default(autoincrement())
+  refid         String
+  from          String
+  fromid        Float
+  toid          Float
+  to            String
+  remainigtotal Float    @default(0)
+  amount        Float
+  remaining     Float
+  totalprice    Float
+  price         Float
+  type          Int      @default(0)
+  time          DateTime @default(now())
+}
+
+model Products {
+  id            Int      @id @default(autoincrement())
+  from          String
+  fromid        Float
+  toid          Float
+  to            String
+  amount        Float
+  remaining     Float    @default(0)
+  totalprice    Float
+  remainigtotal Float    @default(0)
+  price         Float
+  refid         String
+  invoiceid     Int      @unique
+  type          Int      @default(0)
+  time          DateTime @default(now())
+}
+
+model clientvaulttransaction {
+  id         Int      @id @default(autoincrement())
+  refid      String?
+  fromid     Float
+  toid       Float
+  fromname   String
+  toname     String
+  way        String
+  amount     Float    @default(0)
+  time       DateTime @default(now())
+}
+
+model productoutcome {
+  id          Int      @id @default(autoincrement())
+  refid       String?
+  productid   Float
+  lotid       Float
+  clientid    Float
+  productname String
+  clientname  String
+  totalprice  Float
+  price       Float
+  amount      Float
+  return      Float    @default(0)
+  returnid    String?
+  remaining   Float    @default(0)
+  payed       Boolean
+  payedamount Float    @default(0)
+  time        DateTime @default(now())
+}
+
+model autoproductexports {
+  id          Int      @id @default(autoincrement())
+  refid       String?
+  productid   Float
+  clientid    Float
+  productname String
+  clientname  String
+  totalprice  Float
+  price       Float
+  amount      Float
+  return      Float    @default(0)
+  returnid    String?
+  remaining   Float    @default(0)
+  payed       Boolean
+  payedamount Float    @default(0)
+  time        DateTime @default(now())
+}
+
+model workerpayout {
+  id          Int      @id @default(autoincrement())
+  workerid    Float
+  workername  String
+  totalprice  Float
+  price       Float
+  amount      Float
+  nights      Float
+  return      Float
+  payed       Boolean
+  remaining   Float
+  payedamount Float    @default(0)
+  time        DateTime @default(now())
+}
+
+model fridgeproducts {
+  id         Int      @id @default(autoincrement())
+  refid      String
+  from       String
+  fromid     Float
+  toid       Float
+  to         String
+  amount     Float
+  totalprice Float
+  price      Float
+  return     Float    @default(0)
+  remaining  Float
+  managed    Boolean
+  time       DateTime @default(now())
+}
+
+model Plink {
+  id        Int    @id @unique @default(autoincrement())
+  bigid     Int    @unique
+  bigname   String
+  smallid   Int    @unique
+  smallname String
+  amount    Float
+}
+
+model productoutcomereturn {
+  id            Int      @id @default(autoincrement())
+  refid         String
+  from          String
+  fromid        Float
+  toid          Float
+  to            String
+  remainigtotal Float    @default(0)
+  amount        Float
+  remaining     Float
+  totalprice    Float
+  price         Float
+  time          DateTime @default(now())
+}

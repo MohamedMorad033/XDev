@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `vault` MODIFY `code` DOUBLE NULL DEFAULT 0;
