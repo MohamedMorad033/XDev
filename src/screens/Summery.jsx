@@ -99,7 +99,7 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme','light')
+            localStorage.setItem('Theme', 'light')
         }
 }
 
@@ -205,26 +205,26 @@ function Summery() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     const search = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 settheirdvaultdata(resp.data.foundproduts)
             }
         })
     }
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/Vault').then((resp) => {
+        axios.get('http://localhost:1024/Vault').then((resp) => {
             setnewcode(resp.data.Vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchproduct', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchproduct', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -243,7 +243,7 @@ function Summery() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addVault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addVault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -275,7 +275,7 @@ function Summery() {
             return
         }
         console.log(newdata)
-        axios.post('http://192.168.1.20:1024/addProductoutcome', { prodname: newdata.to, clientname: theirdvaultname, prodid: newdata.toid, amount: newexpenses, pricehistoryid: newdata.id }).then((resp) => {
+        axios.post('http://localhost:1024/addProductoutcome', { prodname: newdata.to, clientname: theirdvaultname, prodid: newdata.toid, amount: newexpenses, pricehistoryid: newdata.id }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn3(false)
@@ -289,7 +289,7 @@ function Summery() {
     const [selectedRows, setselectedRows] = useState([])
     const searchprod = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchproducthistoryexact', { searchtext: secondvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/searchproducthistoryexact', { searchtext: secondvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -313,7 +313,7 @@ function Summery() {
     var headernoreturn = { id: 'م', refid: 'فاتوره', productid: 4, clientid: 26, productname: 'الصنف', clientname: "اسم العميل", amount: 'الكميه', return: "المرتجع" }
     const searchclient = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/clientsummery', { clientname: firstvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/clientsummery', { clientname: firstvaultname , date }).then((resp) => {
             if (resp.data.status == 200) {
                 arr = []
                 arr = [...arr, stop, hed, ...resp.data.exportsum]
@@ -397,7 +397,7 @@ function Summery() {
     const [sumarr, setsumarr] = useState([])
 
     const [newdata, setnewdata] = useState({})
-
+    const [date, setdate] = useState(new Date().toISOString().split('T')[0])
 
     const [dark_theme_en, set_dark_theme_en] = useState('light')
     const [AccesToken, setAccesToken] = useState([]);
@@ -405,7 +405,7 @@ function Summery() {
 
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Modal open={prt} onClose={() => { setprt(false) }}>
+            {/* <Modal open={prt} onClose={() => { setprt(false) }}>
                 <div style={{ width: '100%', height: '100%', backgroundColor: '#fff', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ padding: 50, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
                         <div style={{ width: '50%' }}>
@@ -621,51 +621,67 @@ function Summery() {
 
 
                 </div>
-            </Modal>
+            </Modal> */}
             <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'space-between', flexDirection: 'row', marginTop: 20, marginBottom: 20, paddingLeft: 20, paddingRight: 20 }}>
                 <div>
                     {/* <Button disabled={false} variant='contained' color='success' onClick={() => { setprt(true) }}>print</Button> */}
                     <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
-                        axios.post('http://192.168.1.20:1024/print/clientsummery', { rows: sumarr, name: rows[0].clientname }).then((resp) => {
+                        axios.post('http://localhost:1024/print/clientsummery', { rows: sumarr, name: rows[0].clientname }).then((resp) => {
                             setTimeout(() => {
-                                window.open('http://192.168.1.20:1024/' + resp.data.file, '_blank', 'noreferrer')
+                                window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                             }, 500);
                         })
                     }}>print</Button>
                 </div>
                 <div style={{ alignItems: 'baseline', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                        <Autocomplete
-                            id="free-solo-demo"
-                            label='d'
-                            style={{ marginRight: 20, width: 200 }}
-                            onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/clients').then((resp) => {
-                                    setfirstvaultdata(resp.data.clients)
-                                })
-                            }}
-                            freeSolo
-                            value={firstvaultname}
-                            onInputChange={(event, newInputValue) => {
-                                setfirstvaultname(newInputValue);
-                                search1(newInputValue)
-                            }}
-                            options={firstvaultdata.map((option) => option.name)}
-                            size='small'
-                            renderInput={(params) => <TextField {...params} label="عميل/مورد" />}
-                        />
-                        <Button style={{ marginRight: 20 }} disabled={false} variant='contained' onClick={() => { searchclient() }}>تأكيد</Button>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                        <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
-                            setrows([])
-                            setrows2([])
-                            setrows3([])
-                            setrows4([])
-                            setfirstvaultname('')
-                            setsecondvaultname('')
-                        }} endIcon={<Refresh />}>Reset</Button>
-                    </div>
+                    <Autocomplete
+                        id="free-solo-demo"
+                        label='d'
+                        style={{ marginRight: 20, width: 200 }}
+                        onFocus={() => {
+                            axios.get('http://localhost:1024/clients').then((resp) => {
+                                setfirstvaultdata(resp.data.clients)
+                            })
+                        }}
+                        freeSolo
+                        value={firstvaultname}
+                        onInputChange={(event, newInputValue) => {
+                            setfirstvaultname(newInputValue);
+                            search1(newInputValue)
+                        }}
+                        options={firstvaultdata.map((option) => option.name)}
+                        size='small'
+                        renderInput={(params) => <TextField {...params} label="عميل/مورد" />}
+                    />
+                    <TextField
+                        style={{ marginRight: 20, width: 200 }}
+                        margin="dense"
+                        size='small'
+                        fullWidth
+                        id="date"
+                        label="حتي تاريخ"
+                        type="date"
+                        value={date}
+                        onChange={(e) => {
+                            setdate(e.currentTarget.value)
+                        }}
+                        onBlur={() => {
+                            if (!new Date(date)) {
+                                setdate(new Date().toISOString().split('T')[0])
+                            }
+                        }}
+                        variant="outlined"
+                        onDoubleClick={() => { }}
+                    />
+                    <Button style={{ marginRight: 20 }} disabled={false} variant='contained' onClick={() => { searchclient() }}>تأكيد</Button>
+                    <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
+                        setrows([])
+                        setrows2([])
+                        setrows3([])
+                        setrows4([])
+                        setfirstvaultname('')
+                        setsecondvaultname('')
+                    }} endIcon={<Refresh />}>Reset</Button>
                 </div>
 
 
@@ -855,7 +871,7 @@ function Summery() {
                         style={{ marginRight: 20, width: 200 }}
                         fullWidth
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                            axios.get('http://localhost:1024/clients').then((resp) => {
                                 settheirdvaultdata(resp.data.clients)
                             })
                         }}

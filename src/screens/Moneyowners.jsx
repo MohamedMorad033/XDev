@@ -95,7 +95,7 @@ function Moneyowners() {
     const [secondvaultdata, setsecondvaultdata] = useState([])
     const [data, setdata] = useState([])
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
@@ -173,7 +173,7 @@ function Moneyowners() {
 
 
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => {
+        axios.get('http://localhost:1024/moneyowner').then((resp) => {
             setrows(resp.data.vault);
         })
     }, [])
@@ -201,13 +201,13 @@ function Moneyowners() {
 
     const editsubmit = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editmoneyowner', { name, expenses, value: payments, code, selid, sel }).then((resp) => {
+        axios.post('http://localhost:1024/editmoneyowner', { name, expenses, value: payments, code, selid, sel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
+                axios.get('http://localhost:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -228,7 +228,7 @@ function Moneyowners() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addmoneyowner', { name: newname, value: newpayments, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addmoneyowner', { name: newname, value: newpayments, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
@@ -237,7 +237,7 @@ function Moneyowners() {
                 setnewpayments(0)
                 seteditrn(false)
                 setnewcode(newcode + 1)
-                axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
+                axios.get('http://localhost:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -288,23 +288,24 @@ function Moneyowners() {
     );
 
 
+    const [editload, seteditload] = useState(false)
 
-
-    const submittrans = () => {
-        axios.post('http://192.168.1.20:1024/addvaultclienttransaction', { fromname: data.id, toname: firstvaultdata[0].id, amount: transvalue, type: newsel }).then((resp) => {
+    const submitedit = () => {
+        axios.post('http://localhost:1024/editmoneyowner', { name: editname, payment: editpayment, payed: editpayed, selid: data.id }).then((resp) => {
             if (resp.data.status == 200) {
-                setsearchload(false)
+                seteditload(false)
                 console.log(resp.data)
-                seteditrn(false)
-                axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => {
-                    setrows(resp.data.vault); setnewcode(resp.data.vault.length + 1);
+                axios.get('http://localhost:1024/moneyowner').then((resp) => {
+                    setrows(resp.data.vault);
                 })
+                seteditrn(false)
+            } else if (resp.data.status == 400) {
+                seteditload(false)
+                alert('name must be unique')
             } else {
-                setloadrn(false)
                 alert('failed')
-                setsearchload(false)
-                axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
-
+                seteditload(false)
+                axios.get('http://localhost:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
             }
         })
     }
@@ -313,25 +314,24 @@ function Moneyowners() {
 
     const search = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchmoneyowners', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
                 setrows([])
-                setrows(resp.data.foundproduts)
-            } else {
-                setloadrn(false)
-                alert('failed')
-                setsearchload(false)
-                axios.get('http://192.168.1.20:1024/vault').then((resp) => { setrows(resp.data.vault) })
-
+                setrows(resp.data.mowners)
             }
+        }).catch((e) => {
+            setsearchload(false)
+            alert(e.message)
         })
     }
     const [refreshloading, setrefreshloading] = useState(false)
+    const [editname, seteditname] = useState('')
+    const [editpayment, seteditpayment] = useState('')
+    const [editpayed, seteditpayed] = useState('')
     return (
         <div style={{ width: '100%' }}>
-
             <div style={{ width: '100%', display: 'flex', marginTop: 10, alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', marginTop: 10, alignItems: 'baseline' }}>
                     <TextField
@@ -346,13 +346,13 @@ function Moneyowners() {
                         variant="standard"
                     />
                     <Button style={{ height: 30, marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
+                        setsearchtext(''); axios.get('http://localhost:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
                     }}>Clear</Button>
                 </div>
                 <div>
                     <Button style={{ height: 30, marginRight: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                         setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/moneyowner').then((resp) => { setrows(resp.data.vault); setrefreshloading(false) })
+                        axios.get('http://localhost:1024/moneyowner').then((resp) => { setrows(resp.data.vault); setrefreshloading(false) })
                     }} endIcon={<Refresh />}>Refresh</Button>
                 </div>
             </div>
@@ -371,80 +371,77 @@ function Moneyowners() {
                     fixedHeaderScrollHeight='450px'
                     selectableRowsHighlight
                     direction="rtl"
-                    onSelectedRowsChange={(rows) => { setselectedRows(rows.selectedRows); setdata(rows); }}
                     onRowDoubleClicked={(data) => {
                         setdata(data);
+                        seteditname(data.name)
+                        seteditpayed(data.payed)
+                        seteditpayment(data.payment)
+                        seteditrn(true);
                     }}
                     columns={columns}
-                    selectableRows
                     data={rows}
-                    expandableRows
-                    expandOnRowClicked
                 />
             </div>
-            <Dialog open={editrn}>
-                <DialogTitle>Edit A Product</DialogTitle>
+            <Dialog open={editrn} onClose={() => [seteditrn(false)]}>
+                <DialogTitle>تعديل شريك</DialogTitle>
                 <DialogContent>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
-                    <div style={{ width: '100%' }}>
-                        <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                            <Typography variant='h6' style={{ marginRight: 20 }}>
-                                اسم الخزنه : {data.name}
-                            </Typography>
-                            <Typography variant='h6' style={{ marginRight: 20 }}>
-                                رصيد الخزنه : {data.value}
-                            </Typography>
-                        </div>
-                        <Autocomplete
-                            id="free-solo-demo"
-                            includeInputInList
-                            freeSolo
-                            style={{ marginBottom: 20 }}
-                            fullWidth
-                            value={firstvaultname}
-                            onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/clients').then((resp) => {
-                                    setfirstvaultdata(resp.data.clients)
-                                })
-                            }}
-                            onInputChange={(event, newInputValue) => {
-                                setfirstvaultname(newInputValue);
-                                search1(newInputValue)
-                            }}
-                            onDoubleClick={() => { seteditrn(true); }}
-                            options={firstvaultdata.map((option) => option.name)}
-                            renderInput={(params) => <TextField {...params} label="المورد" />}
-                            size='small'
-                        />
-                        <Select
-                            variant='outlined'
-                            value={newsel}
-                            size='small'
-                            style={{ marginBottom: 20 }}
-                            fullWidth
-                            onChange={(e) => { setnewsel(e.target.value) }}
-                        >
-                            {mesures.map((option) => (
-                                <MenuItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </MenuItem>
-                            ))}
-                        </Select>
                         <TextField
                             size='small'
                             margin="dense"
-                            fullWidth
-                            label='المبلغ'
+                            label='الاسم'
+                            type="text"
+                            value={editname}
+                            style={{ margin: 10, width: 300 }}
+                            onChange={(e) => { seteditname(e.target.value); }}
+                            variant="outlined"
+                        />
+                        <TextField
+                            size='small'
+                            margin="dense"
+                            label='له'
                             type="number"
-                            value={transvalue}
-                            onChange={(e) => { settransvalue(e.target.value); }}
+                            value={editpayment}
+                            style={{ margin: 10, width: 300 }}
+                            onChange={(e) => { seteditpayment(e.target.value); }}
+                            variant="outlined"
+                        />
+                        <TextField
+                            size='small'
+                            margin="dense"
+                            label='عليه'
+                            type="number"
+                            value={editpayed}
+                            style={{ margin: 10, width: 300 }}
+                            onChange={(e) => { seteditpayed(e.target.value); }}
                             variant="outlined"
                         />
                     </div>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => { seteditrn(false) }} >الغاء</Button>
-                    <Button disabled={loadrn} variant='contained' onClick={() => { submittrans() }}>حفظ</Button>
+                    <Button disabled={loadrn} variant='contained' onClick={() => {
+                        axios.post('http://localhost:1024/delmoneyowner', { selid: data.id }).then((resp) => {
+                            if (resp.data.status == 200) {
+                                seteditload(false)
+                                console.log(resp.data)
+                                axios.get('http://localhost:1024/moneyowner').then((resp) => {
+                                    setrows(resp.data.vault);
+                                })
+                                seteditrn(false)
+                            } else if (resp.data.status == 400) {
+                                seteditload(false)
+                                alert('cannot delete')
+                            } else {
+                                alert('failed')
+                                seteditload(false)
+                                axios.get('http://localhost:1024/moneyowner').then((resp) => { setrows(resp.data.vault) })
+                            }
+                        })
+
+                    }} color='error'>حذف</Button>
+                    <Button disabled={loadrn} variant='contained' onClick={() => { submitedit() }}>حفظ</Button>
                 </DialogActions>
             </Dialog>
 

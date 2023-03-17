@@ -191,27 +191,27 @@ function FridgeIncome() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
-        axios.get('http://192.168.1.20:1024/fridgeincome').then((resp) => {
+        axios.get('http://localhost:1024/fridgeincome').then((resp) => {
             setrows(resp.data.Productincome);
         })
     }, [])
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchproduct', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchproduct', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -230,7 +230,7 @@ function FridgeIncome() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -263,7 +263,7 @@ function FridgeIncome() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addproduct', { name: newprodname, price: newprice, amount: newamount, code: newcode, selectmode: sel }).then((resp) => {
+        axios.post('http://localhost:1024/addproduct', { name: newprodname, price: newprice, amount: newamount, code: newcode, selectmode: sel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
@@ -272,7 +272,7 @@ function FridgeIncome() {
                 seteditrn2(false)
                 setnewcode(newcode + 1)
 
-                axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -299,7 +299,7 @@ function FridgeIncome() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addclients', { name: newname, expenses: newexpenses, payments: newpayments, selectmode: newsel }).then((resp) => {
+        axios.post('http://localhost:1024/addclients', { name: newname, expenses: newexpenses, payments: newpayments, selectmode: newsel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -321,11 +321,11 @@ function FridgeIncome() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addProductincome', { amount: newcamount, price: expenses, fromname: firstvaultdata[0].id, toname: secondvaultdata[0].id }).then((resp) => {
+        axios.post('http://localhost:1024/addProductincome', { amount: newcamount, price: expenses, fromname: firstvaultdata[0].id, toname: secondvaultdata[0].id }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows([])
                 console.log(resp.data)
-                axios.get('http://192.168.1.20:1024/Productincome').then((resp) => { setrows(resp.data.Productincome); setrefreshloading(false) })
+                axios.get('http://localhost:1024/Productincome').then((resp) => { setrows(resp.data.Productincome); setrefreshloading(false) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -363,7 +363,7 @@ function FridgeIncome() {
                         style={{ margin: 20, width: 200 }}
                         value={firstvaultname}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                            axios.get('http://localhost:1024/clients').then((resp) => {
                                 setfirstvaultdata(resp.data.clients)
                             })
                         }}
@@ -382,7 +382,7 @@ function FridgeIncome() {
                     label='d'
                     style={{ marginRight: 20, width: 200 }}
                     onFocus={() => {
-                        axios.get('http://192.168.1.20:1024/products').then((resp) => {
+                        axios.get('http://localhost:1024/products').then((resp) => {
                             setsecondvaultdata(resp.data.products)
                         })
                     }}
@@ -437,7 +437,7 @@ function FridgeIncome() {
             </div>
             <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                 setrefreshloading(true);
-                axios.get('http://192.168.1.20:1024/Productincome').then((resp) => { setrows(resp.data.Productincome); setrefreshloading(false) })
+                axios.get('http://localhost:1024/Productincome').then((resp) => { setrows(resp.data.Productincome); setrefreshloading(false) })
             }} endIcon={<Refresh />}>Refresh</Button>
         </div>
     );

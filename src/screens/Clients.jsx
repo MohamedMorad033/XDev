@@ -294,7 +294,7 @@ function Clients() {
 
 
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+        axios.get('http://localhost:1024/clients').then((resp) => {
             setrows(resp.data.clients); setnewcode(resp.data.clients.length + 1);
         })
     }, [])
@@ -322,13 +322,13 @@ function Clients() {
 
     const editsubmit = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editclients', { name, expenses, payments, selid: newdata.id, sel }).then((resp) => {
+        axios.post('http://localhost:1024/editclients', { name, expenses, payments, selid: newdata.id, sel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/clients').then((resp) => { setrows(resp.data.clients) })
+                axios.get('http://localhost:1024/clients').then((resp) => { setrows(resp.data.clients) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -353,7 +353,7 @@ function Clients() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addclients', { name: newname, expenses: newexpenses, payments: newpayments, code: newcode, selectmode: newsel }).then((resp) => {
+        axios.post('http://localhost:1024/addclients', { name: newname, expenses: newexpenses, payments: newpayments, code: newcode, selectmode: newsel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
@@ -363,7 +363,7 @@ function Clients() {
                 setloadrn(false)
                 seteditrn(false)
                 setnewcode(newcode + 1)
-                axios.get('http://192.168.1.20:1024/clients').then((resp) => { setrows(resp.data.clients) })
+                axios.get('http://localhost:1024/clients').then((resp) => { setrows(resp.data.clients) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -375,7 +375,7 @@ function Clients() {
 
     const search = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -385,7 +385,7 @@ function Clients() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/clients').then((resp) => { setrows(resp.data.clients) })
+                axios.get('http://localhost:1024/clients').then((resp) => { setrows(resp.data.clients) })
 
             }
         })
@@ -491,13 +491,13 @@ function Clients() {
                         variant="standard"
                     />
                     <Button style={{ marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://192.168.1.20:1024/clients').then((resp) => { setrows(resp.data.clients) })
+                        setsearchtext(''); axios.get('http://localhost:1024/clients').then((resp) => { setrows(resp.data.clients) })
                     }}>Clear</Button>
                 </div>
                 <div>
                     <Button style={{ marginRight: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                         setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/clients').then((resp) => { setrows(resp.data.clients); setrefreshloading(false) })
+                        axios.get('http://localhost:1024/clients').then((resp) => { setrows(resp.data.clients); setrefreshloading(false) })
                     }} endIcon={<Refresh />}>Refresh</Button>
                     <Button style={{ marginRight: 20 }} variant='contained' color='success' onClick={() => { setprt(true) }}>Print</Button>
                 </div>

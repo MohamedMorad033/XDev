@@ -215,26 +215,26 @@ function WorkerPayout() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchWorkers', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchWorkers', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     const search = (text) => {
-        axios.post('http://192.168.1.20:1024/searchWorkers', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchWorkers', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 settheirdvaultdata(resp.data.foundproduts)
             }
         })
     }
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/Vault').then((resp) => {
+        axios.get('http://localhost:1024/Vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchWorkers', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchWorkers', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -251,7 +251,7 @@ function WorkerPayout() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addVault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addVault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -283,7 +283,7 @@ function WorkerPayout() {
             return
         }
         console.log(newdata)
-        axios.post('http://192.168.1.20:1024/addProductoutcome', { prodname: newdata.to, clientname: theirdvaultname, prodid: newdata.toid, amount: newexpenses, pricehistoryid: newdata.id }).then((resp) => {
+        axios.post('http://localhost:1024/addProductoutcome', { prodname: newdata.to, clientname: theirdvaultname, prodid: newdata.toid, amount: newexpenses, pricehistoryid: newdata.id }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn3(false)
@@ -297,7 +297,7 @@ function WorkerPayout() {
     const [selectedRows, setselectedRows] = useState([])
     const searchprod = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchproductoutcomeexact', { searchtext: secondvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/searchproductoutcomeexact', { searchtext: secondvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -315,7 +315,7 @@ function WorkerPayout() {
     }
     const searchclient = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchworkerspaysbynameexact', { searchtext: firstvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/searchworkerspaysbynameexact', { searchtext: firstvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -335,7 +335,7 @@ function WorkerPayout() {
 
     const searchclientdata = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchworkerspaysbydateexact', { searchtext: value }).then((resp) => {
+        axios.post('http://localhost:1024/searchworkerspaysbydateexact', { searchtext: value }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -362,14 +362,14 @@ function WorkerPayout() {
     const contextActions = () => (
         <>
             <Button color='error' variant='contained' onClick={() => {
-                axios.post('http://192.168.1.20:1024/deleteworkerpayment', { deleteproduct: selectedRows }).then((resp) => {
+                axios.post('http://localhost:1024/deleteworkerpayment', { deleteproduct: selectedRows }).then((resp) => {
                     if (resp.data.status == 200) {
                         console.log(resp.data)
                         setrows([])
                         setrows(resp.data.workers)
                     } else {
                         alert('failed')
-                        axios.get('http://192.168.1.20:1024/Workerspay').then((resp) => { setrows(resp.data.products) })
+                        axios.get('http://localhost:1024/Workerspay').then((resp) => { setrows(resp.data.products) })
 
                     }
                 })
@@ -405,7 +405,7 @@ function WorkerPayout() {
                     label='d'
                     style={{ marginRight: 20, width: 200 }}
                     onFocus={() => {
-                        axios.get('http://192.168.1.20:1024/Workers').then((resp) => {
+                        axios.get('http://localhost:1024/Workers').then((resp) => {
                             setfirstvaultdata(resp.data.clients)
                         })
                     }}
@@ -423,7 +423,7 @@ function WorkerPayout() {
             </div>
             <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                 setrefreshloading(true);
-                axios.get('http://192.168.1.20:1024/Workerspay').then((resp) => { setrows(resp.data.products); setrefreshloading(false) })
+                axios.get('http://localhost:1024/Workerspay').then((resp) => { setrows(resp.data.products); setrefreshloading(false) })
             }} endIcon={<Refresh />}>Refresh</Button>
         </div>
     );
@@ -459,7 +459,7 @@ function WorkerPayout() {
             alert('set returns')
             return
         }
-        axios.post('http://192.168.1.20:1024/createworkerinvoice', { workername: secondvaultname, amount: newamount, price: newprice, total: Number(newamount) * Number(newprice) + Number(nights) - Number(returns), returns, nights, date }).then((resp) => {
+        axios.post('http://localhost:1024/createworkerinvoice', { workername: secondvaultname, amount: newamount, price: newprice, total: Number(newamount) * Number(newprice) + Number(nights) - Number(returns), returns, nights, date }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.workers)
                 setreturns(0)
@@ -507,7 +507,7 @@ function WorkerPayout() {
             alert('set returns')
             return
         }
-        axios.post('http://192.168.1.20:1024/editworkerinvoice', { workername: theirdvaultdata, amount: editamount, price: editprice, total: Number(editprice) * Number(editamount) + Number(newnights) - Number(newreturns), selid: newdata.id, newdata, returns: newreturns, nights: newnights, date: newdate }).then((resp) => {
+        axios.post('http://localhost:1024/editworkerinvoice', { workername: theirdvaultdata, amount: editamount, price: editprice, total: Number(editprice) * Number(editamount) + Number(newnights) - Number(newreturns), selid: newdata.id, newdata, returns: newreturns, nights: newnights, date: newdate }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.workers)
                 seteditrn(false)
@@ -568,7 +568,7 @@ function WorkerPayout() {
                         id="free-solo-demo"
                         style={{ marginRight: 20, width: 200 }}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/Workers').then((resp) => {
+                            axios.get('http://localhost:1024/Workers').then((resp) => {
                                 setsecondvaultdata(resp.data.clients)
                             })
                         }}
@@ -734,7 +734,7 @@ function WorkerPayout() {
                             style={{ marginRight: 20, width: 200, marginTop: 10 }}
                             fullWidth
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/Workers').then((resp) => {
+                                axios.get('http://localhost:1024/Workers').then((resp) => {
                                     settheirdvaultdata(resp.data.clients)
                                 })
                             }}

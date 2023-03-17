@@ -146,7 +146,7 @@ function Products() {
 
 
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/products').then((resp) => {
+        axios.get('http://localhost:1024/products').then((resp) => {
             setrows(resp.data.products);
             setnewcode(resp.data.products.length + 1);
         })
@@ -191,13 +191,13 @@ function Products() {
 
     const editsubmit = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editproduct', { name, price, amount, code, selid, sel }).then((resp) => {
+        axios.post('http://localhost:1024/editproduct', { name, price, amount, code, selid, sel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -222,7 +222,7 @@ function Products() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addproduct', { name: newname, price: newprice, amount: newamount, code: newcode, selectmode: newsel }).then((resp) => {
+        axios.post('http://localhost:1024/addproduct', { name: newname, price: newprice, amount: newamount, code: newcode, selectmode: newsel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
@@ -232,7 +232,7 @@ function Products() {
                 setnewamount(0)
                 setnewname('')
                 setnewprice(0)
-                axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -244,7 +244,7 @@ function Products() {
 
     const search = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchproduct', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchproduct', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -254,7 +254,7 @@ function Products() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
 
             }
         })
@@ -264,20 +264,20 @@ function Products() {
     const contextActions = () => (
         <>
             <Button color='error' variant='contained' onClick={() => {
-                axios.post('http://192.168.1.20:1024/deleteproduct', { deleteproduct: selectedRows }).then((resp) => {
+                axios.post('http://localhost:1024/deleteproduct', { deleteproduct: selectedRows }).then((resp) => {
                     if (resp.data.status == 200) {
                         console.log(resp.data)
                         setrows([])
                         setrows(resp.data.products)
                     } else {
                         alert('failed')
-                        axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                        axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
 
                     }
                 })
             }}>delete</Button>
             <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
-                axios.post('http://192.168.1.20:1024/print/productssum', {}).then((resp) => {
+                axios.post('http://localhost:1024/print/productssum', {}).then((resp) => {
                     window.open('localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                 })
             }}> print</Button>
@@ -336,7 +336,7 @@ function Products() {
             <Button disabled={newloadrn} variant='contained' onClick={() => { createnew() }}>Create</Button>
             <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                 setrefreshloading(true);
-                axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products); setrefreshloading(false) })
+                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products); setrefreshloading(false) })
             }} endIcon={<Refresh />}>Refresh</Button>
         </div>
     );
@@ -427,7 +427,7 @@ function Products() {
                         variant="outlined"
                     />
                     <Button style={{ marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                        setsearchtext(''); axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
                     }}>Clear</Button>
                     <Button style={{ marginLeft: 20 }} variant='contained' color='success' onClick={() => { setprt(true) }}>PRINT</Button>
 

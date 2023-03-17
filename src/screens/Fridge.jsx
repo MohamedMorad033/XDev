@@ -20,6 +20,16 @@ import Refresh from '@mui/icons-material/RefreshRounded'
 import Typography from '@mui/material/Typography';
 import DataTable, { createTheme } from 'react-data-table-component';
 import Autocomplete from '@mui/material/Autocomplete'
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import FileCopyIcon from '@mui/icons-material/FileCopyOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import PrintIcon from '@mui/icons-material/Print';
+import ShareIcon from '@mui/icons-material/Share';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import { FormControlLabel, FormGroup } from '@mui/material';
+
 const updatetheme = (theme) => {
     if (theme == 'dark') {
         document.documentElement.style.setProperty('--firstcolor', '#000000');
@@ -76,13 +86,83 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme','light')
+            localStorage.setItem('Theme', 'light')
         }
 }
 
 updatetheme(localStorage.getItem('Theme'))
 
 function Fridge() {
+    const [a, sa] = useState(true)
+    const [b, sb] = useState(true)
+    const [c, sc] = useState(true)
+    const [d, sd] = useState(true)
+    const [e, se] = useState(true)
+    const [f, sf] = useState(true)
+    const [g, sg] = useState(true)
+    const [h, sh] = useState(true)
+    const [i, si] = useState(true)
+    const [j, sj] = useState(true)
+    const [filter, setfilter] = useState(true)
+
+    const downloadFile = ({ data, fileName, fileType }) => {
+        const blob = new Blob([data], { type: fileType })
+
+        const a = document.createElement('a')
+        a.download = fileName
+        a.href = window.URL.createObjectURL(blob)
+        const clickEvt = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        })
+        a.dispatchEvent(clickEvt)
+        a.remove()
+    }
+
+    const exportToJson = e => {
+        downloadFile({
+            data: JSON.stringify(rows),
+            fileName: 'Product_Imports.json',
+            fileType: 'text/json',
+        })
+    }
+
+    const exportToCsv = e => {
+        var data = []
+        // Headers for each column
+        let headers = ["id", "refid", "clientname", "clientid", "productid", "productname", "amount", "price", "totalprice", "time"]
+
+        // Convert users data to a csv
+        let usersCsv = rows.reduce((acc, row) => {
+            const { id, refid, clientname, clientid, productid, productname, amount, price, totalprice, time } = row
+            acc.push([id, refid, clientname, clientid, productid, productname, amount, price, totalprice, time.split("T")[0]].join(','))
+            return acc
+        }, [])
+        data.push(headers.join(','))
+        data.push(...usersCsv)
+        var BOM = "\uFEFF";
+        var csvContent = BOM + data.join('\n');
+        downloadFile({
+            data: csvContent,
+            fileName: 'Product_Exports.csv',
+            fileType: 'text/csv;charset=utf-8',
+        })
+    }
+    const actions = [
+        { icon: <FilterAltIcon onClick={() => { setfilter(!filter) }} />, name: 'Filter' },
+        { icon: <SaveIcon onClick={(e) => { exportToCsv(e) }} />, name: 'Save' },
+        {
+            icon: <PrintIcon onClick={(e) => {
+                axios.post('http://localhost:1024/print/fridgeimports', { rows: rows , rows2 : rows}).then((resp) => {
+                    setTimeout(() => {
+                        window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
+                    }, 500);
+                })
+            }} />, name: 'Print'
+        },
+        { icon: <ShareIcon />, name: 'Share' },
+    ];
 
     const types = [
         {
@@ -121,58 +201,72 @@ function Fridge() {
             name: 'id',
             selector: row => row.id,
             sortable: true,
-            width: '60px'
+            width: '60px',
+            omit: !a
         },
         {
             name: 'فاتوره',
             selector: row => row.refid,
             sortable: true,
-            width: '100px'
+            width: '100px',
+            omit: !b
         },
         {
             name: 'الصنف',
             selector: row => row.to,
             sortable: true,
             grow: 3,
+            omit: !e
         },
         {
             name: 'العميل',
             selector: row => row.from,
             sortable: true,
             grow: 3,
+            omit: !d
         },
         {
             name: 'الكميه',
             selector: row => row.amount,
             sortable: true,
-
+            omit: !f
         },
         {
             name: 'مرتجع',
             selector: row => row.return,
             sortable: true,
+            omit: !c
         },
         {
             name: 'اجمالي الكميه',
             selector: row => row.amount - row.return,
             sortable: true,
+            omit: !j
         },
         {
             name: 'سعر القطعه',
             selector: row => row.price,
             sortable: true,
+            omit: !g
         },
         {
             name: 'السعر الكلي',
             selector: row => row.totalprice,
             sortable: true,
+            omit: !h
+        },
+        {
+            name: 'تاريخ الاستلام',
+            selector: row => row.time.split('T')[0],
+            sortable: true,
+            omit: !i
         }];
 
 
 
 
-        const [dark_theme_en, set_dark_theme_en] = useState('light')
-        const [AccesToken, setAccesToken] = useState([]);
+    const [dark_theme_en, set_dark_theme_en] = useState('light')
+    const [AccesToken, setAccesToken] = useState([]);
 
     const [firstvaultname, setfirstvaultname] = useState('')
     const [secondvaultname, setsecondvaultname] = useState('')
@@ -204,14 +298,14 @@ function Fridge() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchproduct', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchproduct', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -230,7 +324,7 @@ function Fridge() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -262,7 +356,7 @@ function Fridge() {
             return
         }
         console.log(newdata)
-        axios.post('http://192.168.1.20:1024/editlot', { lotid: newdata.id, newprice: newpayments, newamount: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/editlot', { lotid: newdata.id, newprice: newpayments, newamount: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn3(false)
@@ -275,7 +369,7 @@ function Fridge() {
     }
     const searchprod = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchfridgeexact', { searchtext: secondvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/searchfridgeexact', { searchtext: secondvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -293,7 +387,7 @@ function Fridge() {
     }
     const searchrefid = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchfridgebyrefid', { refid }).then((resp) => {
+        axios.post('http://localhost:1024/searchfridgebyrefid', { refid }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -311,7 +405,7 @@ function Fridge() {
     }
     const searchclient = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchfridgebyclient', { searchtext: firstvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/searchfridgebyclient', { searchtext: firstvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -342,128 +436,267 @@ function Fridge() {
         <>
             <Button color='error' variant='contained' onClick={() => { }}>delete</Button>
             <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
-                axios.post('http://192.168.1.20:1024/print/lots', { rows: selectableRows }).then((resp) => {
+                axios.post('http://localhost:1024/print/fridgeimports', { rows: selectableRows }).then((resp) => {
                     window.open('localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                 })
             }}>print</Button>
         </>
     );
     const [refid, setrefid] = useState()
-    const actions = () => (
-        <div style={{ width: '100%', alignItems: 'flex-end', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
-            <TextField
-                autoFocus
-                margin="dense"
-                id="code"
-                size='small'
-                type="number"
-                value={refid}
-                style={{ width: 200, margin: 10 }}
-                onChange={(e) => { setrefid(e.currentTarget.value) }}
-                variant="outlined"
-                label='الرقم المرجعى'
-            />
-            <Button style={{ margin: 10 }} disabled={false} variant='contained' onClick={() => { searchrefid() }}>تأكيد</Button>
-            <Autocomplete
-                id="free-solo-demo"
-                label='d'
-                style={{ width: 200, margin: 10 }}
-                onFocus={() => {
-                    axios.get('http://192.168.1.20:1024/clients').then((resp) => {
-                        setfirstvaultdata(resp.data.clients)
-                    })
-                }}
-                freeSolo
-                value={firstvaultname}
-                onInputChange={(event, newInputValue) => {
-                    setfirstvaultname(newInputValue);
-                    search1(newInputValue)
-                }}
-                options={firstvaultdata.map((option) => option.name)}
-                size='small'
-                renderInput={(params) => <TextField {...params} label="المورد" />}
-            />
-            <Button style={{ margin: 10 }} disabled={false} variant='contained' onClick={() => { searchclient() }}>تأكيد</Button>
-            <Autocomplete
-                id="free-solo-demo"
-                label='d'
-                style={{ width: 200, margin: 10 }}
-                onFocus={() => {
-                    axios.get('http://192.168.1.20:1024/products').then((resp) => {
-                        setsecondvaultdata(resp.data.products)
-                    })
-                }}
-                freeSolo
-                value={secondvaultname}
-                onInputChange={(event, newInputValue) => {
-                    setsecondvaultname(newInputValue);
-                    search2(newInputValue)
-                }}
-                options={secondvaultdata.map((option) => option.name)}
-                size='small'
-                renderInput={(params) => <TextField {...params} label="الصنف" />}
-            />
-            <Button style={{ margin: 10 }} disabled={false} variant='contained' onClick={() => { searchprod() }}>تأكيد</Button>
-            <Button style={{ margin: 10 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
-                setrefreshloading(true);
-                axios.get('http://192.168.1.20:1024/fridgeincome').then((resp) => { setrows(resp.data.productincome); setrefreshloading(false) })
-            }} endIcon={<Refresh />}>Refresh</Button>
-        </div>
-    );
+
 
 
     const [refreshloading, setrefreshloading] = useState(false)
-
-
-
+    const generalsearch = (cln, prd, rfd, dat, fdt) => {
+        setsearchload(true);
+        axios.post('http://localhost:1024/searchfridgehistorygeneral', { product: prd, client: cln, refid: rfd, date: dat, fdate: fdt }).then((resp) => {
+            if (resp.data.status == 200) {
+                setrows(resp.data.results)
+                setsearchload(false)
+                var sum = 0
+                var asum = 0
+                resp.data.foundproduts.forEach(function (value, index, arry) {
+                    sum += value.totalprice;
+                });
+                resp.data.foundproduts.forEach(function (value, index, arry) {
+                    asum += value.amount;
+                });
+                settotalamount(asum)
+                settotalprice(sum)
+            }
+        })
+    }
     const [newdata, setnewdata] = useState({})
 
+    const [fdate, setfdate] = useState(new Date().toISOString().split('T')[0])
+    const [date, setdate] = useState(new Date().toISOString().split('T')[0])
 
 
     return (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Modal open={prt} onFocus={() => { window.print() }} onClose={() => { setprt(false) }}>
-                <div ref={componentRef} style={{ height: '100%', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div style={{ width: '100%' }}>
-                        <div className='NavContainer' style={{ position: 'sticky', top: 0, backgroundColor: '#eee' }}>
-                            <div>
-                                <img onClick={(e) => {
-                                    e.preventDefault();
-                                    window.location.href = 'http://localhost:3000/';
-                                }} src={logo} width={65.61} height={40} style={{ marginLeft: 5 }} />
-                            </div>
-                            <div style={{ marginRight: 20 }}>
-                                <h4>فاتوره ايرادات</h4>
-                            </div>
-                        </div>
-                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                            <DataTable
-                                dense
-                                direction="rtl"
-                                columns={columns}
-                                data={selectableRows}
-                            />
-                            <div style={{ display: 'flex', width: '100%', justifyContent: 'start' }}>
-                                <Typography color={'#000'} style={{ marginLeft: 50 }}>
-                                    اجمالي المبلغ : {totalprice}
-                                </Typography>
-                                <Typography color={'#000'} style={{ marginLeft: 50 }}>
-                                    اجمالي الكميه : {totalamount}
-                                </Typography>
-                            </div>
-                        </div>
-                    </div>
-                    <h1>{totalprice}</h1>
+        <div style={{ width: '100%', flexDirection: 'row', display: 'flex', alignItems: 'flex-start' }}>
+            <SpeedDial
+                ariaLabel="SpeedDial basic example"
+                sx={{ position: 'absolute', bottom: 16, right: 16 }}
+                icon={<SpeedDialIcon />}
+            >
+                {actions.map((action) => (
+                    <SpeedDialAction
+                        key={action.name}
+                        icon={action.icon}
+                        tooltipTitle={action.name}
+                    />
+                ))}
+            </SpeedDial>
+            <div hidden={filter} style={{
+                width: '30%',
+                height: window.innerHeight - 46,
+                borderRightColor: '#000',
+                borderRightWidth: 1,
+                borderRightStyle: 'solid',
+                backgroundColor: '#8888882b',
+                padding: 10,
+                transition: "all .2s",
+                opacity: filter ? "0" : "1",
+                transition: "all .2s",
+                visibility: filter ? "hidden" : "visible",
+            }}>
+                <div>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="code"
+                        size='small'
+                        type="number"
+                        value={refid}
+                        style={{ marginBottom: 10 }}
+                        fullWidth
+                        onChange={(e) => {
+                            setrefid(e.currentTarget.value)
+                            generalsearch(firstvaultname, secondvaultname, e.currentTarget.value, new Date(date), new Date(fdate))
+                        }}
+                        variant="outlined"
+                        label='الرقم المرجعى'
+                    />
+                    <Autocomplete
+                        id="free-solo-demo"
+                        label='d'
+                        style={{ marginBottom: 10 }}
+                        fullWidth
+                        onFocus={() => {
+                            axios.get('http://localhost:1024/clients').then((resp) => {
+                                setfirstvaultdata(resp.data.clients)
+                            })
+                        }}
+                        freeSolo
+                        value={firstvaultname}
+                        onInputChange={(event, newInputValue) => {
+                            setfirstvaultname(newInputValue);
+                            search1(newInputValue)
+                            generalsearch(newInputValue, secondvaultname, refid, new Date(date), new Date(fdate))
+                        }}
+                        options={firstvaultdata.map((option) => option.name)}
+                        size='small'
+                        renderInput={(params) => <TextField {...params} label="المورد" />}
+                    />
+                    <Autocomplete
+                        id="free-solo-demo"
+                        label='d'
+                        style={{ marginBottom: 10 }}
+                        fullWidth
+                        onFocus={() => {
+                            axios.get('http://localhost:1024/products').then((resp) => {
+                                setsecondvaultdata(resp.data.products)
+                            })
+                        }}
+                        freeSolo
+                        value={secondvaultname}
+                        onInputChange={(event, newInputValue) => {
+                            setsecondvaultname(newInputValue);
+                            search2(newInputValue)
+                            generalsearch(firstvaultname, newInputValue, refid, new Date(date), new Date(fdate))
+                        }}
+                        options={secondvaultdata.map((option) => option.name)}
+                        size='small'
+                        renderInput={(params) => <TextField {...params} label="الصنف" />}
+                    />
+                    <TextField
+                        style={{ marginBottom: 10 }}
+                        autoFocus
+                        margin="dense"
+                        size='small'
+                        fullWidth
+                        id="date"
+                        label="من تاريخ"
+                        type="date"
+                        value={fdate}
+                        onChange={(e) => {
+                            setfdate(e.currentTarget.value)
+                            if (new Date(date)) {
+                                console.log({ date, datee: new Date(date) })
+                                generalsearch(firstvaultname, secondvaultname, refid, new Date(date), new Date(e.currentTarget.value),)
+
+                            }
+                        }}
+                        onBlur={() => {
+                            if (!new Date(date)) {
+                                setfdate(new Date().toISOString().split('T')[0])
+                            }
+                        }}
+                        variant="outlined"
+                        onDoubleClick={() => { }}
+                    />
+                    <TextField
+                        style={{ marginBottom: 10 }}
+                        autoFocus
+                        margin="dense"
+                        size='small'
+                        fullWidth
+                        id="date"
+                        label="حتي تاريخ"
+                        type="date"
+                        value={date}
+                        onChange={(e) => {
+                            setdate(e.currentTarget.value)
+                            if (new Date(date)) {
+                                console.log({ date, datee: new Date(date) })
+                                generalsearch(firstvaultname, secondvaultname, refid, new Date(e.currentTarget.value), new Date(fdate))
+
+                            }
+                        }}
+                        onBlur={() => {
+                            if (!new Date(date)) {
+                                setdate(new Date().toISOString().split('T')[0])
+                            }
+                        }}
+                        variant="outlined"
+                        onDoubleClick={() => { }}
+                    />
                 </div>
-            </Modal>
-            <div style={{ width: '100%' }}>
+                <div style={{ display: 'flex', width: '100%', flexDirection: 'row' }}>
+                    <Button disabled={searchload} style={{ flex: 1, marginRight: 5 }} variant='outlined' color='warning'
+                        onClick={() => {
+                            generalsearch(firstvaultname, secondvaultname, refid, new Date(date), new Date(fdate))
+                        }}>
+                        Search
+                    </Button>
+                    <Button disabled={searchload} style={{ flex: 1, marginLeft: 5, marginRight: 5 }} variant='outlined' color='primary'
+                        onClick={() => {
+                            setfirstvaultname('')
+                            setsecondvaultname('')
+                            setrefid('')
+                            setdate(new Date().toISOString().split('T')[0])
+                            generalsearch('', '', '', new Date(), new Date('01-01-2000'))
+                        }}>
+                        All
+                    </Button>
+                    <Button disabled={searchload} style={{ flex: 1, marginLeft: 5 }} variant='outlined' color='error'
+                        onClick={() => {
+                            setfirstvaultname('')
+                            setsecondvaultname('')
+                            setrefid('')
+                            setdate(new Date().toISOString().split('T')[0])
+                            setfdate(new Date().toISOString().split('T')[0])
+                            setrows([])
+                        }}>
+                        Reset
+                    </Button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'row', padding: 10 }}>
+                    <FormGroup style={{ flex: 1, alignItems: 'flex-end' }}>
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={f} onChange={(e) => { sf(e.target.checked); }} />} label="الكميه  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={j} onChange={(e) => { sj(e.target.checked); }} />} label="اجمالي الكميه  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={g} onChange={(e) => { sg(e.target.checked); }} />} label="سعر القطعه  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={h} onChange={(e) => { sh(e.target.checked); }} />} label="اجمالي المبلغ  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={i} onChange={(e) => { si(e.target.checked); }} />} label="تاريخ الاستلام  ." />
+                    </FormGroup>
+                    <FormGroup style={{ flex: 1, alignItems: 'flex-end' }}>
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={a} onChange={(e) => { sa(e.target.checked); }} />} label="م  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={b} onChange={(e) => { sb(e.target.checked); }} />} label="فاتوره  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={c} onChange={(e) => { sc(e.target.checked); }} />} label="مرتجع  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={d} onChange={(e) => { sd(e.target.checked); }} />} label="المورد  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={e} onChange={(e) => { se(e.target.checked); }} />} label="الصنف  ." />
+                    </FormGroup>
+                </div>
+                <div style={{ display: 'flex', width: '100%', flexDirection: 'row' }}>
+                    <Button style={{ flex: 1, marginRight: 5 }} variant='outlined' color='success'
+                        onClick={() => {
+                            sf(true);
+                            sg(true);
+                            sh(true);
+                            si(true);
+                            sj(true);
+                            sa(true);
+                            sb(true);
+                            sc(true);
+                            sd(true);
+                            se(true);
+                        }}>
+                        Select All
+                    </Button>
+                    <Button style={{ flex: 1, marginLeft: 5 }} variant='outlined' color='error'
+                        onClick={() => {
+                            sf(false);
+                            sg(false);
+                            sh(false);
+                            si(false);
+                            sj(false);
+                            sa(false);
+                            sb(false);
+                            sc(false);
+                            sd(false);
+                            se(false);
+                        }}>
+                        Unselect All
+                    </Button>
+                </div>
+            </div>
+            <div style={{ width: filter ? '100%' : '80%', minHeight: window.innerHeight - 46, display: 'flex', flexDirection: 'column' }} onClick={() => { setfilter(true) }}>
+
                 <DataTable
                     pagination
                     dense
                     theme='newtheme'
                     paginationPerPage={100}
-                    contextActions={contextActions()}
-                    actions={actions()}
                     highlightOnHover
                     pointerOnHover
                     fixedHeader

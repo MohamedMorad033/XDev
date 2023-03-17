@@ -100,7 +100,7 @@ function Vault() {
     const [secondvaultdata, setsecondvaultdata] = useState([])
     const [data, setdata] = useState([])
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
@@ -135,7 +135,7 @@ function Vault() {
 
 
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/Vault').then((resp) => {
+        axios.get('http://localhost:1024/Vault').then((resp) => {
             setrows(resp.data.vault); setnewcode(resp.data.vault.length + 1);
         })
     }, [])
@@ -163,13 +163,13 @@ function Vault() {
 
     const editsubmit = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editVault', { name, expenses, value: payments, code, selid, sel }).then((resp) => {
+        axios.post('http://localhost:1024/editVault', { name, expenses, value: payments, code, selid, sel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/Vault').then((resp) => { setrows(resp.data.vault) })
+                axios.get('http://localhost:1024/Vault').then((resp) => { setrows(resp.data.vault) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -190,7 +190,7 @@ function Vault() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addVault', { name: newname, value: newpayments, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addVault', { name: newname, value: newpayments, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
@@ -198,7 +198,7 @@ function Vault() {
                 seteditrn(false)
                 setnewname('')
                 setnewcode(newcode + 1)
-                axios.get('http://192.168.1.20:1024/Vault').then((resp) => { setrows(resp.data.vault) })
+                axios.get('http://localhost:1024/Vault').then((resp) => { setrows(resp.data.vault) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -252,19 +252,19 @@ function Vault() {
 
 
     const submittrans = () => {
-        axios.post('http://192.168.1.20:1024/addvaultclienttransaction', { fromname: data.id, toname: firstvaultdata[0].id, amount: transvalue, type: newsel }).then((resp) => {
+        axios.post('http://localhost:1024/addvaultclienttransaction', { fromname: data.id, toname: firstvaultdata[0].id, amount: transvalue, type: newsel }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/Vault').then((resp) => {
+                axios.get('http://localhost:1024/Vault').then((resp) => {
                     setrows(resp.data.vault); setnewcode(resp.data.vault.length + 1);
                 })
             } else {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/Vault').then((resp) => { setrows(resp.data.vault) })
+                axios.get('http://localhost:1024/Vault').then((resp) => { setrows(resp.data.vault) })
 
             }
         })
@@ -274,7 +274,7 @@ function Vault() {
 
     const search = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchVault', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchVault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -284,7 +284,7 @@ function Vault() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/Vault').then((resp) => { setrows(resp.data.vault) })
+                axios.get('http://localhost:1024/Vault').then((resp) => { setrows(resp.data.vault) })
 
             }
         })
@@ -307,13 +307,13 @@ function Vault() {
                         variant="standard"
                     />
                     <Button style={{ height: 30, marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://192.168.1.20:1024/Vault').then((resp) => { setrows(resp.data.vault) })
+                        setsearchtext(''); axios.get('http://localhost:1024/Vault').then((resp) => { setrows(resp.data.vault) })
                     }}>Clear</Button>
                 </div>
                 <div>
                     <Button style={{ height: 30, marginRight: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                         setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/Vault').then((resp) => { setrows(resp.data.vault); setrefreshloading(false) })
+                        axios.get('http://localhost:1024/Vault').then((resp) => { setrows(resp.data.vault); setrefreshloading(false) })
                     }} endIcon={<Refresh />}>Refresh</Button>
                 </div>
             </div>
@@ -356,7 +356,7 @@ function Vault() {
                             fullWidth
                             value={firstvaultname}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                                axios.get('http://localhost:1024/clients').then((resp) => {
                                     setfirstvaultdata(resp.data.clients)
                                 })
                             }}

@@ -157,27 +157,27 @@ function Workertransaction() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchvault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
-        axios.get('http://192.168.1.20:1024/wtransaction').then((resp) => {
+        axios.get('http://localhost:1024/wtransaction').then((resp) => {
             setrows(resp.data.transaction);
         })
     }, [])
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchWorkers', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchWorkers', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -194,7 +194,7 @@ function Workertransaction() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -218,7 +218,7 @@ function Workertransaction() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -251,20 +251,20 @@ function Workertransaction() {
         }
 
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addwTransaction', { amount: expenses, refid: refid.toString(), fromname: firstvaultname, toname: secondvaultname, date: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/addwTransaction', { amount: expenses, refid: refid.toString(), fromname: firstvaultname, toname: secondvaultname, date: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setexpenses(0)
                 setfirstvaultname('')
                 setsecondvaultname('')
                 setrefid('')
-                axios.get('http://192.168.1.20:1024/wtransaction').then((resp) => {
+                axios.get('http://localhost:1024/wtransaction').then((resp) => {
                     setrows(resp.data.transaction);
                 })
             } else if (resp.data.status == 400) {
                 setloadrn(false)
                 setrefiderr('error')
-                axios.get('http://192.168.1.20:1024/wtransaction').then((resp) => {
+                axios.get('http://localhost:1024/wtransaction').then((resp) => {
                     setrows(resp.data.transaction);
                 })
             } else {
@@ -283,7 +283,7 @@ function Workertransaction() {
     const [editrefiderr, seteditrefiderr] = useState('primary')
 
     const searchrefid = (refid) => {
-        axios.post('http://192.168.1.20:1024/searchrefidworkertransaction', { refid: refid.toString() }).then((resp) => {
+        axios.post('http://localhost:1024/searchrefidworkertransaction', { refid: refid.toString() }).then((resp) => {
             if (resp.data.status == 200) {
                 if (resp.data.transaction.length > 0) {
                     setrefiderr('warning')
@@ -386,7 +386,7 @@ function Workertransaction() {
                                 search1(newInputValue)
                             }}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                                axios.get('http://localhost:1024/vault').then((resp) => {
                                     if (resp.data.status == 200) {
                                         setfirstvaultdata(resp.data.vault)
                                     }
@@ -402,7 +402,7 @@ function Workertransaction() {
                             label='d'
                             value={secondvaultname}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/Workers').then((resp) => {
+                                axios.get('http://localhost:1024/Workers').then((resp) => {
                                     setsecondvaultdata(resp.data.clients)
                                 })
                             }}
@@ -442,7 +442,7 @@ function Workertransaction() {
 
                         <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                             setrefreshloading(true);
-                            axios.get('http://192.168.1.20:1024/wtransaction').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
+                            axios.get('http://localhost:1024/wtransaction').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
                         }} endIcon={<Refresh />}>Refresh</Button>
                     </div>
 
@@ -517,14 +517,14 @@ function Workertransaction() {
                             value={transfromname}
                             onInputChange={(event, newInputValue) => {
                                 settransfromname(newInputValue);
-                                axios.post('http://192.168.1.20:1024/searchvault', { searchtext: newInputValue }).then((resp) => {
+                                axios.post('http://localhost:1024/searchvault', { searchtext: newInputValue }).then((resp) => {
                                     if (resp.data.status == 200) {
                                         settransfromdata(resp.data.foundproduts)
                                     }
                                 })
                             }}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                                axios.get('http://localhost:1024/vault').then((resp) => {
                                     if (resp.data.status == 200) {
                                         settransfromdata(resp.data.vault)
                                     }
@@ -541,7 +541,7 @@ function Workertransaction() {
                             label='d'
                             value={transtoname}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/Workers').then((resp) => {
+                                axios.get('http://localhost:1024/Workers').then((resp) => {
                                     settranstodata(resp.data.clients)
                                 })
                             }}
@@ -573,20 +573,20 @@ function Workertransaction() {
                 <DialogActions>
                     <Button onClick={() => { setedittrans(false) }} >الغاء</Button>
                     <Button variant='contained' color='error' onClick={() => {
-                        axios.post('http://192.168.1.20:1024/delwtransaction', { newdata }).then(resp => {
+                        axios.post('http://localhost:1024/delwtransaction', { newdata }).then(resp => {
                             if (resp.data.status == 200) {
                                 setedittrans(false);
-                                axios.get('http://192.168.1.20:1024/wtransaction').then((resp) => {
+                                axios.get('http://localhost:1024/wtransaction').then((resp) => {
                                     setrows(resp.data.transaction);
                                 })
                             }
                         }).catch((e) => { alert(e.message) })
                     }} >حذف</Button>
                     <Button variant='contained' onClick={async () => {
-                        axios.post('http://192.168.1.20:1024/editwtransaction', { newdata, transfromname, transtoname, transval, editrefid: editrefid.toString() }).then(resp => {
+                        axios.post('http://localhost:1024/editwtransaction', { newdata, transfromname, transtoname, transval, editrefid: editrefid.toString() }).then(resp => {
                             if (resp.data.status == 200) {
                                 setedittrans(false);
-                                axios.get('http://192.168.1.20:1024/wtransaction').then((resp) => {
+                                axios.get('http://localhost:1024/wtransaction').then((resp) => {
                                     setrows(resp.data.transaction);
                                 })
                             } else if (resp.data.status == 400) {

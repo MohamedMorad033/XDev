@@ -76,7 +76,7 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme','light')
+            localStorage.setItem('Theme', 'light')
         }
 }
 
@@ -210,24 +210,24 @@ function Vctransaction() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/cvtransaction').then((resp) => {
+        axios.get('http://localhost:1024/cvtransaction').then((resp) => {
             setrows(resp.data.cvtransaction);
         })
     }, [])
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchvault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -246,7 +246,7 @@ function Vctransaction() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -279,7 +279,7 @@ function Vctransaction() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addproduct', { name: newprodname, price: newprice, amount: newamount, code: newcode, selectmode: sel }).then((resp) => {
+        axios.post('http://localhost:1024/addproduct', { name: newprodname, price: newprice, amount: newamount, code: newcode, selectmode: sel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
@@ -288,7 +288,7 @@ function Vctransaction() {
                 seteditrn2(false)
                 setnewcode(newcode + 1)
 
-                axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -315,7 +315,7 @@ function Vctransaction() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addclients', { name: newname, expenses: newexpenses, payments: newpayments, selectmode: newsel }).then((resp) => {
+        axios.post('http://localhost:1024/addclients', { name: newname, expenses: newexpenses, payments: newpayments, selectmode: newsel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -328,12 +328,12 @@ function Vctransaction() {
     }
     const deletetrans = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/deletevaultclienttransaction', { id: data.id }).then((resp) => {
+        axios.post('http://localhost:1024/deletevaultclienttransaction', { id: data.id }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/cvtransaction').then((resp) => {
+                axios.get('http://localhost:1024/cvtransaction').then((resp) => {
                     setrows(resp.data.cvtransaction);
                 })
             } else {
@@ -364,18 +364,18 @@ function Vctransaction() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editvaultclienttransaction', { id: data.id, fromname: vaultname, toname: clientname, amount: editamount, type: editsel, refid: editrefid.toString(), time: editdate }).then((resp) => {
+        axios.post('http://localhost:1024/editvaultclienttransaction', { id: data.id, fromname: vaultname, toname: clientname, amount: editamount, type: editsel, refid: editrefid.toString(), time: editdate }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/cvtransaction').then((resp) => {
+                axios.get('http://localhost:1024/cvtransaction').then((resp) => {
                     setrows(resp.data.cvtransaction);
                 })
             } else if (resp.data.status == 400) {
                 setloadrn(false)
                 seteditrefiderr('error')
-                axios.get('http://192.168.1.20:1024/cvtransaction').then((resp) => {
+                axios.get('http://localhost:1024/cvtransaction').then((resp) => {
                     setrows(resp.data.cvtransaction);
                 })
             } else {
@@ -391,7 +391,7 @@ function Vctransaction() {
     const [refid, setrefid] = useState()
     const submittrans = () => {
         setrefreshloading(true)
-        axios.post('http://192.168.1.20:1024/addvaultclienttransaction', { fromname: secondvaultname, toname: firstvaultname, amount: Number(amount), type: newsel, refid: refid.toString(), time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/addvaultclienttransaction', { fromname: secondvaultname, toname: firstvaultname, amount: Number(amount), type: newsel, refid: refid.toString(), time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 setrefreshloading(false)
                 console.log(resp.data)
@@ -401,13 +401,13 @@ function Vctransaction() {
                 setamount(0);
                 setnewsel('in');
                 setrefid(Number(refid) + 1)
-                axios.get('http://192.168.1.20:1024/cvtransaction').then((resp) => {
+                axios.get('http://localhost:1024/cvtransaction').then((resp) => {
                     setrows(resp.data.cvtransaction);
                 })
             } else if (resp.data.status == 400) {
                 setrefreshloading(false)
                 setrefiderr('error')
-                axios.get('http://192.168.1.20:1024/cvtransaction').then((resp) => {
+                axios.get('http://localhost:1024/cvtransaction').then((resp) => {
                     setrows(resp.data.cvtransaction);
                 })
             } else {
@@ -445,7 +445,7 @@ function Vctransaction() {
     const [editrefid, seteditrefid] = useState(0)
     const [editdate, seteditdate] = useState('')
     const searchrefid = (refid) => {
-        axios.post('http://192.168.1.20:1024/searchrefidvaultclienttransaction', { fromname: secondvaultname, toname: firstvaultname, amount: Number(amount), type: newsel, refid: refid.toString(), time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/searchrefidvaultclienttransaction', { fromname: secondvaultname, toname: firstvaultname, amount: Number(amount), type: newsel, refid: refid.toString(), time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 if (resp.data.transaction.length > 0) {
                     setrefiderr('warning')
@@ -525,7 +525,7 @@ function Vctransaction() {
                             search1(newInputValue)
                         }}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                            axios.get('http://localhost:1024/clients').then((resp) => {
                                 if (resp.data.status == 200) {
                                     setfirstvaultdata(resp.data.clients)
                                 }
@@ -550,7 +550,7 @@ function Vctransaction() {
 
                         }}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                            axios.get('http://localhost:1024/vault').then((resp) => {
                                 if (resp.data.status == 200) {
                                     setsecondvaultdata(resp.data.vault)
                                 }
@@ -588,7 +588,7 @@ function Vctransaction() {
                     <Button disabled={refreshloading} style={{ margin: 10 }} variant='contained' onClick={() => { submittrans() }}>تأكيد</Button>
                     <Button style={{ margin: 10 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                         setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/cvtransaction').then((resp) => { setrows(resp.data.cvtransaction); setrefreshloading(false); console.log(resp.data) })
+                        axios.get('http://localhost:1024/cvtransaction').then((resp) => { setrows(resp.data.cvtransaction); setrefreshloading(false); console.log(resp.data) })
                     }} endIcon={<Refresh />}>Refresh</Button>
                 </div>
                 <DataTable
@@ -658,7 +658,7 @@ function Vctransaction() {
                             search1(newInputValue)
                         }}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                            axios.get('http://localhost:1024/clients').then((resp) => {
                                 if (resp.data.status == 200) {
                                     setclientdata(resp.data.clients)
                                 }
@@ -683,7 +683,7 @@ function Vctransaction() {
 
                         }}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                            axios.get('http://localhost:1024/vault').then((resp) => {
                                 if (resp.data.status == 200) {
                                     setvaultdata(resp.data.vault)
                                 }

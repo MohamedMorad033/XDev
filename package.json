@@ -30,6 +30,11 @@
   },
   "scripts": {
     "start": "yarn react-scripts start",
+    "backend": "cd backend && yarn start",
+    "migrate": "cd backend && yarn prisma migrate dev",
+    "pull": "cd backend && yarn prisma db pull",
+    "push": "cd backend && yarn prisma db push",
+    "dev": "serve -s build -p 80",
     "build": "yarn react-scripts build",
     "test": "yarn react-scripts test",
     "eject": "yarn react-scripts eject"

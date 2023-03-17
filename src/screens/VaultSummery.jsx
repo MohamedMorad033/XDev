@@ -207,26 +207,26 @@ function VaultSummery() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     const search = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 settheirdvaultdata(resp.data.foundproduts)
             }
         })
     }
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchvault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -245,7 +245,7 @@ function VaultSummery() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -277,7 +277,7 @@ function VaultSummery() {
             return
         }
         console.log(newdata)
-        axios.post('http://192.168.1.20:1024/editlot', { lotid: newdata.id, newprice: newpayments, newamount: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/editlot', { lotid: newdata.id, newprice: newpayments, newamount: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn3(false)
@@ -290,7 +290,7 @@ function VaultSummery() {
     }
     const searchprod = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchproducthistoryexact', { searchtext: secondvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/searchproducthistoryexact', { searchtext: secondvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -308,7 +308,7 @@ function VaultSummery() {
     }
     const searchrefid = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchlotsbyrefid', { refid }).then((resp) => {
+        axios.post('http://localhost:1024/searchlotsbyrefid', { refid }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.foundproduts)
                 var sum = 0
@@ -326,7 +326,7 @@ function VaultSummery() {
     }
     const searchvault = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/vaultsummery', { vaultname: secondvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/vaultsummery', { vaultname: secondvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.summeryarray)
                 setvaultname(resp.data.summeryarray[0].vaultname)
@@ -352,9 +352,9 @@ function VaultSummery() {
     const contextActions = () => (
         <>
             <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
-                axios.post('http://192.168.1.20:1024/print/vaultsummery', { vaultname : rows[0].vaultName }).then((resp) => {
+                axios.post('http://localhost:1024/print/vaultsummery', { vaultname : rows[0].vaultName }).then((resp) => {
                     setTimeout(() => {
-                        window.open('http://192.168.1.20:1024/' + resp.data.file, '_blank', 'noreferrer')
+                        window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                     }, 500);
                 })
             }}>print</Button>
@@ -395,7 +395,7 @@ function VaultSummery() {
 
                         }}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                            axios.get('http://localhost:1024/vault').then((resp) => {
                                 if (resp.data.status == 200) {
                                     setsecondvaultdata(resp.data.vault)
                                 }
@@ -411,9 +411,9 @@ function VaultSummery() {
                 </div>
                 <div>
                     <Button color='success' style={{ margin: 10 }} variant='contained' onClick={() => {
-                        axios.post('http://192.168.1.20:1024/print/vaultsummery', { vaultname: rows[0].vaultName }).then((resp) => {
+                        axios.post('http://localhost:1024/print/vaultsummery', { vaultname: rows[0].vaultName }).then((resp) => {
                             setTimeout(() => {
-                                window.open('http://192.168.1.20:1024/' + resp.data.file, '_blank', 'noreferrer')
+                                window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                             }, 500);
                         })
                     }}>print</Button>

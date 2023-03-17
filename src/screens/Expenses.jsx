@@ -151,11 +151,11 @@ function Expenses() {
 
 
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/expensescategory').then((resp) => {
+        axios.get('http://localhost:1024/expensescategory').then((resp) => {
             setfirstcat(resp.data.expensescategorys);
             editsetfirstcat(resp.data.expensescategorys)
         })
-        axios.get('http://192.168.1.20:1024/expenses').then((resp) => {
+        axios.get('http://localhost:1024/expenses').then((resp) => {
             setrows(resp.data.expenses);
         })
     }, [])
@@ -199,13 +199,13 @@ function Expenses() {
     const [editname, seteditname] = useState()
     const editsubmit = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editexpenses', { name, expenses, code, secondvaultname, selected, esel1, esel2, edittransdate }).then((resp) => {
+        axios.post('http://localhost:1024/editexpenses', { name, expenses, code, secondvaultname, selected, esel1, esel2, edittransdate }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
+                axios.get('http://localhost:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -238,7 +238,7 @@ function Expenses() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addexpenses', { name: newname, value: newexpenses, refid: newcode, sel1: newsel, sel2: newsel2, vault: firstvaultdata, transdate }).then((resp) => {
+        axios.post('http://localhost:1024/addexpenses', { name: newname, value: newexpenses, refid: newcode, sel1: newsel, sel2: newsel2, vault: firstvaultdata, transdate }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
@@ -253,7 +253,7 @@ function Expenses() {
                 setname('')
                 setnewname('')
                 setnewpayments(0)
-                axios.get('http://192.168.1.20:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
+                axios.get('http://localhost:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -265,7 +265,7 @@ function Expenses() {
 
     const search = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchexpenses', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchexpenses', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -275,14 +275,14 @@ function Expenses() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
+                axios.get('http://localhost:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
 
             }
         })
     }
     const searchnamef = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchexpensesnames', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchexpensesnames', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -292,14 +292,14 @@ function Expenses() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
+                axios.get('http://localhost:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
 
             }
         })
     }
     const searchcatf = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchexpensescategoryes', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchexpensescategoryes', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -309,7 +309,7 @@ function Expenses() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
+                axios.get('http://localhost:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
 
             }
         })
@@ -318,13 +318,13 @@ function Expenses() {
     const contextActions = () => (
         <>
             <Button color='error' variant='contained' onClick={() => {
-                axios.post('http://192.168.1.20:1024/deleteexpenses', { data: data.selectedRows }).then((resp) => {
+                axios.post('http://localhost:1024/deleteexpenses', { data: data.selectedRows }).then((resp) => {
                     if (resp.data.status == 200) {
                         console.log(resp.data)
                         setrows([])
                         setloadrn(false)
                         seteditrn(false)
-                        axios.get('http://192.168.1.20:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
+                        axios.get('http://localhost:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
                     } else {
                         setloadrn(false)
                         alert('failed')
@@ -352,7 +352,7 @@ function Expenses() {
                     type="number"
                     value={newcode}
                     onBlur={() => {
-                        axios.post('http://192.168.1.20:1024/expensescheckrefid', { refid: newcode }).then((resp) => {
+                        axios.post('http://localhost:1024/expensescheckrefid', { refid: newcode }).then((resp) => {
                             if (resp.data.status == 200) {
                                 if (resp.data.avail) {
                                     alert('refid is in use')
@@ -389,7 +389,7 @@ function Expenses() {
 
                     onChange={(e) => {
                         setnewsel(e.target.value);
-                        axios.post('http://192.168.1.20:1024/searchexpensescategory2byname', { searchtext: e.target.value }).then((resp) => {
+                        axios.post('http://localhost:1024/searchexpensescategory2byname', { searchtext: e.target.value }).then((resp) => {
                             setseccat(resp.data.foundproduts);
                             console.log(resp.data)
                         })
@@ -426,7 +426,7 @@ function Expenses() {
                         search1(newInputValue)
                     }}
                     onFocus={() => {
-                        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                        axios.get('http://localhost:1024/vault').then((resp) => {
                             if (resp.data.status == 200) {
                                 setfirstvaultdata(resp.data.vault)
                             }
@@ -480,14 +480,14 @@ function Expenses() {
     const [totalamount, settotalamount] = useState(0)
     const [refreshloading, setrefreshloading] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchvault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchvault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -565,13 +565,13 @@ function Expenses() {
                         variant="standard"
                     />
                     <Button style={{ height: 30, marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://192.168.1.20:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
+                        setsearchtext(''); axios.get('http://localhost:1024/expenses').then((resp) => { setrows(resp.data.expenses) })
                     }}>Clear</Button>
                 </div>
                 <div>
                     <Button style={{ height: 30, marginRight: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                         setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/expenses').then((resp) => { setrows(resp.data.expenses); setrefreshloading(false) })
+                        axios.get('http://localhost:1024/expenses').then((resp) => { setrows(resp.data.expenses); setrefreshloading(false) })
                     }} endIcon={<Refresh />}>Refresh</Button>
                 </div>
             </div>
@@ -623,7 +623,7 @@ function Expenses() {
                         setname(data.name);
                         setsecondvaultname(data.vaultname)
                         setesel1(data.categeryname)
-                        axios.post('http://192.168.1.20:1024/searchexpensescategory2byname', { searchtext: data.categeryname }).then((resp) => {
+                        axios.post('http://localhost:1024/searchexpensescategory2byname', { searchtext: data.categeryname }).then((resp) => {
                             seteseccat(resp.data.foundproduts);
                             setesel2(data.nestedcategoryname)
                             console.log(resp.data)
@@ -654,7 +654,7 @@ function Expenses() {
                             style={{ margin: 5 }}
                             onChange={(e) => {
                                 setesel1(e.target.value);
-                                axios.post('http://192.168.1.20:1024/searchexpensescategory2byname', { searchtext: e.target.value }).then((resp) => {
+                                axios.post('http://localhost:1024/searchexpensescategory2byname', { searchtext: e.target.value }).then((resp) => {
                                     seteseccat(resp.data.foundproduts);
                                     console.log(resp.data)
                                 })
@@ -690,7 +690,7 @@ function Expenses() {
                                 search2(newInputValue)
                             }}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+                                axios.get('http://localhost:1024/vault').then((resp) => {
                                     if (resp.data.status == 200) {
                                         setsecondvaultdata(resp.data.vault)
                                     }

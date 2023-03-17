@@ -87,6 +87,8 @@ function Expensescategory2() {
             name: 'loading'
         },
     ])
+
+
     const [rows, setrows] = useState([
     ]);
     const [editrn, seteditrn] = useState(false)
@@ -113,8 +115,11 @@ function Expensescategory2() {
     ];
 
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/expensescategory2').then((resp) => {
+        axios.get('http://localhost:1024/expensescategory2').then((resp) => {
             setrows(resp.data.expensescategorys);
+        })
+        axios.get('http://localhost:1024/expensescategory').then((resp) => {
+            setmesures(resp.data.expensescategorys);
         })
     }, [])
     const [sel, setsel] = useState('seller')
@@ -141,13 +146,13 @@ function Expensescategory2() {
 
     const editsubmit = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editexpensescategory2', { name, newselid, sel: selid }).then((resp) => {
+        axios.post('http://localhost:1024/editexpensescategory2', { name, newselid, sel: selid }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys) })
+                axios.get('http://localhost:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -160,13 +165,16 @@ function Expensescategory2() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addexpensescategory2', { name: newname, newsel }).then((resp) => {
+        axios.post('http://localhost:1024/addexpensescategory2', { name: newname, newsel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
+                setexpenses('')
+                setnewsel('')
+                setname('')
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys) })
+                axios.get('http://localhost:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -178,7 +186,7 @@ function Expensescategory2() {
 
     const search = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchexpensescategory2', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchexpensescategory2', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -188,7 +196,7 @@ function Expensescategory2() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys) })
+                axios.get('http://localhost:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys) })
 
             }
         })
@@ -244,13 +252,13 @@ function Expensescategory2() {
                         variant="standard"
                     />
                     <Button style={{ height: 30, marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://192.168.1.20:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys) })
+                        setsearchtext(''); axios.get('http://localhost:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys) })
                     }}>Clear</Button>
                 </div>
                 <div>
                     <Button style={{ height: 30, marginRight: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                         setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys); setrefreshloading(false) })
+                        axios.get('http://localhost:1024/expensescategory2').then((resp) => { setrows(resp.data.expensescategorys); setrefreshloading(false) })
                     }} endIcon={<Refresh />}>Refresh</Button>
                 </div>
             </div>

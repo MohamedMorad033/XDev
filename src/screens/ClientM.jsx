@@ -203,24 +203,24 @@ function ClientM() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/cmtransaction').then((resp) => {
+        axios.get('http://localhost:1024/cmtransaction').then((resp) => {
             setrows(resp.data.cvtransaction);
         })
     }, [])
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchvault', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchvault', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -239,7 +239,7 @@ function ClientM() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -272,7 +272,7 @@ function ClientM() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addproduct', { name: newprodname, price: newprice, amount: newamount, code: newcode, selectmode: sel }).then((resp) => {
+        axios.post('http://localhost:1024/addproduct', { name: newprodname, price: newprice, amount: newamount, code: newcode, selectmode: sel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
@@ -281,7 +281,7 @@ function ClientM() {
                 seteditrn2(false)
                 setnewcode(newcode + 1)
 
-                axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -308,7 +308,7 @@ function ClientM() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addclients', { name: newname, expenses: newexpenses, payments: newpayments, selectmode: newsel }).then((resp) => {
+        axios.post('http://localhost:1024/addclients', { name: newname, expenses: newexpenses, payments: newpayments, selectmode: newsel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -321,12 +321,12 @@ function ClientM() {
     }
     const deletetrans = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/deleteclientmtransaction', { id: data.id }).then((resp) => {
+        axios.post('http://localhost:1024/deleteclientmtransaction', { id: data.id }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/cmtransaction').then((resp) => {
+                axios.get('http://localhost:1024/cmtransaction').then((resp) => {
                     setrows(resp.data.cvtransaction);
                 })
             } else {
@@ -358,12 +358,12 @@ function ClientM() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editclientmtransaction', { id: data.id, clientname, amount: editamount, type: editsel, time: editdate, text: edittext }).then((resp) => {
+        axios.post('http://localhost:1024/editclientmtransaction', { id: data.id, clientname, amount: editamount, type: editsel, time: editdate, text: edittext }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/cmtransaction').then((resp) => {
+                axios.get('http://localhost:1024/cmtransaction').then((resp) => {
                     setrows(resp.data.cvtransaction);
                 })
             } else {
@@ -397,7 +397,7 @@ function ClientM() {
             return
         }
         setrefreshloading(true)
-        axios.post('http://192.168.1.20:1024/addclientmtransaction', { text, fromname: secondvaultname, toname: firstvaultname, amount: Number(amount), type: newsel, time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/addclientmtransaction', { text, fromname: secondvaultname, toname: firstvaultname, amount: Number(amount), type: newsel, time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 setrefreshloading(false)
                 console.log(resp.data)
@@ -408,7 +408,7 @@ function ClientM() {
                 settext('')
                 setnewsel('in');
                 setrefid(Number(refid) + 1)
-                axios.get('http://192.168.1.20:1024/cmtransaction').then((resp) => {
+                axios.get('http://localhost:1024/cmtransaction').then((resp) => {
                     setrows(resp.data.cvtransaction);
                 })
             } else {
@@ -498,7 +498,7 @@ function ClientM() {
                             search1(newInputValue)
                         }}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                            axios.get('http://localhost:1024/clients').then((resp) => {
                                 if (resp.data.status == 200) {
                                     setfirstvaultdata(resp.data.clients)
                                 }
@@ -545,7 +545,7 @@ function ClientM() {
                     <Button disabled={refreshloading} style={{ margin: 10 }} variant='contained' onClick={() => { submittrans() }}>تأكيد</Button>
                     <Button style={{ margin: 10 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                         setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/cmtransaction').then((resp) => { setrows(resp.data.cvtransaction); setrefreshloading(false); console.log(resp.data) })
+                        axios.get('http://localhost:1024/cmtransaction').then((resp) => { setrows(resp.data.cvtransaction); setrefreshloading(false); console.log(resp.data) })
                     }} endIcon={<Refresh />}>Refresh</Button>
                 </div>
                 <DataTable
@@ -613,7 +613,7 @@ function ClientM() {
                             search1(newInputValue)
                         }}
                         onFocus={() => {
-                            axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                            axios.get('http://localhost:1024/clients').then((resp) => {
                                 if (resp.data.status == 200) {
                                     setclientdata(resp.data.clients)
                                 }

@@ -50,7 +50,7 @@ function App() {
   const [username, setusername] = useState('')
   const [password, setpassword] = useState('')
   const sub = async () => {
-    const resp = await axios.post('http://192.168.1.20:1024', { "ss": 123 })
+    const resp = await axios.post('http://localhost:1024', { "ss": 123 })
     console.log(resp.data)
   }
 

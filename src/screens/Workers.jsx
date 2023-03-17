@@ -174,7 +174,7 @@ function Workers() {
 
 
     useEffect(() => {
-        axios.get('http://192.168.1.20:1024/Workers').then((resp) => {
+        axios.get('http://localhost:1024/Workers').then((resp) => {
             setrows(resp.data.clients); setnewcode(resp.data.clients.length + 1);
         })
     }, [])
@@ -202,13 +202,13 @@ function Workers() {
 
     const editsubmit = () => {
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/editWorkers', { name, payments, selid: data.id }).then((resp) => {
+        axios.post('http://localhost:1024/editWorkers', { name, payments, selid: data.id }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
-                axios.get('http://192.168.1.20:1024/Workers').then((resp) => { setrows(resp.data.clients) })
+                axios.get('http://localhost:1024/Workers').then((resp) => { setrows(resp.data.clients) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -221,14 +221,14 @@ function Workers() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addWorkers', { name: newname }).then((resp) => {
+        axios.post('http://localhost:1024/addWorkers', { name: newname }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
                 setnewcode(newcode + 1)
-                axios.get('http://192.168.1.20:1024/Workers').then((resp) => { setrows(resp.data.clients) })
+                axios.get('http://localhost:1024/Workers').then((resp) => { setrows(resp.data.clients) })
             } else {
                 setloadrn(false)
                 alert('failed')
@@ -240,7 +240,7 @@ function Workers() {
 
     const search = (text) => {
         setsearchload(true)
-        axios.post('http://192.168.1.20:1024/searchWorkers', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchWorkers', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -250,7 +250,7 @@ function Workers() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://192.168.1.20:1024/Workers').then((resp) => { setrows(resp.data.clients) })
+                axios.get('http://localhost:1024/Workers').then((resp) => { setrows(resp.data.clients) })
 
             }
         })
@@ -259,14 +259,14 @@ function Workers() {
     const contextActions = () => (
         <>
             <Button color='error' variant='contained' onClick={() => {
-                axios.post('http://192.168.1.20:1024/deleteWorkers', { deleteproduct: selectedRows }).then((resp) => {
+                axios.post('http://localhost:1024/deleteWorkers', { deleteproduct: selectedRows }).then((resp) => {
                     if (resp.data.status == 200) {
                         console.log(resp.data)
                         setrows([])
                         setrows(resp.data.Workers)
                     } else {
                         alert('failed')
-                        axios.get('http://192.168.1.20:1024/products').then((resp) => { setrows(resp.data.products) })
+                        axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
 
                     }
                 })
@@ -326,13 +326,13 @@ function Workers() {
                         variant="standard"
                     />
                     <Button style={{ height: 30, marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://192.168.1.20:1024/Workers').then((resp) => { setrows(resp.data.clients) })
+                        setsearchtext(''); axios.get('http://localhost:1024/Workers').then((resp) => { setrows(resp.data.clients) })
                     }}>Clear</Button>
                 </div>
                 <div>
                     <Button style={{ height: 30, marginRight: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
                         setrefreshloading(true);
-                        axios.get('http://192.168.1.20:1024/Workers').then((resp) => { setrows(resp.data.clients); setrefreshloading(false) })
+                        axios.get('http://localhost:1024/Workers').then((resp) => { setrows(resp.data.clients); setrefreshloading(false) })
                     }} endIcon={<Refresh />}>Refresh</Button>
                 </div>
             </div>

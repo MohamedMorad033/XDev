@@ -178,26 +178,26 @@ function Productexportreturn() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     const search = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 settheirdvaultdata(resp.data.foundproduts)
             }
         })
     }
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchproduct', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchproduct', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -216,7 +216,7 @@ function Productexportreturn() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -249,7 +249,7 @@ function Productexportreturn() {
         }
         setsubmit(true)
         console.log(rows)
-        axios.post('http://192.168.1.20:1024/addproductexport', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/addproductexport', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setsecondvaultname('')
@@ -289,7 +289,7 @@ function Productexportreturn() {
         }
         // setsubmit(true)
         console.log(rows)
-        axios.post('http://192.168.1.20:1024/editproductexportreturn', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/editproductexportreturn', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setsecondvaultname('')
@@ -318,7 +318,7 @@ function Productexportreturn() {
     const [selectedRows, setselectedRows] = useState([])
     const searchprod = (data) => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchproducthistorybyclientexact', { searchtext: data, clientname: firstvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/searchproducthistorybyclientexact', { searchtext: data, clientname: firstvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 setlots(resp.data.foundproduts.filter(x => x.remaining !== 0))
             }
@@ -326,7 +326,7 @@ function Productexportreturn() {
     }
     const searchrefid = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/productexportreturnrefid', { refid: refid }).then((resp) => {
+        axios.post('http://localhost:1024/productexportreturnrefid', { refid: refid }).then((resp) => {
             if (resp.data.status == 200) {
                 setloadrn(false);
                 setfirstvaultname(resp.data.rows[0].clientname)
@@ -393,7 +393,7 @@ function Productexportreturn() {
                     label='d'
                     style={{ marginRight: 20, width: 200 }}
                     onFocus={() => {
-                        axios.get('http://192.168.1.20:1024/products').then((resp) => {
+                        axios.get('http://localhost:1024/products').then((resp) => {
                             setsecondvaultdata(resp.data.products)
                         })
                     }}
@@ -525,7 +525,7 @@ function Productexportreturn() {
                             label='d'
                             style={{ marginRight: 20, width: 200 }}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                                axios.get('http://localhost:1024/clients').then((resp) => {
                                     setfirstvaultdata(resp.data.clients)
                                 })
                             }}
@@ -555,7 +555,7 @@ function Productexportreturn() {
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { searchrefid() }} color='warning'>بحث</Button>
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => {
                             setsubmit(true)
-                            axios.post('http://192.168.1.20:1024/deleteproductexport', { refid: refid }).then((resp) => {
+                            axios.post('http://localhost:1024/deleteproductexport', { refid: refid }).then((resp) => {
                                 if (resp.data.status == 200) {
                                     setrows([])
                                     setsecondvaultname('')

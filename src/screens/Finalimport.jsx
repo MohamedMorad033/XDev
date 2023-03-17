@@ -207,26 +207,26 @@ function Finalimport() {
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setfirstvaultdata(resp.data.foundproduts)
             }
         })
     }
     const search = (text) => {
-        axios.post('http://192.168.1.20:1024/searchclients', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchclients', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 settheirdvaultdata(resp.data.foundproduts)
             }
         })
     }
     const getcode = () => {
-        axios.get('http://192.168.1.20:1024/vault').then((resp) => {
+        axios.get('http://localhost:1024/vault').then((resp) => {
             setnewcode(resp.data.vault.length + 1);
         })
     }
     const search2 = (text) => {
-        axios.post('http://192.168.1.20:1024/searchproduct', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchproduct', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsecondvaultdata(resp.data.foundproduts)
             }
@@ -245,7 +245,7 @@ function Finalimport() {
             return
         }
         setloadrn(true)
-        axios.post('http://192.168.1.20:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
+        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false)
@@ -278,7 +278,7 @@ function Finalimport() {
         }
         setsubmit(true)
         console.log(rows)
-        axios.post('http://192.168.1.20:1024/addfinalimport', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/addfinalimport', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setsecondvaultname('')
@@ -319,7 +319,7 @@ function Finalimport() {
         }
         setsubmit(true)
         console.log(rows)
-        axios.post('http://192.168.1.20:1024/editfinalimport', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/editfinalimport', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setsecondvaultname('')
@@ -348,7 +348,7 @@ function Finalimport() {
             return
         }
         setsubmit(true)
-        axios.post('http://192.168.1.20:1024/selfinalimportclient', { clientname: firstvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/selfinalimportclient', { clientname: firstvaultname }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setsubmit(false)
@@ -370,7 +370,7 @@ function Finalimport() {
     const [avalrows, setavalrows] = useState([])
     const searchprod = (data) => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/searchproducthistoryexact', { searchtext: data }).then((resp) => {
+        axios.post('http://localhost:1024/searchproducthistoryexact', { searchtext: data }).then((resp) => {
             if (resp.data.status == 200) {
                 setlots(resp.data.foundproduts)
             }
@@ -378,7 +378,7 @@ function Finalimport() {
     }
     const searchrefid = () => {
         setloadrn(true);
-        axios.post('http://192.168.1.20:1024/finalimportrefid', { refid: refid }).then((resp) => {
+        axios.post('http://localhost:1024/finalimportrefid', { refid: refid }).then((resp) => {
             if (resp.data.status == 200) {
                 setloadrn(false);
                 setfirstvaultname(resp.data.rows[0].from)
@@ -390,7 +390,7 @@ function Finalimport() {
     const searchdate = () => {
         setloadrn(true);
         setselrows([])
-        axios.post('http://192.168.1.20:1024/finalimportdate', { time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/finalimportdate', { time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 setloadrn(false);
                 setfirstvaultname(resp.data.rows[0].from)
@@ -466,7 +466,7 @@ function Finalimport() {
                     label='d'
                     style={{ marginRight: 20, width: 200 }}
                     onFocus={() => {
-                        axios.get('http://192.168.1.20:1024/products').then((resp) => {
+                        axios.get('http://localhost:1024/products').then((resp) => {
                             setsecondvaultdata(resp.data.products)
                         })
                     }}
@@ -610,7 +610,7 @@ function Finalimport() {
                             label='d'
                             style={{ marginRight: 20, width: 200 }}
                             onFocus={() => {
-                                axios.get('http://192.168.1.20:1024/clients').then((resp) => {
+                                axios.get('http://localhost:1024/clients').then((resp) => {
                                     setfirstvaultdata(resp.data.clients)
                                 })
                             }}
@@ -637,13 +637,13 @@ function Finalimport() {
                             value={newexpenses}
                             onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
                             variant="outlined"
-                            onDoubleClick={() => { seteditrn2(true); searchdate() }}
+                            onDoubleClick={() => { }}
                         />
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { editsubmit() }} color='success'>تأكيد</Button>
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { searchrefid() }} color='warning'>بحث</Button>
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => {
                             setsubmit(true)
-                            axios.post('http://192.168.1.20:1024/deletefinalimport', { refid: refid }).then((resp) => {
+                            axios.post('http://localhost:1024/deletefinalimport', { refid: refid }).then((resp) => {
                                 if (resp.data.status == 200) {
                                     setrows([])
                                     setsecondvaultname('')

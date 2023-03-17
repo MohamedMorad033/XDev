@@ -86,6 +86,7 @@ import { Star, InsertDriveFile, Print } from '@mui/icons-material';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import ClientM from './screens/ClientM';
 import VaultSummery from './screens/VaultSummery';
+import ClientAdvance from './screens/ClientAdvance';
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -138,7 +139,7 @@ function App() {
   const [value, setValue] = useState(0);
   const [AccesToken, setAccesToken] = useState([]);
   const [dark_theme_en, set_dark_theme_en] = useState('light')
-
+  const [title, settitle] = useState('اكواد الاصناف')
   useEffect(() => {
     const AccesToken = localStorage.getItem('AccesToken');
     if (AccesToken) {
@@ -456,6 +457,13 @@ function App() {
                     <ListItemText primary="الخزن" />
                   </ListItemButton>
 
+                  <ListItemButton onClick={() => { setValue(29) }} sx={{ pl: 4 }}>
+                    <ListItemIcon color='#aaaaaa'>
+                      {value == 29 ? <Star color='primary' /> : <StarBorder />}
+                    </ListItemIcon>
+                    <ListItemText primary="العملاء" />
+                  </ListItemButton>
+
                 </List>
               </Collapse>
             </List>
@@ -465,13 +473,20 @@ function App() {
             <img onClick={(e) => {
               setnaven(true)
             }} src={logo} width={157.43119266055} height={60} style={{ margin: -7, marginLeft: 5 }}></img>
+            <div onClick={() => { }}>
+              <Typography color={localStorage.getItem('Theme') == 'dark' ? '#fff' : '#000'}
+                style={{ cursor: 'pointer', marginRight: 20 }} variant='body1'>
+                {title}
+              </Typography>
+            </div>
             <div onClick={() => {
               const c = localStorage.getItem('Theme')
               localStorage.setItem('Theme', c == 'dark' ? 'light' : 'dark')
               window.location.reload()
             }}>
-              <Typography style={{ cursor: 'pointer' , marginRight : 20}} variant='body1'>
-                {localStorage.getItem('Theme') == 'dark' ? 'Dark Theme 🌚' : 'Light Theme 🌞' }
+              <Typography color={localStorage.getItem('Theme') == 'dark' ? '#fff' : '#000'}
+                style={{ cursor: 'pointer', marginRight: 20 }} variant='body1'>
+                {localStorage.getItem('Theme') == 'dark' ? 'Dark Theme 🌚' : 'Light Theme 🌞'}
               </Typography>
             </div>
           </div>
@@ -561,6 +576,9 @@ function App() {
             : null}
           {value == 28 ?
             <VaultSummery />
+            : null}
+          {value == 29 ?
+            <ClientAdvance />
             : null}
 
         </div>
