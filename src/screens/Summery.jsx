@@ -202,6 +202,7 @@ function Summery() {
     const [rows2, setrows2] = useState([]);
     const [rows3, setrows3] = useState([]);
     const [rows4, setrows4] = useState([]);
+    const [rows5, setrows5] = useState([]);
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
@@ -313,7 +314,7 @@ function Summery() {
     var headernoreturn = { id: 'م', refid: 'فاتوره', productid: 4, clientid: 26, productname: 'الصنف', clientname: "اسم العميل", amount: 'الكميه', return: "المرتجع" }
     const searchclient = () => {
         setloadrn(true);
-        axios.post('http://localhost:1024/clientsummery', { clientname: firstvaultname , date }).then((resp) => {
+        axios.post('http://localhost:1024/clientsummery', { clientname: firstvaultname, date }).then((resp) => {
             if (resp.data.status == 200) {
                 arr = []
                 arr = [...arr, stop, hed, ...resp.data.exportsum]
@@ -362,6 +363,7 @@ function Summery() {
 
 
                 setrows4(resp.data.retsum)
+                setrows5(resp.data.sumarray)
                 var sum = 0
                 var asum = 0
                 resp.data.diff.forEach(function (value, index, arry) {
@@ -405,223 +407,6 @@ function Summery() {
 
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-            {/* <Modal open={prt} onClose={() => { setprt(false) }}>
-                <div style={{ width: '100%', height: '100%', backgroundColor: '#fff', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ padding: 50, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
-                        <div style={{ width: '50%' }}>
-                            <img onClick={(e) => {
-                                e.preventDefault();
-                                window.location.href = 'http://localhost:3000/';
-                            }} src={logo} width={200} height={122} style={{ marginLeft: 5 }} />
-                        </div>
-                        <div style={{ width: '50%', alignItems: 'center', display: 'flex', justifyContent: 'end' }}>
-                            <Typography variant='h2' style={{}}>client summery</Typography>
-                        </div>
-                    </div>
-                    <div style={{ padding: 50 }}>
-                        <Typography variant='h4'>
-                            Client Name : {firstvaultname}
-                        </Typography>
-                        <Typography variant='h4'>
-                            Invoice Date : {new Date().toLocaleDateString()}
-                        </Typography>
-                    </div>
-                    <div style={{ padding: 20, width: '100%' }}>
-
-                        <div style={{ display: 'flex', width: '100%', backgroundColor: '#666' }}>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '10%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    N.o
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '48%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Product Name
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Qty
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Price
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '18%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Total Price
-                                </Typography>
-                            </div>
-                        </div>
-                        {rows.map((index, i) => {
-                            return (
-                                <div style={{ display: 'flex', width: '100%', backgroundColor: '#eee', pageBreakAfter: 'always' }}>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '10%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {i + 1}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '48%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.productname}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.amount}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.price}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '18%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.totalprice}
-                                        </Typography>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-
-
-
-
-                    <div style={{ padding: 20, width: '100%' }}>
-
-                        <div style={{ display: 'flex', width: '100%', backgroundColor: '#666' }}>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '10%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    N.o
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '48%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Product Name
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Qty
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Price
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '18%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Date
-                                </Typography>
-                            </div>
-                        </div>
-                        {rows2.map((index, i) => {
-                            return (
-                                <div style={{ display: 'flex', width: '100%', backgroundColor: '#eee' }}>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '10%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {i + 1}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '48%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.productname}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.amount}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.price}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '18%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.time.split('T')[0]}
-                                        </Typography>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-
-
-
-
-                    <div style={{ padding: 20, width: '100%' }}>
-
-                        <div style={{ display: 'flex', width: '100%', backgroundColor: '#666' }}>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '10%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    N.o
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '48%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Product Name
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Qty
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Price
-                                </Typography>
-                            </div>
-                            <div class="view w-48 p-4-8" style={{ padding: 4, width: '18%' }}>
-                                <Typography variant='h5' color={'#fff'}>
-                                    Date
-                                </Typography>
-                            </div>
-                        </div>
-                        {rows3.map((index, i) => {
-                            return (
-                                <div style={{ display: 'flex', width: '100%', backgroundColor: '#eee' }}>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '10%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {i + 1}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '48%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.productname}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.amount}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.price}
-                                        </Typography>
-                                    </div>
-                                    <div class="view w-48 p-4-8" style={{ padding: 4, width: '18%' }}>
-                                        <Typography variant='h5' color={'#000'}>
-                                            {index.time.split('T')[0]}
-                                        </Typography>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-
-
-
-                </div>
-            </Modal> */}
             <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'space-between', flexDirection: 'row', marginTop: 20, marginBottom: 20, paddingLeft: 20, paddingRight: 20 }}>
                 <div>
                     {/* <Button disabled={false} variant='contained' color='success' onClick={() => { setprt(true) }}>print</Button> */}
@@ -847,6 +632,73 @@ function Summery() {
                         ]
                     }
                     data={rows3}
+                />
+                <div style={{ height: 50, backgroundColor: '#ffffff20', backdropFilter: 'blur(20px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <h6>رصيد العميل</h6>
+                </div>
+                <DataTable
+                    dense
+                    theme='newtheme'
+                    highlightOnHover
+                    pagination
+                    paginationPerPage={100}
+                    pointerOnHover
+                    fixedHeader
+                    fixedHeaderScrollHeight='450px'
+                    selectableRowsHighlight
+                    direction="rtl"
+                    selectableRowsComponent={Checkbox}
+                    columns={[
+                        {
+                            name: 'id',
+                            selector: row => row.id,
+                            sortable: true,
+                            width: '60px'
+                        },
+                        {
+                            name: 'العمليه',
+                            selector: row => row.product,
+                            sortable: true,
+                            grow: 2,
+                        },
+                        {
+                            name: 'منصرف',
+                            selector: row => row.vmoney,
+                            sortable: true,
+                        },
+                        {
+                            name: 'وارد',
+                            selector: row => row.cmoney,
+                            sortable: true,
+                        },
+                        {
+                            name: 'مستحقات له',
+                            selector: row => row.clientm,
+                            sortable: true,
+                        },
+                        {
+                            name: 'مستحقات عليه',
+                            selector: row => row.vaultm,
+                            sortable: true,
+                        },
+                        {
+                            name: 'اجمالي ما له',
+                            selector: row => row.totalc,
+                            sortable: true,
+                        },
+                        {
+                            name: 'اجمالي ما عليه',
+                            selector: row => row.totalv,
+                            sortable: true,
+                        },
+                        {
+                            name: 'الرصيد',
+                            selector: row => !isNaN(row.balance) ? Number(row.balance).toFixed(2) : row.balance,
+                            sortable: true,
+                        },
+                    ]}
+                    onRowDoubleClicked={(e) => { console.log({ e }) }}
+                    data={rows5}
                 />
             </div>
             <Dialog open={editrn} onClose={() => { seteditrn(false) }}>

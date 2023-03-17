@@ -20,12 +20,15 @@ function isHebrew(text) {
 
 
 function maybeRtlize(text) {
+    var text = text;
     if (isHebrew(text)) {
         var bidiText = TwitterCldr.Bidi.from_string(text, { direction: "RTL" });
         bidiText.reorder_visually();
         return text.toString();
     } else {
-        return text
+        console.log(text.split(' ').reverse().join(' '))
+
+        return text.split(' ').reverse().join(' ')
     }
 }
 console.log(maybeRtlize('شركه pet للبانت'))
@@ -275,7 +278,7 @@ app.post('/print/productssum', async (req, res) => {
                 doc
                     .fontSize(10)
                     .text(index1 + 1, 50, position, { features: ['rtla'] })
-                    .text(item.name, 80, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.name), 80, position, {})
                     .text(item.quantity, 460, position, { width: 90, align: "right" });
                 generateHr(doc, invoiceTableTop + 10);
                 generateHr(doc, position + 10);
@@ -399,7 +402,7 @@ app.post('/print/clientsum', async (req, res) => {
                 doc
                     .fontSize(10)
                     .text(index1 + 1, 50, position, { features: ['rtla'] })
-                    .text(item.name, 80, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.name), 80, position, {})
                     .text(item.payment, 270, position, { width: 90 })
                     .text(item.expense, 400, position, { width: 90 })
                     .text(item.payment - item.expense, 460, position, { width: 90, align: "right" });
@@ -662,8 +665,8 @@ app.post('/print/exports', async (req, res) => {
                     .font("Tajawal-Light")
                     .fontSize(10)
                     .text(index1 + 1, 20, position, { features: ['rtla'] })
-                    .text(item.clientname, 45, position, { features: ['rtla'] })
-                    .text(item.productname, 185, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.clientname), 45, position)
+                    .text(maybeRtlize(item.productname), 185, position)
                     .font("Helvetica-Bold")
                     .text(item.amount.toFixed(3), 490, position, { features: ['rtla'] })
                     .text(item.price.toFixed(3), 550, position, { features: ['rtla'] })
@@ -809,9 +812,9 @@ app.post('/print/fridgeimports', async (req, res) => {
                 doc
                     .font("Tajawal-Light")
                     .fontSize(10)
-                    .text(item.from !== 'اجمالي' ? index1 + 1 : '', 20, position, { features: ['rtla'] })
-                    .text(item.from, 55, position, { features: ['rtla'] })
-                    .text(item.to, 165, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.from) !== 'اجمالي' ? index1 + 1 : '', 20, position)
+                    .text(maybeRtlize(item.from), 55, position)
+                    .text(maybeRtlize(item.to), 165, position)
                     .font("Helvetica-Bold")
                     .text(item.amount, 320, position, { features: ['rtla'] })
                     .text(item.return, 390, position, { features: ['rtla'] })
@@ -986,12 +989,12 @@ app.post('/print/vaultsummeryy', async (req, res) => {
 app.post('/print/vaultsummery', async (req, res) => {
     var rows = []
     const { vaultname } = req.body
+    console.log(vaultname)
     var vaultt = await prisma.vault.findMany({
         where: {
             name: vaultname
         }
     })
-    console.log(vaultt)
     var summeryarray = [];
     if (vaultt.length < 1) {
         res.status(200).json({ "status": 200, "error": "not found" })
@@ -1013,6 +1016,7 @@ app.post('/print/vaultsummery', async (req, res) => {
     })
     const clients = await prisma.clientvaulttransaction.findMany({
         where: {
+            fromid: vault.id
         }
     })
     const vaultout = await prisma.transaction.findMany({
@@ -1245,6 +1249,7 @@ app.post('/print/vaultsummery', async (req, res) => {
         val = val + element.Income;
         summeryarray[index].Value = val;
     }
+    console.log(summeryarray[summeryarray.length - 1])
     rows = summeryarray
     let doc = new pdfkit({ size: "A4", margin: 20, layout: 'portrait' });
     invoice.items = rows
@@ -1352,8 +1357,8 @@ app.post('/print/vaultsummery', async (req, res) => {
                     .fontSize(10)
                     .text(index1 + 1, 20, position, {})
                     .text(item.refid, 55, position, {})
-                    .text(fixtext(item.Category), 95, position, { features: ['ltra'] })
-                    .text(fixtext(item.OperatorName), 195, position, { features: ['ltra'] })
+                    .text(maybeRtlize(item.Category), 95, position)
+                    .text(maybeRtlize(item.OperatorName), 195, position)
                     .font("Helvetica-Bold")
                     .text(Number(item.Income) == 0 ? '' : Number(item.Income).toFixed(2).toString().split('.')[1] == '00' ? Number(item.Income) : Number(item.Income).toFixed(2), 340, position, {})
                     .text(Number(item.Outcome) == 0 ? '' : Number(item.Outcome).toFixed(2).toString().split('.')[1] == '00' ? Number(item.Outcome) : Number(item.Outcome).toFixed(2), 400, position, {})
@@ -1514,7 +1519,7 @@ app.post('/print/clientsummery', async (req, res) => {
                     doc
                         .fontSize(10)
                         .text(indexxxx == 0 ? iiii == 2 ? 'م' : 'م' : iiii == 2 ? indexxxx : indexxxx, 20, position, { features: ['rtla'] })
-                        .text(indexxxx == 0 ? iiii == 2 ? "الصنف" : "الصنف" : item.productname, 50, position, { width: 90, features: ['rtla'] })
+                        .text(indexxxx == 0 ? iiii == 2 ? "الصنف" : "الصنف" : maybeRtlize(item.productname), 50, position)
                         .text(indexxxx == 0 ? iiii == 2 ? "الكميه" : '' : iiii == 2 ? item.amount : "", 350, position, { width: 90, features: ['rtla'] })
                         .text(indexxxx == 0 ? iiii == 2 ? "مرتجع" : '' : iiii == 2 ? item.return : "", 450, position, { width: 90, features: ['rtla'] })
                         .text(indexxxx == 0 ? iiii == 2 ? 'اجمالى الكميه' : 'اجمالى الكميه' : iiii == 2 ? item.amount - item.return : item.amount, 490, position, { width: 90, align: "right", features: ['rtla'] });
@@ -1925,7 +1930,6 @@ app.post('/print/clientadvance', async (req, res) => {
 app.post('/clientadvance', async (req, res) => {
     var rows = []
     var balance = 0;
-    console.log('sss')
     const { clientname } = req.body
     var vaultt = await prisma.clients.findMany({
         where: {
@@ -1940,21 +1944,6 @@ app.post('/clientadvance', async (req, res) => {
         return
     }
     const vault = vaultt[0]
-    // await prisma.vault.update({
-    //     where: {
-    //         id: vault.id
-    //     },
-    //     data: {
-    //         value: 0
-    //     }
-    // })
-
-
-    // const ownertrans = await prisma.mtransaction.findMany({
-    //     where: {
-    //         toid: vault.id
-    //     }
-    // })
     const clientstransactions = await prisma.clientvaulttransaction.findMany({
         where: {
             toid: vault.id
@@ -1980,45 +1969,6 @@ app.post('/clientadvance', async (req, res) => {
             clientid: vault.id
         }
     })
-    //money owners
-    // for (let index = 0; index < ownertrans.length; index++) {
-    //     const element = ownertrans[index];
-    //     if (element.way == 'in') {
-    //         summeryarray.push({
-    //             "refid": element.refid,
-    //             "vaultName": element.toname,
-    //             "OperatorName": element.fromname,
-    //             "Date": element.time.toISOString().toString().split('T')[0],
-    //             "Income": element.amount,
-    //             "Outcome": '',
-    //             "Category": 'ايراد من شريك'
-    //         })
-    //     } else {
-    //         summeryarray.push({
-    //             "refid": element.refid,
-    //             "vaultName": element.toname,
-    //             "OperatorName": element.fromname,
-    //             "Date": element.time.toISOString().toString().split('T')[0],
-    //             "Income": '',
-    //             "Outcome": element.amount,
-    //             "Category": 'منصرف لشريك'
-    //         })
-    //     }
-
-    //     // const v = await prisma.vault.findUnique({
-    //     //     where: {
-    //     //         id: vault.id
-    //     //     }
-    //     // })
-    //     // await prisma.vault.update({
-    //     //     where: {
-    //     //         id: v.id
-    //     //     },
-    //     //     data: {
-    //     //         value: v.value + element.amount
-    //     //     }
-    //     // })
-    // }
     //vault income transactions
     for (let index = 0; index < vaultin.length; index++) {
         const element = vaultin[index];
@@ -2162,7 +2112,7 @@ app.post('/clientadvance', async (req, res) => {
         const element = summeryarray[index];
         summeryarray[index].id = index + 1;
         balance = balance + Number(element.Bonus) + Number(element.Money);
-        if (element.TotalPrice !== '-') {
+        if (element.TotalPrice !== '-' && element.Notes == 'وارد خام') {
             balance = balance + Number(element.TotalPrice)
         }
         summeryarray[index].Balance = balance.toFixed(3);
@@ -2181,13 +2131,13 @@ app.post('/clientadvance', async (req, res) => {
     sumarray.push({
         'id': '',
         'product': 'اجمالي الخام',
-        clientm: '',
-        vaultm: '',
-        cmoney: '',
-        vmoney: '',
-        balance: '',
-        totalc: '',
-        totalv: ''
+        vmoney: 'منصرف',
+        cmoney: 'وارد',
+        clientm: 'مرتجع',
+        vaultm: 'اجمالي الخام',
+        totalc: 'وارد التصفيه',
+        totalv: 'اجمالي المبلغ',
+        balance: 'الرصيد',
     })
 
 
@@ -2203,7 +2153,6 @@ app.post('/clientadvance', async (req, res) => {
             clientid: client[0].id,
         }
     })
-    console.log(8)
     const imports = await prisma.fridgeproducts.findMany({
         where: {
             fromid: client[0].id
@@ -2222,6 +2171,7 @@ app.post('/clientadvance', async (req, res) => {
         if (objInAcc) {
             objInAcc.amount += curr.amount;
             objInAcc.return += curr.return;
+            objInAcc.totalprice += curr.totalprice;
         }
         else acc.push(curr);
         return acc;
@@ -2237,18 +2187,9 @@ app.post('/clientadvance', async (req, res) => {
         else acc.push(curr);
         return acc;
     }, []);
-    retsum = retsum.map(({
-        toid: productid,
-        to: productname,
-        from: clientname,
-        ...rest
-    }) => ({
-        productid,
-        productname,
-        clientname,
-        ...rest
-    }));
+
     var importsum = impsum
+    var returnsum = retsum
     const expsum = exports.reduce((acc, curr) => {
         const objInAcc = acc.find((o) => o.productid == curr.productid && o.productname == curr.productname);
         if (objInAcc) {
@@ -2258,66 +2199,98 @@ app.post('/clientadvance', async (req, res) => {
         else acc.push(curr);
         return acc;
     }, []);
-    const exportsumedit = expsum.map(object => ({ ...object }))
-    const exportsum = expsum.map(object => ({ ...object }))
-    impsum = impsum.map(({
+
+
+
+    var exportsum = expsum.map(object => ({ ...object }))
+    exportsum = exportsum.map(({
+        amount: exp,
+        ...rest
+    }) => ({
+        exp,
+        ...rest
+    }));
+    retsum = retsum.map(({
         toid: productid,
         to: productname,
         from: clientname,
+        amount: ret,
         ...rest
     }) => ({
         productid,
         productname,
         clientname,
+        ret,
         ...rest
     }));
-
     importsum = importsum.map(({
         toid: productid,
         to: productname,
         from: clientname,
+        amount: imp,
         ...rest
     }) => ({
         productid,
         productname,
         clientname,
+        imp,
         ...rest
     }));
-    const newexpsum = exportsumedit.concat(retsum)
+    var returnsum = retsum
 
-    const finalexpsum = newexpsum.reduce((acc, curr) => {
-        const objInAcc = acc.find((o) => o.productid == curr.productid && o.productname == curr.productname);
-        if (objInAcc) {
-            objInAcc.amount -= curr.amount;
-        }
-        else acc.push(curr);
-        return acc;
-    }, []);
-
-    const combined = finalexpsum.concat(impsum)
+    for (let index = 0; index < exportsum.length; index++) {
+        const element = exportsum[index];
+        exportsum[index].imp = 0
+        exportsum[index].ret = 0
+        exportsum[index].diff = element.exp
+        // returnsum[index].totalprice = 0
+    }
+    for (let index = 0; index < importsum.length; index++) {
+        const element = importsum[index];
+        importsum[index].exp = 0
+        importsum[index].ret = 0
+        importsum[index].diff = element.imp - element.return
+    }
+    for (let index = 0; index < returnsum.length; index++) {
+        const element = returnsum[index];
+        returnsum[index].exp = 0
+        returnsum[index].return = 0
+        returnsum[index].imp = 0
+        returnsum[index].totalprice = 0
+        returnsum[index].diff = element.ret
+    }
+    console.log({ exportsum, returnsum, importsum })
+    console.log({ returnsum })
+    const combined = exportsum.concat(importsum).concat(returnsum)
 
 
     const diff = combined.reduce((acc, curr) => {
         const objInAcc = acc.find((o) => o.productid == curr.productid && o.productname == curr.productname);
         if (objInAcc) {
-            objInAcc.amount = (objInAcc.amount - objInAcc.return) - (curr.amount - curr.return);
+            objInAcc.imp = objInAcc.imp + curr.imp;
+            objInAcc.exp = objInAcc.exp + curr.exp;
+            objInAcc.ret = objInAcc.ret + curr.ret;
+            objInAcc.return = objInAcc.return + curr.return;
+            objInAcc.diff = objInAcc.diff - curr.diff;
+            objInAcc.totalprice = objInAcc.totalprice + curr.totalprice;
         }
         else acc.push(curr);
         return acc;
     }, []);
+    console.log(diff)
 
-    for (let index = 0; index < importsum.length; index++) {
-        const element = importsum[index];
+    for (let index = 0; index < diff.length; index++) {
+        const element = diff[index];
         sumarray.push({
-            'id': '',
+            'id': index + 1,
             'product': element.productname,
-            clientm: '',
-            vaultm: '',
-            cmoney: '',
-            vmoney: '',
-            balance: '',
-            totalc: '',
-            totalv: ''
+            vmoney: element.exp,
+            cmoney: element.imp,
+            clientm: element.return,
+            vaultm: element.imp - element.return,
+            totalc: element.ret,
+            totalv: element.totalprice,
+            balance: element.diff
         })
     }
 
@@ -7328,6 +7301,198 @@ app.post('/clientsummery', async (req, res) => {
     })
 
 
+
+    var balance = 0;
+    const vault = client[0]
+    var sumarray = [];
+    var summeryarray = [];
+    const clientstransactions = await prisma.clientvaulttransaction.findMany({
+        where: {
+            toid: vault.id
+        }
+    })
+    const vaultout = await prisma.autoproductexports.findMany({
+        where: {
+            clientid: vault.id
+        }
+    })
+    const vaultin = await prisma.fridgeproducts.findMany({
+        where: {
+            fromid: vault.id
+        }
+    })
+    const expenses = await prisma.clientm.findMany({
+        where: {
+            clientid: vault.id
+        }
+    })
+    const wtrans = await prisma.clientm.findMany({
+        where: {
+            clientid: vault.id
+        }
+    })
+    //vault income transactions
+    for (let index = 0; index < vaultin.length; index++) {
+        const element = vaultin[index];
+        summeryarray.push({
+            "refid": element.refid,
+            "vaultName": element.to,
+            "OperatorName": element.from,
+            "Date": element.time.toISOString().toString().split('T')[0],
+            "Income": element.amount,
+            "Outcome": '-',
+            "price": element.price,
+            "Money": 0,
+            "Bonus": 0,
+            "Return": element.return,
+            "Totalamount": element.amount - element.return,
+            "TotalPrice": (element.amount - element.return) * element.price,
+            "Notes": 'وارد خام'
+        })
+    }
+    //vault outcome transactions
+    for (let index = 0; index < vaultout.length; index++) {
+        const element = vaultout[index];
+        summeryarray.push({
+            "refid": element.refid,
+            "vaultName": element.productname,
+            "OperatorName": element.clientname,
+            "Date": element.time.toISOString().toString().split('T')[0],
+            "Income": '-',
+            "Outcome": element.amount,
+            "price": element.price,
+            "Money": 0,
+            "Bonus": 0,
+            "Return": '-',
+            "Totalamount": element.amount,
+            "TotalPrice": element.amount * element.price,
+            "Notes": 'مواد تعبأه منصرفه'
+        })
+    }
+    //expenses outcome transactions
+    var clientm = 0
+    var vaultm = 0
+    for (let index = 0; index < expenses.length; index++) {
+        const element = expenses[index];
+        if (element.way == 'in') {
+            summeryarray.push({
+                "refid": element.refid,
+                "vaultName": element.fromname,
+                "OperatorName": element.toname,
+                "Date": element.time.toISOString().toString().split('T')[0],
+                "Income": '-',
+                "Outcome": '-',
+                "price": '-',
+                "Money": 0,
+                "Bonus": element.amount,
+                "Return": '-',
+                "Totalamount": '-',
+                "TotalPrice": '-',
+                "Notes": 'مستحقات الى عميل/مورد'
+            })
+            clientm = clientm + element.amount;
+        } else {
+            summeryarray.push({
+                "refid": element.refid,
+                "vaultName": element.fromname,
+                "OperatorName": element.toname,
+                "Date": element.time.toISOString().toString().split('T')[0],
+                "Income": '-',
+                "Outcome": '-',
+                "price": '-',
+                "Money": 0,
+                "Bonus": -element.amount,
+                "Return": '-',
+                "Totalamount": '-',
+                "TotalPrice": '-',
+                "Notes": 'مستحقات علي عميل/مورد'
+            })
+            vaultm = vaultm + element.amount;
+        }
+    }
+    //workers outcome transactions
+    for (let index = 0; index < wtrans.length; index++) {
+        const element = wtrans[index];
+        summeryarray.push({
+            "refid": element.refid,
+            "vaultName": element.fromname,
+            "OperatorName": element.toname,
+            "Date": element.time.toISOString().toString().split('T')[0],
+            "Income": '',
+            "TotalPrice": '-',
+            "Outcome": '-',
+            "Money": 0,
+            "Bonus": 0,
+            "Notes": ''
+        })
+    }
+    var cmoney = 0
+    var vmoney = 0
+    //clientstransactions transactions
+    for (let index = 0; index < clientstransactions.length; index++) {
+        const element = clientstransactions[index];
+        if (element.way == 'out') {
+            summeryarray.push({
+                "refid": element.refid,
+                "vaultName": element.fromname,
+                "OperatorName": element.toname,
+                "Date": element.time.toISOString().toString().split('T')[0],
+                "Income": '-',
+                "Outcome": '-',
+                "price": '-',
+                "Money": -element.amount,
+                "Bonus": 0,
+                "Return": '-',
+                "Totalamount": '-',
+                "TotalPrice": '-',
+                "Notes": 'منصرف الى عميل/مورد'
+            })
+            vmoney = vmoney + element.amount
+        } else {
+            summeryarray.push({
+                "refid": element.refid,
+                "vaultName": element.fromname,
+                "OperatorName": element.toname,
+                "Date": element.time.toISOString().toString().split('T')[0],
+                "Income": '-',
+                "Outcome": '-',
+                "price": '-',
+                "Money": element.amount,
+                "Bonus": 0,
+                "Return": '-',
+                "Totalamount": '-',
+                "TotalPrice": '-',
+                "Notes": 'وارد من عميل/مورد'
+            })
+            cmoney = cmoney + element.amount
+        }
+    }
+    summeryarray.sort((a, b) => {
+        return new Date(a.Date) - new Date(b.Date)
+    })
+    for (let index = 0; index < summeryarray.length; index++) {
+        const element = summeryarray[index];
+        summeryarray[index].id = index + 1;
+        balance = balance + Number(element.Bonus) + Number(element.Money);
+        if (element.TotalPrice !== '-' && element.Notes == 'وارد خام') {
+            balance = balance + Number(element.TotalPrice)
+        }
+        summeryarray[index].Balance = balance.toFixed(3);
+    }
+    sumarray.push({
+        'id': sumarray.length + 1,
+        'product': 'اجمالي الرصيد',
+        clientm,
+        vaultm,
+        cmoney,
+        vmoney,
+        balance,
+        totalc: clientm + cmoney,
+        totalv: vaultm + vmoney
+    })
+
+
+
     var impsum = imports.reduce((acc, curr) => {
         const objInAcc = acc.find((o) => o.toid == curr.toid && o.to == curr.to);
         if (objInAcc) {
@@ -7416,8 +7581,8 @@ app.post('/clientsummery', async (req, res) => {
         else acc.push(curr);
         return acc;
     }, []);
-
-    res.status(200).json({ "status": 200, retsum, client, imports, exports, importsum, exportsum, combined, diff })
+    console.log(sumarray)
+    res.status(200).json({ "status": 200, retsum, client, imports, exports, importsum, exportsum, combined, diff, sumarray })
 })
 
 
@@ -8118,6 +8283,7 @@ app.post('/vaultsummery', async (req, res) => {
         val = val + element.Income;
         summeryarray[index].Value = val;
     }
+    console.log(summeryarray[summeryarray.length - 1])
     res.status(200).json({ "status": 200, summeryarray })
 })
 

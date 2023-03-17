@@ -511,13 +511,13 @@ function ClientAdvance() {
                             grow: 2,
                         },
                         {
-                            name: 'وارد',
-                            selector: row => row.cmoney,
+                            name: 'منصرف',
+                            selector: row => row.vmoney,
                             sortable: true,
                         },
                         {
-                            name: 'منصرف',
-                            selector: row => row.vmoney,
+                            name: 'وارد',
+                            selector: row => row.cmoney,
                             sortable: true,
                         },
                         {
@@ -542,7 +542,7 @@ function ClientAdvance() {
                         },
                         {
                             name: 'الرصيد',
-                            selector: row => Number(row.balance).toFixed(2),
+                            selector: row => !isNaN(row.balance)? Number(row.balance).toFixed(2) : row.balance,
                             sortable: true,
                         },
                     ]}
