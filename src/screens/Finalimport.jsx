@@ -119,9 +119,9 @@ function Finalimport() {
     const updatetheme = (theme) => {
         if (theme == 'dark') {
             set_dark_theme_en('dark')
-            document.documentElement.style.setProperty('--firstcolor', '#000000');
-            document.documentElement.style.setProperty('--seconscolor', '#1f1f1f');
-            document.documentElement.style.setProperty('--headercolor', '#00000018');
+            document.documentElement.style.setProperty('--firstcolor', '#23282e');
+            document.documentElement.style.setProperty('--seconscolor', '#16161e');
+            document.documentElement.style.setProperty('--headercolor', '#23282e18');
             createTheme('newtheme', {
                 text: {
                     primary: '#fff',
@@ -287,7 +287,7 @@ function Finalimport() {
                 setlotsid('')
                 setrows([])
                 setrefid(Math.floor(Math.random(1) * 1000000))
-                setnewexpenses('')
+                setnewexpenses(new Date().toISOString().split('T')[0])
                 setsubmit(false)
                 setfirstvaultname('')
             } else if (resp.data.status == 400) {
@@ -327,7 +327,7 @@ function Finalimport() {
                 setlotsid('')
                 setrows([])
                 setrefid(Math.floor(Math.random(1) * 1000000))
-                setnewexpenses('')
+                setnewexpenses(new Date().toISOString().split('T')[0])
                 setsubmit(false)
                 setfirstvaultname('')
             } else if (resp.data.status == 400) {
@@ -376,14 +376,34 @@ function Finalimport() {
             }
         })
     }
-    const searchrefid = () => {
+    // const searchrefid = () => {
+    //     setloadrn(true);
+    //     axios.post('http://localhost:1024/finalimportrefid', { refid: refid }).then((resp) => {
+    //         if (resp.data.status == 200) {
+    //             setloadrn(false);
+    //             setfirstvaultname(resp.data.rows[0].from)
+    //             setnewexpenses(resp.data.rows[0].time.split('T')[0])
+    //             setrows(resp.data.rows.filter((el) => { return el.managed == true }))
+    //         }
+    //     })
+    // }
+    const searchrefid = (refid) => {
         setloadrn(true);
-        axios.post('http://localhost:1024/finalimportrefid', { refid: refid }).then((resp) => {
+        axios.post('http://localhost:1024/fridgeimportrefid', { refid: refid }).then((resp) => {
             if (resp.data.status == 200) {
                 setloadrn(false);
-                setfirstvaultname(resp.data.rows[0].from)
-                setnewexpenses(resp.data.rows[0].time.split('T')[0])
-                setrows(resp.data.rows.filter((el) => { return el.managed == true }))
+                console.log(resp.data)
+                seteden(resp.data.editing)
+                setused(resp.data.used)
+                if (resp.data.count > 0) {
+                    setfirstvaultname(resp.data.rows[0].from)
+                    setnewexpenses(resp.data.rows[0].time.split('T')[0])
+                    setrows(resp.data.rows)
+                } else {
+                    setfirstvaultname('')
+                    setnewexpenses(new Date().toISOString().split('T')[0])
+                    setrows([])
+                }
             }
         })
     }
@@ -544,7 +564,8 @@ function Finalimport() {
         </div>
     );
 
-
+    const [eden, seteden] = useState(false);
+    const [used, setused] = useState(false)
     const [refreshloading, setrefreshloading] = useState(false)
     const [editloss, seteditloss] = useState(0)
     const [newdata, setnewdata] = useState({})
@@ -599,9 +620,11 @@ function Finalimport() {
                             label="كود"
                             type="number"
                             value={refid}
-                            onChange={(e) => { setrefid(e.currentTarget.value) }}
+                            onChange={(e) => {
+                                setrefid(e.currentTarget.value)
+                                searchrefid(e.currentTarget.value);
+                            }}
                             variant="outlined"
-                            onDoubleClick={() => { setrefid(Math.floor(Math.random(1) * 1000000)) }}
                         />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'baseline' }}>
@@ -651,7 +674,7 @@ function Finalimport() {
                                     setlotsid('')
                                     setrows([])
                                     setrefid(Math.floor(Math.random(1) * 1000000))
-                                    setnewexpenses('')
+                                    setnewexpenses(new Date().toISOString().split('T')[0])
                                     setsubmit(false)
                                     setfirstvaultname('')
                                 }

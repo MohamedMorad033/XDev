@@ -22,9 +22,9 @@ import Autocomplete from '@mui/material/Autocomplete'
 import DataTable, { createTheme } from 'react-data-table-component';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#000000');
-        document.documentElement.style.setProperty('--seconscolor', '#1f1f1f');
-        document.documentElement.style.setProperty('--headercolor', '#00000018'); createTheme('newtheme', {
+        document.documentElement.style.setProperty('--firstcolor', '#23282e');
+        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
                 primary: '#fff',
@@ -76,7 +76,7 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme','light')
+            localStorage.setItem('Theme', 'light')
         }
 }
 
@@ -231,10 +231,21 @@ function Transactions() {
             alert('name cannot be empty')
             return
         }
-        setloadrn(true)
+        if (expenses == '') {
+            alert('amount cannot be empty')
+            return;
+        }
+        setloadrn(true);
         axios.post('http://localhost:1024/addTransaction', { amount: expenses, fromname: firstvaultdata[0].id, toname: secondvaultdata[0].id, date: newexpenses, refid }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
+                setloadrn(false);
+                axios.get('http://localhost:1024/transaction').then((resp) => {
+                    setrows(resp.data.transaction);
+                })
+            } else if (resp.data.status == 400) {
+                setloadrn(false);
+                setrefiderr('error')
                 axios.get('http://localhost:1024/transaction').then((resp) => {
                     setrows(resp.data.transaction);
                 })
@@ -242,6 +253,9 @@ function Transactions() {
                 setloadrn(false)
                 alert('failed')
             }
+        }).catch(e => {
+            alert(e.message);
+            setloadrn(false)
         })
     }
     const [refid, setrefid] = useState(undefined)
@@ -263,97 +277,6 @@ function Transactions() {
     const [newexpenses, setnewexpenses] = useState(new Date().toISOString().split('T')[0])
     const [date, setdate] = useState(new Date().toISOString().split('T')[0])
 
-    const actions = () => (
-        <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
-            <TextField
-                margin="dense"
-                label="فاتوره"
-                type="number"
-                value={refid}
-                style={{ margin: 20, width: 200 }}
-                size='small'
-                onChange={(e) => { setrefid(e.currentTarget.value) }}
-                variant="outlined"
-            />
-            <Autocomplete
-                id="free-solo-demo"
-                includeInputInList
-                freeSolo
-                style={{ margin: 20, width: 200 }}
-                value={firstvaultname}
-                onInputChange={(event, newInputValue) => {
-                    setfirstvaultname(newInputValue);
-                    search1(newInputValue)
-                }}
-                onFocus={() => {
-                    axios.get('http://localhost:1024/vault').then((resp) => {
-                        if (resp.data.status == 200) {
-                            setfirstvaultdata(resp.data.vault)
-                        }
-                    })
-                }}
-                onDoubleClick={() => { seteditrn(true); getcode() }}
-                options={firstvaultdata.map((option) => option.name)}
-                renderInput={(params) => <TextField {...params} label="من" />}
-                size='small'
-            />
-            <Autocomplete
-                id="free-solo-demo"
-                label='d'
-                style={{ marginRight: 20, width: 200 }}
-
-                freeSolo
-                value={secondvaultname}
-
-                onInputChange={(event, newInputValue) => {
-                    setsecondvaultname(newInputValue);
-                    search2(newInputValue)
-
-                }}
-                onFocus={() => {
-                    axios.get('http://localhost:1024/vault').then((resp) => {
-                        if (resp.data.status == 200) {
-                            setsecondvaultdata(resp.data.vault)
-                        }
-                    })
-                }}
-                options={secondvaultdata.map((option) => option.name)}
-                size='small'
-
-                renderInput={(params) => <TextField {...params} label="الي" />}
-                onDoubleClick={() => { seteditrn2(true); getcode() }}
-            />
-            <TextField
-                margin="dense"
-                id="expenses"
-                label="المبلغ"
-                type="number"
-                value={expenses}
-                style={{ marginRight: 20, width: 200 }}
-                size='small'
-                onChange={(e) => { setexpenses(e.currentTarget.value) }}
-                variant="outlined"
-            />
-            <TextField
-                style={{ marginRight: 20 }}
-                autoFocus
-                margin="dense"
-                size='small'
-                id="expenses"
-                label="التاريخ"
-                type="date"
-                value={newexpenses}
-                onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
-                variant="outlined"
-            />
-            <Button disabled={false} variant='contained' onClick={() => { createnewtransaction() }}>تأكيد</Button>
-
-            <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
-                setrefreshloading(true);
-                axios.get('http://localhost:1024/transaction').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
-            }} endIcon={<Refresh />}>Refresh</Button>
-        </div>
-    );
     const [selectedRows, setselectedRows] = useState([])
     const [data, setdata] = useState('')
     const [newdata, setnewdata] = useState({})
@@ -364,52 +287,131 @@ function Transactions() {
     const [totalamount, settotalamount] = useState(0)
     const [transfromname, settransfromname] = useState('')
     const [transfromdata, settransfromdata] = useState([])
-
+    const [refiderr, setrefiderr] = useState('primary')
+    const [editrefiderr, seteditrefiderr] = useState('primary')
     const [transtoname, settranstoname] = useState('')
     const [transtodata, settranstodata] = useState([])
 
     const [transval, settransval] = useState(0)
+    const searchrefid = (refid) => {
+        axios.post('http://localhost:1024/searchrefidvaulttransaction', { refid: refid.toString() }).then((resp) => {
+            if (resp.data.status == 200) {
+                if (resp.data.transaction.length > 0) {
+                    setrefiderr('warning')
+                } else {
+                    setrefiderr('primary')
+                }
+            } else {
+                alert('error while fetching refid data')
+            }
+        })
+    }
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Modal open={prt} onClose={() => { setprt(false) }}>
-                <div style={{ height: '100%', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div style={{ width: '100%' }}>
-                        <div className='NavContainer' style={{ position: 'sticky', top: 0, backgroundColor: '#eee' }}>
-                            <div>
-                                <img onClick={(e) => {
-                                    e.preventDefault();
-                                    window.location.href = 'http://localhost:3000/';
-                                }} src={logo} width={65.61} height={40} style={{ marginLeft: 5 }} />
-                            </div>
-                            <div style={{ marginRight: 20 }}>
-                                <h4>فاتوره تحويلات الخزنه</h4>
-                            </div>
-                        </div>
-                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                            <DataTable
-                                dense
-                                direction="rtl"
-                                columns={columns}
-                                data={selectedRows}
-                            />
-                            <div style={{ display: 'flex', width: '100%', justifyContent: 'start' }}>
-                                <Typography color={'#000'} style={{ margin: 50 }}>
-                                    اجمالي المبلغ : {totalamount}
-                                </Typography>
-                            </div>
-                        </div>
-                    </div>
-                    <h1>{totalprice}</h1>
-                </div>
-            </Modal>
             <div style={{ width: '100%' }}>
+                <div style={{ width: '100%', alignItems: 'center', marginBottom: 10, display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
+                    <TextField
+                        margin="dense"
+                        label="فاتوره"
+                        type="number"
+                        value={refid}
+                        style={{ marginRight: 20, width: 200 }}
+                        size='small'
+                        onChange={(e) => {
+                            setrefid(e.currentTarget.value)
+                            searchrefid(e.currentTarget.value)
+                        }}
+                        variant="outlined"
+                        color={refiderr}
+                        focused={refiderr !== 'primary'}
+                    />
+                    <Autocomplete
+                        id="free-solo-demo"
+                        includeInputInList
+                        freeSolo
+                        style={{ marginRight: 20, width: 200 }}
+                        value={firstvaultname}
+                        onInputChange={(event, newInputValue) => {
+                            setfirstvaultname(newInputValue);
+                            search1(newInputValue)
+                        }}
+                        onFocus={() => {
+                            axios.get('http://localhost:1024/vault').then((resp) => {
+                                if (resp.data.status == 200) {
+                                    setfirstvaultdata(resp.data.vault)
+                                }
+                            })
+                        }}
+                        onDoubleClick={() => { seteditrn(true); getcode() }}
+                        options={firstvaultdata.map((option) => option.name)}
+                        renderInput={(params) => <TextField {...params} label="من" />}
+                        size='small'
+                    />
+                    <Autocomplete
+                        id="free-solo-demo"
+                        label='d'
+                        style={{ marginRight: 20, width: 200 }}
+
+                        freeSolo
+                        value={secondvaultname}
+
+                        onInputChange={(event, newInputValue) => {
+                            setsecondvaultname(newInputValue);
+                            search2(newInputValue)
+
+                        }}
+                        onFocus={() => {
+                            axios.get('http://localhost:1024/vault').then((resp) => {
+                                if (resp.data.status == 200) {
+                                    setsecondvaultdata(resp.data.vault)
+                                }
+                            })
+                        }}
+                        options={secondvaultdata.map((option) => option.name)}
+                        size='small'
+
+                        renderInput={(params) => <TextField {...params} label="الي" />}
+                        onDoubleClick={() => { seteditrn2(true); getcode() }}
+                    />
+                    <TextField
+                        margin="dense"
+                        id="expenses"
+                        label="المبلغ"
+                        type="number"
+                        value={expenses}
+                        style={{ marginRight: 20, width: 200 }}
+                        size='small'
+                        onChange={(e) => { setexpenses(e.currentTarget.value) }}
+                        variant="outlined"
+                    />
+                    <TextField
+                        style={{ marginRight: 20 }}
+                        autoFocus
+                        margin="dense"
+                        size='small'
+                        id="expenses"
+                        label="التاريخ"
+                        type="date"
+                        value={newexpenses}
+                        onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
+                        variant="outlined"
+                    />
+                    <Button disabled={loadrn} variant='contained' onClick={() => { createnewtransaction() }}>تأكيد</Button>
+
+                    <Button disabled={loadrn} style={{ marginLeft: 20 }} variant='contained' color='warning' onClick={() => {
+                        setloadrn(true);
+                        axios.get('http://localhost:1024/transaction').then((resp) => {
+                            setrows(resp.data.transaction);
+                            setloadrn(false);
+                            console.log(resp.data)
+                        })
+                    }} endIcon={<Refresh />}>Refresh</Button>
+                </div>
                 <DataTable
                     pagination
                     dense
                     theme='newtheme'
                     paginationPerPage={100}
-                    contextActions={contextActions()}
-                    actions={actions()}
                     highlightOnHover
                     pointerOnHover
                     fixedHeader
@@ -431,9 +433,7 @@ function Transactions() {
                         settotalamount(asum)
                         settotalprice(sum)
                     }}
-                    selectableRowsComponent={Checkbox}
                     columns={columns}
-                    selectableRows
                     data={rows}
                     onRowDoubleClicked={(data) => { setnewdata(data); settransfromname(data.fromname); settranstoname(data.toname); settransval(data.amount); setedittrans(true); editsetrefid(data.refid); setdate(data.time.split('T')[0]) }}
                 />
@@ -528,15 +528,15 @@ function Transactions() {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <TextField
                             margin="dense"
-                            id="payments"
                             label="فاتوره"
                             type="number"
                             value={editrefid}
+                            style={{ marginTop: 10, width: 400 }}
+                            size='small'
                             onChange={(e) => { editsetrefid(e.currentTarget.value) }}
-                            style={{ marginTop: 20, width: 400 }}
-                            size={'small'}
                             variant="outlined"
-                            autoFocus
+                            focused={editrefiderr !== 'primary'}
+                            color={editrefiderr}
                         />
                         <Autocomplete
                             id="free-solo-demo"
@@ -623,22 +623,40 @@ function Transactions() {
 
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => { setedittrans(false) }} >الغاء</Button>
-                    <Button variant='contained' onClick={async () => {
+                    <Button disabled={loadrn} onClick={() => {
+                        setedittrans(false);
+                        setloadrn(false)
+                    }} >الغاء</Button>
+                    <Button disabled={loadrn} variant='contained' onClick={async () => {
                         axios.post('http://localhost:1024/deletetransaction', { id: newdata.id }).then(resp => {
                             setedittrans(false); axios.get('http://localhost:1024/transaction').then((resp) => {
                                 setrows(resp.data.transaction);
-                            })
+                                setloadrn(false)
+                            }).catch(e => alert(e.message))
                         })
                     }}
                         color='error'
                     >حذف</Button>
-                    <Button variant='contained' onClick={async () => {
+                    <Button disabled={loadrn} variant='contained' onClick={async () => {
                         axios.post('http://localhost:1024/edittransaction', { newdata, transfromname, transtoname, transval, date, refid: editrefid }).then(resp => {
-                            setedittrans(false); axios.get('http://localhost:1024/transaction').then((resp) => {
-                                setrows(resp.data.transaction);
-                            })
-                        })
+                            if (resp.data.status == 200) {
+                                setedittrans(false);
+                                setloadrn(false);
+                                axios.get('http://localhost:1024/transaction').then((resp) => {
+                                    setrows(resp.data.transaction);
+                                })
+                            } else if (resp.data.status == 400) {
+                                setloadrn(false)
+                                seteditrefiderr('error')
+                                axios.get('http://localhost:1024/transaction').then((resp) => {
+                                    setrows(resp.data.transaction);
+                                })
+                            } else {
+                                setloadrn(false)
+                                alert('failed')
+                            }
+
+                        }).catch(e => alert(e.message))
                     }}>حفظ</Button>
                 </DialogActions>
             </Dialog>

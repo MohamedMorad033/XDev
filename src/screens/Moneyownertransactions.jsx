@@ -22,9 +22,9 @@ import Autocomplete from '@mui/material/Autocomplete'
 import DataTable, { createTheme } from 'react-data-table-component';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#000000');
-        document.documentElement.style.setProperty('--seconscolor', '#1f1f1f');
-        document.documentElement.style.setProperty('--headercolor', '#00000018'); createTheme('newtheme', {
+        document.documentElement.style.setProperty('--firstcolor', '#23282e');
+        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
                 primary: '#fff',
@@ -90,6 +90,7 @@ function Moneyownertransactions() {
             name: 'م',
             selector: row => row.id,
             sortable: true,
+            width : '100px'
         },
         {
             name: 'فاتوره؟',
@@ -512,8 +513,6 @@ function Moneyownertransactions() {
                     dense
                     theme='newtheme'
                     paginationPerPage={100}
-                    contextActions={contextActions()}
-                    actions={actions()}
                     highlightOnHover
                     pointerOnHover
                     fixedHeader

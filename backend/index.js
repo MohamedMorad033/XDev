@@ -7,17 +7,30 @@ app.use(express.json({ limit: '50mb' }));
 app.use(cors())
 app.use(express.static('files'))
 import fs from 'fs'
+import bidiFactory from 'bidi-js'
+import { Console } from 'console';
 import pdfkit from 'pdfkit';
 import * as TwitterCldrLoader from "twitter_cldr";
-const TwitterCldr = TwitterCldrLoader.load("en");
+// make a new logger
+const myLogger = new Console({
+    stdout: fs.createWriteStream("normalStdout.txt"),
+    stderr: fs.createWriteStream("errStdErr.txt"),
+});
 
-import bidiFactory from 'bidi-js'
+const clog = (d) => {
+    myLogger.log(d);
+    console.log(d);
+}
+app.all('/*', function (req, res, next) {
+    next()
+});
+
 const bidi = bidiFactory()
 function isHebrew(text) {
     var position = text.search(/[\u0590-\u05FF]/);
     return position >= 0;
 }
-
+myLogger.log('ss')
 
 function maybeRtlize(text) {
     var text = text;
@@ -26,12 +39,12 @@ function maybeRtlize(text) {
         bidiText.reorder_visually();
         return text.toString();
     } else {
-        console.log(text.split(' ').reverse().join(' '))
+        clog(text.split(' ').reverse().join(' '))
 
         return text.split(' ').reverse().join(' ')
     }
 }
-console.log(maybeRtlize('شركه pet للبانت'))
+clog(maybeRtlize('شركه pet للبانت'))
 const fixtext = (text) => {
     const embeddingLevels = bidi.getEmbeddingLevels(text, "rtl");
     let newText = text.split("");
@@ -42,7 +55,7 @@ const fixtext = (text) => {
         text, //the full input string
         embeddingLevels //the full result object from getEmbeddingLevels
     );
-    console.log(flips)
+    clog(flips)
     flips.forEach((range, i) => {
         const [start, end] = range;
         // Reverse this sequence of characters from start to end, inclusive
@@ -54,7 +67,7 @@ const fixtext = (text) => {
             //...
         }
     });
-    console.log(flips.length > 1)
+    clog(flips.length > 1)
     return flips.length > 1 ? newText.join('') : newText.reverse().join('')
 }
 const getflips = (text) => {
@@ -70,7 +83,7 @@ const getflips = (text) => {
 
     return flips.length
 }
-console.log(getflips('شركه pp ميم'))
+clog(getflips('شركه pp ميم'))
 var invoice = {
     shipping: {
         name: "John Doe",
@@ -186,24 +199,26 @@ var invoice = {
 app.get('/', async (req, res) => {
     res.json({ 'Status': 200 })
 });
-
+app.get('/ping', async (req, res) => {
+    res.json({ 'Status': 200 })
+});
 app.post('/print/productssum', async (req, res) => {
-    let doc = new pdfkit({ size: "A4", margin: 50 });
+    let doc = new pdfkit({ size: "A4", margin: 20 });
     invoice.items = await prisma.inventoryproducts.findMany({})
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 35
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-    console.log(pages)
+    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
     for (let index = 0; index < pages; index++) {
         //draw header
         doc
-            .image("logo.png", 50, 45, { width: 50 })
+            .image("logo.png", 20, 45, { width: 50 })
             .fillColor("#444444")
             .fontSize(20)
-            .text("B2B Corp.", 110, 57)
+            .text("B2B Corp.", 80, 57)
             .fontSize(10)
             .text("B2B Corp.", 200, 50, { align: "right" })
             .text("kom hamada", 200, 65, { align: "right" })
@@ -216,7 +231,7 @@ app.post('/print/productssum', async (req, res) => {
         doc
             .fillColor("#444444")
             .fontSize(20)
-            .text("Report", 50, 100);
+            .text("Report", 20, 100);
 
         generateHr(doc, 125);
 
@@ -224,16 +239,16 @@ app.post('/print/productssum', async (req, res) => {
 
         doc
             .fontSize(10)
-            .text("Report Number:", 50, customerInformationTop)
+            .text("Report Number:", 20, customerInformationTop)
             .font("Helvetica-Bold")
-            .text(invoicenum, 150, customerInformationTop)
+            .text(invoicenum, 120, customerInformationTop)
             .font("Helvetica")
-            .text("Report Date:", 50, customerInformationTop + 15)
-            .text(formatDate(new Date()), 150, customerInformationTop + 15)
-            .text("Page Number : ", 50, customerInformationTop + 30)
+            .text("Report Date:", 20, customerInformationTop + 15)
+            .text(formatDate(new Date()), 120, customerInformationTop + 15)
+            .text("Page Number : ", 20, customerInformationTop + 30)
             .text(
                 index + 1,
-                150,
+                120,
                 customerInformationTop + 30
             )
 
@@ -264,26 +279,26 @@ app.post('/print/productssum', async (req, res) => {
         doc.font("Helvetica-Bold");
         doc
             .fontSize(10)
-            .text('id', 50, invoiceTableTop, { features: ['rtla'] })
-            .text('Item Name', 80, invoiceTableTop, { features: ['rtla'] })
-            .text('Quantity', 460, invoiceTableTop, { width: 90, align: "right" });
+            .text('id', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('Item Name', 50, invoiceTableTop, { features: ['rtla'] })
+            .text('Quantity', 490, invoiceTableTop, { width: 90, align: "right" });
         generateHr(doc, invoiceTableTop + 10);
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
-                console.log('end')
+                clog('end')
             } else {
                 const item = invoice.items[index1];
                 var position = invoiceTableTop + (i) * 15;
                 doc
                     .fontSize(10)
-                    .text(index1 + 1, 50, position, { features: ['rtla'] })
-                    .text(maybeRtlize(item.name), 80, position, {})
-                    .text(item.quantity, 460, position, { width: 90, align: "right" });
+                    .text(index1 + 1, 20, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.name), 50, position, {})
+                    .text(item.quantity, 490, position, { width: 90, align: "right" });
                 generateHr(doc, invoiceTableTop + 10);
                 generateHr(doc, position + 10);
                 index1++
-                console.log(index1)
+                clog(index1)
             }
         }
         doc
@@ -301,7 +316,7 @@ app.post('/print/productssum', async (req, res) => {
     doc.end();
     const date = await new Date()
 
-    console.log(date.toJSON())
+    clog(date.toJSON())
     const file = 'IR' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
@@ -315,7 +330,7 @@ app.post('/print/clientsum', async (req, res) => {
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 35
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-    console.log(pages)
+    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
@@ -395,7 +410,7 @@ app.post('/print/clientsum', async (req, res) => {
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
-                console.log('end')
+                clog('end')
             } else {
                 const item = invoice.items[index1];
                 var position = invoiceTableTop + (i) * 15;
@@ -409,7 +424,7 @@ app.post('/print/clientsum', async (req, res) => {
                 generateHr(doc, invoiceTableTop + 10);
                 generateHr(doc, position + 10);
                 index1++
-                console.log(index1)
+                clog(index1)
             }
         }
         doc
@@ -427,7 +442,7 @@ app.post('/print/clientsum', async (req, res) => {
     doc.end();
     const date = await new Date()
 
-    console.log(date.toJSON())
+    clog(date.toJSON())
     const file = 'CS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
@@ -441,7 +456,7 @@ app.post('/print/lots', async (req, res) => {
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 21
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-    console.log(pages)
+    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
@@ -524,7 +539,7 @@ app.post('/print/lots', async (req, res) => {
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
-                console.log('end')
+                clog('end')
             } else {
                 const item = invoice.items[index1];
                 var position = invoiceTableTop + (i) * 16;
@@ -546,7 +561,7 @@ app.post('/print/lots', async (req, res) => {
                 linelandscape(doc, invoiceTableTop + 11);
                 linelandscape(doc, position + 11);
                 index1++
-                console.log(index1)
+                clog(index1)
             }
         }
         doc
@@ -564,7 +579,7 @@ app.post('/print/lots', async (req, res) => {
     doc.end();
     const date = await new Date()
 
-    console.log(date.toJSON())
+    clog(date.toJSON())
     const file = 'IS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
@@ -577,7 +592,7 @@ app.post('/print/exports', async (req, res) => {
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 21
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-    console.log(pages)
+    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
@@ -657,7 +672,7 @@ app.post('/print/exports', async (req, res) => {
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
-                console.log('end')
+                clog('end')
             } else {
                 const item = invoice.items[index1];
                 var position = invoiceTableTop + (i) * 16;
@@ -676,7 +691,7 @@ app.post('/print/exports', async (req, res) => {
                 linelandscape(doc, invoiceTableTop + 11);
                 linelandscape(doc, position + 11);
                 index1++
-                console.log(index1)
+                clog(index1)
             }
         }
         doc
@@ -694,7 +709,7 @@ app.post('/print/exports', async (req, res) => {
     doc.end();
     const date = await new Date()
 
-    console.log(date.toJSON())
+    clog(date.toJSON())
     const file = 'ES' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
@@ -707,7 +722,7 @@ app.post('/print/fridgeimports', async (req, res) => {
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 21
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-    console.log(pages)
+    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
@@ -717,6 +732,7 @@ app.post('/print/fridgeimports', async (req, res) => {
         if (objInAcc) {
             objInAcc.amount += curr.amount;
             objInAcc.return += curr.return;
+            objInAcc.totalprice += curr.totalprice
             objInAcc.from = 'اجمالي'
             objInAcc.time = ''
             objInAcc.refid = ''
@@ -725,6 +741,10 @@ app.post('/print/fridgeimports', async (req, res) => {
         else acc.push(curr);
         return acc;
     }, []);
+    // for (let index = 0; index < impsum.length; index++) {
+    //     const item = impsum[index]
+    //     impsum[index].totalprice = ((item.amount - item.return) * item.price)
+    // }
     invoice.items = [...rows, ...impsum]
 
     for (let index = 0; index < pages; index++) {
@@ -805,7 +825,7 @@ app.post('/print/fridgeimports', async (req, res) => {
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
-                console.log('end')
+                clog('end')
             } else {
                 const item = invoice.items[index1];
                 var position = invoiceTableTop + (i) * 16;
@@ -820,7 +840,7 @@ app.post('/print/fridgeimports', async (req, res) => {
                     .text(item.return, 390, position, { features: ['rtla'] })
                     .text(item.amount - item.return, 460, position, { features: ['rtla'] })
                     .text(item.price, 530, position, { features: ['rtla'] })
-                    .text(((item.amount - item.return) * item.price).toFixed(3), 600, position, { features: ['rtla'] })
+                    .text(item.totalprice.toFixed(3), 600, position, { features: ['rtla'] })
                     .text(item.refid, 720, position, { features: ['rtla'] })
                     .text(item.time.split('T')[0], 770, position, { features: ['rtla'] });
                 linelandscape(doc, invoiceTableTop + 11);
@@ -829,7 +849,7 @@ app.post('/print/fridgeimports', async (req, res) => {
                 if (item.from !== 'اجمالي') {
                     linelandscape(doc, position + 11);
                 }
-                console.log(index1)
+                clog(index1)
             }
         }
         doc
@@ -847,7 +867,7 @@ app.post('/print/fridgeimports', async (req, res) => {
     doc.end();
     const date = await new Date()
 
-    console.log(date.toJSON())
+    clog(date.toJSON())
     const file = 'FS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
@@ -860,7 +880,7 @@ app.post('/print/vaultsummeryy', async (req, res) => {
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 21
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-    console.log(pages)
+    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
@@ -942,7 +962,7 @@ app.post('/print/vaultsummeryy', async (req, res) => {
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
-                console.log('end')
+                clog('end')
             } else {
                 const item = invoice.items[index1];
                 var position = invoiceTableTop + (i) * 16;
@@ -962,7 +982,7 @@ app.post('/print/vaultsummeryy', async (req, res) => {
                 linelandscape(doc, invoiceTableTop + 11);
                 linelandscape(doc, position + 11);
                 index1++
-                console.log(index1)
+                clog(index1)
             }
         }
         doc
@@ -980,7 +1000,7 @@ app.post('/print/vaultsummeryy', async (req, res) => {
     doc.end();
     const date = await new Date()
 
-    console.log(date.toJSON())
+    clog(date.toJSON())
     const file = 'VS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
@@ -989,7 +1009,7 @@ app.post('/print/vaultsummeryy', async (req, res) => {
 app.post('/print/vaultsummery', async (req, res) => {
     var rows = []
     const { vaultname } = req.body
-    console.log(vaultname)
+    clog(vaultname)
     var vaultt = await prisma.vault.findMany({
         where: {
             name: vaultname
@@ -1249,14 +1269,14 @@ app.post('/print/vaultsummery', async (req, res) => {
         val = val + element.Income;
         summeryarray[index].Value = val;
     }
-    console.log(summeryarray[summeryarray.length - 1])
+    clog(summeryarray[summeryarray.length - 1])
     rows = summeryarray
     let doc = new pdfkit({ size: "A4", margin: 20, layout: 'portrait' });
     invoice.items = rows
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 35
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-    console.log(pages)
+    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
@@ -1348,7 +1368,7 @@ app.post('/print/vaultsummery', async (req, res) => {
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
-                console.log('end')
+                clog('end')
             } else {
                 const item = invoice.items[index1];
                 var position = invoiceTableTop + (i) * 16;
@@ -1367,7 +1387,7 @@ app.post('/print/vaultsummery', async (req, res) => {
                 generateHr(doc, invoiceTableTop + 11);
                 generateHr(doc, position + 11);
                 index1++
-                console.log(index1)
+                clog(index1)
             }
         }
         doc
@@ -1385,20 +1405,20 @@ app.post('/print/vaultsummery', async (req, res) => {
     doc.end();
     const date = await new Date()
 
-    console.log(date.toJSON())
+    clog(date.toJSON())
     const file = 'VS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
 });
 app.post('/print/clientsummery', async (req, res) => {
     const { rows } = req.body
-    console.log(rows)
+    clog(rows)
     let doc = new pdfkit({ size: "A4", margin: 20 });
     invoice.items = rows
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 35
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-    console.log(pages)
+    clog(pages)
     const customFontt = fs.readFileSync(`Tajawal-Bold.ttf`);
     doc.registerFont(`Tajawal-Bold`, customFontt);
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
@@ -1477,7 +1497,7 @@ app.post('/print/clientsummery', async (req, res) => {
         var margin = 0
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
-                console.log('end')
+                clog('end')
             } else {
                 const item = invoice.items[index1];
                 var position = invoiceTableTop + (i) * 15 + margin;
@@ -1494,7 +1514,7 @@ app.post('/print/clientsummery', async (req, res) => {
                     // generateHr(doc, position + 10);
                 }
                 if (item.id == 'Stop') {
-                    console.log('break')
+                    clog('break')
                     doc
                         .fillColor("#000000")
                         .fontSize(13)
@@ -1515,7 +1535,7 @@ app.post('/print/clientsummery', async (req, res) => {
                     margin = margin + 30
                     indexxxx = 0
                 } else {
-                    console.log(item.clientname)
+                    clog(item.clientname)
                     doc
                         .fontSize(10)
                         .text(indexxxx == 0 ? iiii == 2 ? 'م' : 'م' : iiii == 2 ? indexxxx : indexxxx, 20, position, { features: ['rtla'] })
@@ -1528,7 +1548,7 @@ app.post('/print/clientsummery', async (req, res) => {
                     indexxxx++
                 }
                 index1++
-                console.log(index1)
+                clog(index1)
             }
         }
         doc
@@ -1546,7 +1566,7 @@ app.post('/print/clientsummery', async (req, res) => {
     doc.end();
     const date = await new Date()
 
-    console.log(date.toJSON())
+    clog(date.toJSON())
     const file = 'CS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
@@ -1562,7 +1582,7 @@ app.post('/print/clientadvance', async (req, res) => {
             name: clientname
         }
     })
-    console.log(vaultt)
+    clog(vaultt)
     var summeryarray = [];
     if (vaultt.length < 1) {
         res.status(200).json({ "status": 200, "error": "not found" })
@@ -1793,7 +1813,7 @@ app.post('/print/clientadvance', async (req, res) => {
     // const invoicenum = Math.floor(Math.random() * 1000000)
     // const rowsperpage = 35
     // const pages = Math.ceil(invoice.items.length / rowsperpage)
-    // console.log(pages)
+    // clog(pages)
     // const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     // doc.registerFont(`Tajawal-Light`, customFont);
     // var index1 = 0
@@ -1885,7 +1905,7 @@ app.post('/print/clientadvance', async (req, res) => {
     //     doc.font("Tajawal-Light");
     //     for (i = 1; i <= rowsperpage; i++) {
     //         if (index1 >= invoice.items.length) {
-    //             console.log('end')
+    //             clog('end')
     //         } else {
     //             const item = invoice.items[index1];
     //             var position = invoiceTableTop + (i) * 16;
@@ -1904,7 +1924,7 @@ app.post('/print/clientadvance', async (req, res) => {
     //             generateHr(doc, invoiceTableTop + 11);
     //             generateHr(doc, position + 11);
     //             index1++
-    //             console.log(index1)
+    //             clog(index1)
     //         }
     //     }
     //     doc
@@ -1922,7 +1942,7 @@ app.post('/print/clientadvance', async (req, res) => {
     // doc.end();
     // const date = await new Date()
 
-    // console.log(date.toJSON())
+    // clog(date.toJSON())
     // const file = 'VS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
     // doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, rows })
@@ -1930,13 +1950,15 @@ app.post('/print/clientadvance', async (req, res) => {
 app.post('/clientadvance', async (req, res) => {
     var rows = []
     var balance = 0;
+    var cmoney = 0
+    var vmoney = 0
     const { clientname } = req.body
     var vaultt = await prisma.clients.findMany({
         where: {
             name: clientname
         }
     })
-    console.log(vaultt)
+    clog(vaultt)
     var summeryarray = [];
     var sumarray = [];
     if (vaultt.length < 1) {
@@ -1987,6 +2009,7 @@ app.post('/clientadvance', async (req, res) => {
             "TotalPrice": (element.amount - element.return) * element.price,
             "Notes": 'وارد خام'
         })
+        cmoney = cmoney + ((element.amount - element.return) * element.price)
     }
     //vault outcome transactions
     for (let index = 0; index < vaultout.length; index++) {
@@ -2064,8 +2087,7 @@ app.post('/clientadvance', async (req, res) => {
             "Notes": ''
         })
     }
-    var cmoney = 0
-    var vmoney = 0
+
     //clientstransactions transactions
     for (let index = 0; index < clientstransactions.length; index++) {
         const element = clientstransactions[index];
@@ -2259,8 +2281,8 @@ app.post('/clientadvance', async (req, res) => {
         returnsum[index].totalprice = 0
         returnsum[index].diff = element.ret
     }
-    console.log({ exportsum, returnsum, importsum })
-    console.log({ returnsum })
+    clog({ exportsum, returnsum, importsum })
+    clog({ returnsum })
     const combined = exportsum.concat(importsum).concat(returnsum)
 
 
@@ -2277,7 +2299,7 @@ app.post('/clientadvance', async (req, res) => {
         else acc.push(curr);
         return acc;
     }, []);
-    console.log(diff)
+    clog(diff)
 
     for (let index = 0; index < diff.length; index++) {
         const element = diff[index];
@@ -2298,6 +2320,271 @@ app.post('/clientadvance', async (req, res) => {
     res.json({ 'Status': 200, summeryarray, sumarray })
 });
 
+
+app.post('/print/workeradvance', async (req, res) => {
+    const { rows } = req.body
+    let doc = new pdfkit({ size: "A4", margin: 20, layout: 'portrait' });
+    invoice.items = rows
+    const invoicenum = Math.floor(Math.random() * 1000000)
+    const rowsperpage = 35
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
+    clog(pages)
+    const customFontt = fs.readFileSync(`Tajawal-Bold.ttf`);
+    doc.registerFont(`Tajawal-Bold`, customFontt);
+    const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
+    doc.registerFont(`Tajawal-Light`, customFont);
+    var index1 = 0
+    var newobj = null;
+    var add = 0;
+    var sub = 0;
+
+    for (let index = 0; index < rows.length; index++) {
+        const element = rows[index];
+        add = add + element.add
+        sub = sub + element.sub
+        newobj = {
+            "Name": '',
+            "Type": 'اجمالي',
+            "Count": '',
+            "Date": new Date().toISOString().toString().split('T')[0],
+            "Amount": '',
+            "TotalPrice": '',
+            "Nights": '',
+            "Return": '',
+            add,
+            sub,
+            'dadd': add,
+            'dsub': sub,
+            'Balance': add - sub
+        }
+    }
+    invoice.items = [...rows, newobj]
+    for (let index = 0; index < pages; index++) {
+        //draw header
+        doc
+            .image("newlogo.png", 20, 45, { width: 200 })
+            .fillColor("#444444")
+            .fontSize(10)
+            .text("B2B Corp.", 200, 50, { align: "right" })
+            .text("kom hamada", 200, 65, { align: "right" })
+            .text("egypt, behira , 22821", 200, 80, { align: "right" })
+            .moveDown();
+
+
+        // draw detaild
+        doc
+            .fillColor("#444444")
+            .fontSize(20)
+            .text("Worker Summery", 20, 100);
+
+        generateHr(doc, 125);
+
+
+        const customerInformationTop = 130;
+
+        doc
+            .fontSize(10)
+            .font("Helvetica")
+            .text("Client Name : ", 20, customerInformationTop)
+            .font("Tajawal-Bold")
+            .text(
+                rows.length > 0 ? rows[0].Name : 'Empty',
+                120,
+                customerInformationTop,
+                { features: ['rtla'] }
+            )
+            .font("Helvetica")
+            .text("Report Number:", 20, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text('WS' + invoicenum, 120, customerInformationTop + 15)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(formatDate(new Date()), 120, customerInformationTop + 30)
+            .font("Helvetica")
+            .text("Page Number : ", 20, customerInformationTop + 45)
+            .font("Helvetica-Bold")
+            .text(
+                index + 1,
+                120,
+                customerInformationTop + 45
+            )
+        generateHr(doc, 192);
+
+
+
+
+        //draw table
+        let i;
+        const invoiceTableTop = 195;
+
+        doc.font("Tajawal-Bold");
+        doc
+            .fontSize(10)
+            .text('م', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('العمليه', 45, invoiceTableTop, { features: ['rtla'] })
+            .text('عدد العمال', 95, invoiceTableTop, { features: ['rtla'] })
+            .text('اليوميه', 160, invoiceTableTop, { features: ['rtla'] })
+            .text('السهرات', 205, invoiceTableTop, { features: ['rtla'] })
+            .text('الخصم', 260, invoiceTableTop, { features: ['rtla'] })
+            .text('اجمالي المبلغ', 315, invoiceTableTop, { features: ['rtla'] })
+            .text('منصرف', 385, invoiceTableTop, { features: ['rtla'] })
+            .text('الرصيد', 460, invoiceTableTop, { features: ['rtla'] })
+            .text('التاريخ', 540, invoiceTableTop, { features: ['rtla'], align: 'right' });
+        generateHr(doc, invoiceTableTop + 10);
+        doc.font("Tajawal-Bold");
+        for (i = 1; i <= rowsperpage; i++) {
+            if (index1 >= invoice.items.length) {
+                clog('end')
+            } else {
+                const item = invoice.items[index1];
+                var position = invoiceTableTop + (i) * 16;
+                doc
+                    .font("Tajawal-Bold")
+                    .fontSize(10)
+                    .text(index1 + 1, 20, position)
+                    .text(maybeRtlize(item.Type), 45, position)
+                    .font("Helvetica-Bold")
+                    .text(item.Count, 95, position)
+                    .text(item.Amount, 160, position, { features: ['rtla'] })
+                    .text(item.Nights, 205, position, { features: ['rtla'] })
+                    .text(item.Return, 260, position, { features: ['rtla'] })
+                    .text(item.dadd, 315, position, { features: ['rtla'] })
+                    .text(item.dsub, 385, position, { features: ['rtla'] })
+                    .text(item.Balance, 460, position, { features: ['rtla'] })
+                    .text(item.Date, 520, position, { features: ['rtla'], align: 'right' });
+                generateHr(doc, invoiceTableTop + 11);
+
+                index1++
+                if (item.Type !== 'اجمالي') {
+                    generateHr(doc, position + 11);
+                }
+                clog(index1)
+            }
+        }
+        doc
+            .fontSize(10)
+            .text(
+                "Thank you for your business.",
+                50,
+                770,
+                { align: "center", width: 500 }
+            );
+        if (index < pages - 1) {
+            doc.addPage()
+        }
+    }
+    doc.end();
+    const date = await new Date()
+
+    clog(date.toJSON())
+    const file = 'WS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
+    doc.pipe(fs.createWriteStream('files/' + file));
+    res.json({ 'Status': 200, file })
+});
+app.post('/workeradvance', async (req, res) => {
+    var rows = []
+    var balance = 0;
+    var cmoney = 0
+    var vmoney = 0
+    const { workername } = req.body
+    var vaultt = await prisma.workers.findMany({
+        where: {
+            name: workername
+        }
+    })
+    clog(vaultt)
+    var summeryarray = [];
+    var sumarray = [];
+    if (vaultt.length < 1) {
+        res.status(200).json({ "status": 200, "error": "not found" })
+        return
+    }
+    const vault = vaultt[0]
+    const workertransactions = await prisma.workerpayout.findMany({
+        where: {
+            workerid: vault.id
+        }
+    })
+    const WorkerPayout = await prisma.wtransaction.findMany({
+        where: {
+            toid: vault.id
+        }
+    })
+
+
+    //workertransactions outcome transactions
+    for (let index = 0; index < workertransactions.length; index++) {
+        const element = workertransactions[index];
+        summeryarray.push({
+            "Name": element.workername,
+            "Type": 'يوميه',
+            "Count": element.amount,
+            "Date": element.time.toISOString().toString().split('T')[0],
+            "Amount": element.price,
+            "TotalPrice": element.totalprice,
+            "Nights": element.nights,
+            "Return": element.return,
+            'add': element.totalprice,
+            'sub': 0,
+            'dadd': element.totalprice,
+            'dsub': '---'
+        })
+    }
+
+    //WorkerPayout transactions
+    for (let index = 0; index < WorkerPayout.length; index++) {
+        const element = WorkerPayout[index];
+        summeryarray.push({
+            "Name": element.toname,
+            "Type": 'دفعات',
+            "Count": '---',
+            "Date": element.time.toISOString().toString().split('T')[0],
+            "Amount": '---',
+            "TotalPrice": element.amount,
+            "Nights": '---',
+            "Return": '---',
+            'add': 0,
+            'sub': element.amount,
+            'dadd': '---',
+            'dsub': element.amount
+        })
+    }
+    summeryarray.sort((a, b) => {
+        return new Date(a.Date) - new Date(b.Date)
+    })
+    for (let index = 0; index < summeryarray.length; index++) {
+        const element = summeryarray[index];
+        summeryarray[index].id = index + 1;
+        balance = balance + Number(element.add) - Number(element.sub);
+        summeryarray[index].Balance = balance;
+    }
+    // sumarray.push({
+    //     'id': sumarray.length + 1,
+    //     'product': 'اجمالي الرصيد',
+    //     clientm,
+    //     vaultm,
+    //     cmoney,
+    //     vmoney,
+    //     balance,
+    //     totalc: clientm + cmoney,
+    //     totalv: vaultm + vmoney
+    // })
+    // sumarray.push({
+    //     'id': '',
+    //     'product': 'اجمالي الخام',
+    //     vmoney: 'منصرف',
+    //     cmoney: 'وارد',
+    //     clientm: 'مرتجع',
+    //     vaultm: 'اجمالي الخام',
+    //     totalc: 'وارد التصفيه',
+    //     totalv: 'اجمالي المبلغ',
+    //     balance: 'الرصيد',
+    // })
+
+
+    res.json({ 'Status': 200, summeryarray })
+});
 const generatepages = (doc, invoice) => {
 }
 
@@ -2380,11 +2667,11 @@ function generateInvoiceTable(doc, invoice) {
         if (indexx == 2) {
             doc.addPage();
             indexx = 0;
-            console.log('page')
+            clog('page')
         } else {
             indexx++
         }
-        console.log(indexx)
+        clog(indexx)
     }
 
     const subtotalPosition = invoiceTableTop + (i + 1) * 30;
@@ -2524,7 +2811,7 @@ function formatDate(date) {
 app.get('/products', async (req, res) => {
     var ip = req.headers['x-forwarded-for'] || req.socket.remoteAdress
 
-    console.log('product request from : ' + ip)
+    clog('product request from : ' + ip)
     const products = await prisma.inventoryproducts.findMany({
     })
     res.json({ 'status': 200, products })
@@ -2546,7 +2833,7 @@ app.post('/addproduct', async (req, res) => {
                 }
 
 
-    console.log(mesure)
+    clog(mesure)
     const newproduct = await prisma.inventoryproducts.create({
         data: {
             name: name,
@@ -2574,7 +2861,7 @@ app.post('/editproduct', async (req, res) => {
                     mesure = 3
                 }
 
-    console.log(mesure, req.body)
+    clog(mesure, req.body)
     const prod = await prisma.inventoryproducts.findUnique({
         where: {
             id: Number(selid)
@@ -2638,7 +2925,7 @@ app.post('/editproduct', async (req, res) => {
 })
 app.post('/searchproduct', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.inventoryproducts.findMany({
         where: {
             name: {
@@ -2651,7 +2938,7 @@ app.post('/searchproduct', async (req, res) => {
 })
 app.post('/deleteproduct', async (req, res) => {
     const { deleteproduct } = req.body
-    console.log(deleteproduct)
+    clog(deleteproduct)
     const del = await prisma.inventoryproducts.deleteMany({
         where: {
             id: {
@@ -2668,7 +2955,7 @@ app.post('/deleteproduct', async (req, res) => {
 
 
 app.get('/clients', async (req, res) => {
-    console.log('clients request')
+    clog('clients request')
     const clients = await prisma.clients.findMany({
     })
     res.json({ 'status': 200, clients })
@@ -2687,7 +2974,7 @@ app.post('/addclients', async (req, res) => {
             }
 
 
-    console.log(mesure)
+    clog(mesure)
     const newclient = await prisma.clients.create({
         data: {
             name: name,
@@ -2711,7 +2998,7 @@ app.post('/editclients', async (req, res) => {
                 mesure = 2
             }
 
-    console.log(mesure, req.body)
+    clog(mesure, req.body)
     const editedclient = await prisma.clients.update({
         where: {
             id: Number(selid)
@@ -2790,7 +3077,7 @@ app.post('/editclients', async (req, res) => {
 })
 app.post('/searchclients', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.clients.findMany({
         where: {
             name: {
@@ -2803,7 +3090,7 @@ app.post('/searchclients', async (req, res) => {
 })
 app.post('/searchclientexports', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productoutcome.findMany({
         where: {
             clientname: searchtext
@@ -2825,7 +3112,7 @@ app.post('/searchclientexports', async (req, res) => {
 
 //done
 app.get('/workers', async (req, res) => {
-    console.log('product request')
+    clog('product request')
     const clients = await prisma.workers.findMany({
     })
     res.json({ 'status': 200, clients })
@@ -2854,7 +3141,7 @@ app.post('/editworkers', async (req, res) => {
 })
 app.post('/searchworkers', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.workers.findMany({
         where: {
             name: {
@@ -2866,7 +3153,7 @@ app.post('/searchworkers', async (req, res) => {
     res.status(200).json({ "status": 200, foundproduts })
 })
 app.post('/deleteworkers', async (req, res) => {
-    console.log('workers delete request')
+    clog('workers delete request')
     const { deleteproduct } = req.body
     const del = await prisma.workers.deleteMany({
         where: {
@@ -2885,7 +3172,7 @@ app.post('/deleteworkers', async (req, res) => {
 
 
 app.get('/vault', async (req, res) => {
-    console.log('vault request')
+    clog('vault request')
     const vault = await prisma.vault.findMany({
     })
     res.json({ 'status': 200, vault })
@@ -2902,7 +3189,7 @@ app.post('/addvault', async (req, res) => {
 })
 app.post('/editvault', async (req, res) => {
     const { name, value, code, selid } = req.body
-    console.log(req.body)
+    clog(req.body)
     const editedvault = await prisma.vault.update({
         where: {
             id: Number(selid)
@@ -2917,7 +3204,7 @@ app.post('/editvault', async (req, res) => {
 })
 app.post('/searchvault', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.vault.findMany({
         where: {
             name: {
@@ -2935,7 +3222,7 @@ app.post('/searchvault', async (req, res) => {
 
 
 app.get('/moneyowner', async (req, res) => {
-    console.log('moneyowner request')
+    clog('moneyowner request')
     const vault = await prisma.moneyowner.findMany({
     })
     res.json({ 'status': 200, vault })
@@ -2955,7 +3242,7 @@ app.post('/addmoneyowner', async (req, res) => {
 })
 app.post('/editmoneyowner', async (req, res) => {
     const { name, payment, payed, selid } = req.body
-    console.log(req.body)
+    clog(req.body)
     const tt = await prisma.moneyowner.findUnique({
         where: {
             name: name.toString()
@@ -3003,7 +3290,7 @@ app.post('/delmoneyowner', async (req, res) => {
 })
 app.post('/searchmoneyowner', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.moneyowner.findMany({
         where: {
             name: {
@@ -3020,7 +3307,7 @@ app.post('/searchmoneyowner', async (req, res) => {
 
 
 app.get('/transaction', async (req, res) => {
-    console.log('transaction request')
+    clog('transaction request')
     const transaction = await prisma.transaction.findMany({
     })
     res.json({ 'status': 200, transaction })
@@ -3035,7 +3322,17 @@ app.get('/cmtransaction', async (req, res) => {
 })
 app.post('/addtransaction', async (req, res) => {
     const { fromname, toname, amount, date, refid } = req.body
-    console.log(req.body)
+    clog(req.body)
+    const transss = await prisma.transaction.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+    if (transss.length > 0) {
+        clog('refid match in vault trans creation  aborting rn')
+        res.status(200).json({ "status": 400, "error": "refid is used", "field": "refid" })
+        return
+    }
     const fromvault = await prisma.vault.findUnique({
         where: {
             id: Number(fromname)
@@ -3082,7 +3379,23 @@ app.post('/addtransaction', async (req, res) => {
 })
 app.post('/edittransaction', async (req, res) => {
     const { newdata, transfromname, transtoname, transval, date, refid } = req.body
-    console.log(req.body)
+    clog(req.body)
+    const deltrans = await prisma.transaction.findUnique({
+        where: {
+            id: Number(newdata.id)
+        }
+    })
+    const transss = await prisma.transaction.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+    clog(deltrans.refid, transss[0].refid)
+    if (transss.length > 0 && transss[0].refid !== deltrans.refid) {
+        clog('refid match error in vault trans edit aborting now')
+        res.status(200).json({ "status": 400, "error": "refid is used", "field": "refid" })
+        return
+    }
     const fromvault = await prisma.vault.findMany({
         where: {
             name: transfromname
@@ -3094,7 +3407,7 @@ app.post('/edittransaction', async (req, res) => {
         }
     })
 
-    console.log(fromvault, tovault)
+    clog(fromvault, tovault)
     const editedfromvault = await prisma.vault.update({
         where: {
             id: fromvault[0].id
@@ -3111,7 +3424,7 @@ app.post('/edittransaction', async (req, res) => {
             value: (Number(tovault[0].value) - Number(newdata.amount)) + Number(transval),
         }
     })
-    console.log(editedfromvault, editedtovault)
+    clog(editedfromvault, editedtovault)
     const editedtrans = await prisma.transaction.update({
         where: {
             id: Number(newdata.id)
@@ -3132,7 +3445,7 @@ app.post('/edittransaction', async (req, res) => {
 })
 app.post('/deletetransaction', async (req, res) => {
     const { id } = req.body
-    console.log(req.body)
+    clog(req.body)
     const trans = await prisma.transaction.findUnique({
         where: {
             id: id
@@ -3173,7 +3486,7 @@ app.post('/deletetransaction', async (req, res) => {
 })
 app.post('/addvaultclienttransaction', async (req, res) => {
     const { fromname, toname, amount, type, refid, time } = req.body
-    console.log(req.body)
+    clog(req.body)
     const date = new Date(time)
     const transss = await prisma.clientvaulttransaction.findMany({
         where: {
@@ -3194,7 +3507,7 @@ app.post('/addvaultclienttransaction', async (req, res) => {
             name: toname.toString()
         }
     })
-    console.log({ fromvault, toclient })
+    clog({ fromvault, toclient })
     if (type == 'in') {
         const vaultapdate = await prisma.vault.update({
             where: {
@@ -3262,14 +3575,14 @@ app.post('/addvaultclienttransaction', async (req, res) => {
 })
 app.post('/addclientmtransaction', async (req, res) => {
     const { fromname, toname, amount, type, refid, time, text } = req.body
-    console.log(req.body)
+    clog(req.body)
     const date = new Date(time)
     const toclient = await prisma.clients.findMany({
         where: {
             name: toname.toString()
         }
     })
-    console.log({ toclient })
+    clog({ toclient })
     if (type == 'in') {
         const clientupdate = await prisma.clients.update({
             where: {
@@ -3319,7 +3632,7 @@ app.post('/addclientmtransaction', async (req, res) => {
 })
 app.post('/deletevaultclienttransaction', async (req, res) => {
     const { id } = req.body
-    console.log(req.body)
+    clog(req.body)
 
     const transtobiginwith = await prisma.clientvaulttransaction.findUnique({
         where: {
@@ -3338,7 +3651,7 @@ app.post('/deletevaultclienttransaction', async (req, res) => {
     })
     const type = transtobiginwith.way
     if (type == 'in') {
-        console.log('in')
+        clog('in')
         const editedfromvault = await prisma.vault.update({
             where: {
                 id: fromvault.id
@@ -3391,7 +3704,7 @@ app.post('/deletevaultclienttransaction', async (req, res) => {
 })
 app.post('/deleteclientmtransaction', async (req, res) => {
     const { id } = req.body
-    console.log(req.body)
+    clog(req.body)
 
     const transtobiginwith = await prisma.clientm.findUnique({
         where: {
@@ -3405,7 +3718,7 @@ app.post('/deleteclientmtransaction', async (req, res) => {
     })
     const type = transtobiginwith.way
     if (type == 'in') {
-        console.log('in')
+        clog('in')
         const editedclient = await prisma.clients.update({
             where: {
                 id: toclient.id
@@ -3442,7 +3755,7 @@ app.post('/deleteclientmtransaction', async (req, res) => {
 })
 app.post('/editvaultclienttransaction', async (req, res) => {
     const { fromname, toname, amount, type, refid, time, id } = req.body
-    console.log('cvtrans edit req with data : ' + req.body)
+    clog('cvtrans edit req with data : ' + req.body)
     const date = new Date(time);
     const deltrans = await prisma.clientvaulttransaction.findUnique({
         where: {
@@ -3454,7 +3767,7 @@ app.post('/editvaultclienttransaction', async (req, res) => {
             refid: refid
         }
     })
-    console.log(deltrans.refid, transss[0].refid)
+    clog(deltrans.refid, transss[0].refid)
     if (transss.length > 0 && transss[0].refid !== deltrans.refid) {
         res.status(200).json({ "status": 400, "error": "refid is used", "field": "refid" })
         return
@@ -3470,7 +3783,7 @@ app.post('/editvaultclienttransaction', async (req, res) => {
         }
     })
     if (deltrans.way == 'in') {
-        console.log('in')
+        clog('in')
         const editedfromvault = await prisma.vault.update({
             where: {
                 id: delfromvault.id
@@ -3532,7 +3845,7 @@ app.post('/editvaultclienttransaction', async (req, res) => {
             name: toname.toString()
         }
     })
-    console.log({ fromvault, toclient })
+    clog({ fromvault, toclient })
     if (type == 'in') {
         const vaultapdate = await prisma.vault.update({
             where: {
@@ -3604,7 +3917,7 @@ app.post('/editvaultclienttransaction', async (req, res) => {
 
 app.post('/editclientmtransaction', async (req, res) => {
     const { clientname, amount, type, refid, time, id, text } = req.body
-    console.log(req.body)
+    clog(req.body)
     const date = new Date(time);
     const deltrans = await prisma.clientm.findUnique({
         where: {
@@ -3616,9 +3929,9 @@ app.post('/editclientmtransaction', async (req, res) => {
             id: deltrans.clientid
         }
     })
-    console.log(type)
+    clog(type)
     if (deltrans.way == 'out') {
-        console.log('out')
+        clog('out')
         const editedclient = await prisma.clients.update({
             where: {
                 id: deltoclient.id
@@ -3647,7 +3960,7 @@ app.post('/editclientmtransaction', async (req, res) => {
             }
         })
     } else {
-        console.log('error while deleting')
+        clog('error while deleting')
         res.status(404).json({ "status": 404 })
     }
 
@@ -3658,7 +3971,7 @@ app.post('/editclientmtransaction', async (req, res) => {
             name: clientname.toString()
         }
     })
-    console.log({ toclient })
+    clog({ toclient })
     if (type == 'in') {
         const clientupdate = await prisma.clients.update({
             where: {
@@ -3668,7 +3981,7 @@ app.post('/editclientmtransaction', async (req, res) => {
                 expense: toclient[0].expense + Number(amount)
             }
         })
-        console.log('ssss expense')
+        clog('ssss expense')
 
         const newtrans = await prisma.clientm.create({
             data: {
@@ -3691,7 +4004,7 @@ app.post('/editclientmtransaction', async (req, res) => {
                 payment: toclient[0].payment + Number(amount)
             }
         })
-        console.log('ssss payment')
+        clog('ssss payment')
         const newtrans = await prisma.clientm.create({
             data: {
                 clientid: toclient[0].id,
@@ -3713,8 +4026,18 @@ app.post('/editclientmtransaction', async (req, res) => {
 })
 app.post('/searchrefidvaultclienttransaction', async (req, res) => {
     const { refid } = req.body;
-    console.log('cvtrans refid search request : ' + refid)
+    clog('cvtrans refid search request : ' + refid)
     const transaction = await prisma.clientvaulttransaction.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+    res.json({ 'status': 200, transaction })
+})
+app.post('/searchrefidvaulttransaction', async (req, res) => {
+    const { refid } = req.body;
+    clog('vault trans refid search request : ' + refid)
+    const transaction = await prisma.transaction.findMany({
         where: {
             refid: refid.toString()
         }
@@ -3723,7 +4046,7 @@ app.post('/searchrefidvaultclienttransaction', async (req, res) => {
 })
 app.post('/searchrefidmownertransaction', async (req, res) => {
     const { refid } = req.body;
-    console.log('m owner trans refid search request : ' + refid)
+    clog('m owner trans refid search request : ' + refid)
     const transaction = await prisma.mtransaction.findMany({
         where: {
             refid: refid.toString()
@@ -3733,7 +4056,7 @@ app.post('/searchrefidmownertransaction', async (req, res) => {
 })
 app.post('/searchrefidworkertransaction', async (req, res) => {
     const { refid } = req.body;
-    console.log('wtrans refid search request : ' + refid)
+    clog('wtrans refid search request : ' + refid)
     const transaction = await prisma.wtransaction.findMany({
         where: {
             refid: refid.toString()
@@ -3743,7 +4066,7 @@ app.post('/searchrefidworkertransaction', async (req, res) => {
 })
 // app.post('/editvault', async (req, res) => {
 //     const { name, value, code, selid } = req.body
-//     console.log(req.body)
+//     clog(req.body)
 //     const editedvault = await prisma.vault.update({
 //         where: {
 //             id: Number(selid)
@@ -3759,7 +4082,7 @@ app.post('/searchrefidworkertransaction', async (req, res) => {
 
 // app.post('/searchvault', async (req, res) => {
 //     const { searchtext } = req.body
-//     console.log(searchtext)
+//     clog(searchtext)
 //     const foundproduts = await prisma.vault.findMany({
 //         where: {
 //             name: {
@@ -3773,14 +4096,14 @@ app.post('/searchrefidworkertransaction', async (req, res) => {
 
 
 app.get('/moneyownertransactions', async (req, res) => {
-    console.log('transaction request')
+    clog('transaction request')
     const transaction = await prisma.mtransaction.findMany({
     })
     res.json({ 'status': 200, transaction })
 })
 app.post('/searchmoneyowners', async (req, res) => {
     const { searchtext } = req.body
-    console.log('monewyowners search with text : ' + searchtext)
+    clog('monewyowners search with text : ' + searchtext)
     const mowners = await prisma.moneyowner.findMany({
         where: {
             name: {
@@ -3792,8 +4115,8 @@ app.post('/searchmoneyowners', async (req, res) => {
 })
 app.post('/addmoneyownertransactions', async (req, res) => {
     const { fromname, toname, amount, refid, time, way } = req.body
-    console.log('money owner transaction with id of : ' + refid + ' and name of : ' + fromname + ' to vault : ' + toname + ' with amount of : ' + amount + ' time of : ' + time)
-    console.log(req.body)
+    clog('money owner transaction with id of : ' + refid + ' and name of : ' + fromname + ' to vault : ' + toname + ' with amount of : ' + amount + ' time of : ' + time)
+    clog(req.body)
     const date = new Date(time)
     const transss = await prisma.mtransaction.findMany({
         where: {
@@ -3887,7 +4210,7 @@ app.post('/addmoneyownertransactions', async (req, res) => {
 })
 app.post('/editmoneyownertransactions', async (req, res) => {
     const { newdata, transfromname, transtoname, transval, editrefid, edittransdate, way } = req.body
-    console.log(req.body)
+    clog(req.body)
     const id = newdata.id
     const deltrans = await prisma.mtransaction.findUnique({
         where: {
@@ -3899,7 +4222,7 @@ app.post('/editmoneyownertransactions', async (req, res) => {
             refid: editrefid
         }
     })
-    console.log(deltrans.refid, transss[0].refid)
+    clog(deltrans.refid, transss[0].refid)
     if (transss.length > 0 && transss[0].refid !== deltrans.refid) {
         res.status(200).json({ "status": 400, "error": "refid is used", "field": "refid" })
         return
@@ -3979,7 +4302,7 @@ app.post('/editmoneyownertransactions', async (req, res) => {
         }
     })
 
-    console.log('deleted mtrans with id of ' + id)
+    clog('deleted mtrans with id of ' + id)
 
     const date = new Date(edittransdate)
     const fromvault = await prisma.moneyowner.findMany({
@@ -4191,14 +4514,14 @@ app.post('/deletemoneyownertransaction', async (req, res) => {
     res.status(200).json({ "status": 200 })
 })
 
-console.log(new Date().toISOString())
+clog(new Date().toISOString())
 
 
 
 
 
 app.get('/wtransaction', async (req, res) => {
-    console.log('wtransaction request')
+    clog('wtransaction request')
     const transaction = await prisma.wtransaction.findMany({
     })
     res.json({ 'status': 200, transaction })
@@ -4206,7 +4529,7 @@ app.get('/wtransaction', async (req, res) => {
 app.post('/addwtransaction', async (req, res) => {
     const { fromname, toname, amount, date, refid } = req.body
     const invoicetime = new Date(date)
-    console.log(req.body)
+    clog(req.body)
     const transss = await prisma.wtransaction.findMany({
         where: {
             refid: refid
@@ -4262,7 +4585,7 @@ app.post('/addwtransaction', async (req, res) => {
 })
 app.post('/editwtransaction', async (req, res) => {
     const { newdata, transfromname, transtoname, transval, editrefid } = req.body
-    console.log(req.body)
+    clog(req.body)
     const oldtrans = await prisma.wtransaction.findUnique({
         where: {
             id: newdata.id
@@ -4274,7 +4597,7 @@ app.post('/editwtransaction', async (req, res) => {
         }
     })
     if (others.length > 0 && others[0].refid !== oldtrans.refid) {
-        console.log('refid is used')
+        clog('refid is used')
         res.status(200).json({ "status": 400, "error": "refid is used", "field": "refid" })
         return
     }
@@ -4289,7 +4612,7 @@ app.post('/editwtransaction', async (req, res) => {
         }
     })
 
-    console.log(fromvault, tovault)
+    clog(fromvault, tovault)
     const editedfromvault = await prisma.vault.update({
         where: {
             id: fromvault.id
@@ -4306,7 +4629,7 @@ app.post('/editwtransaction', async (req, res) => {
             payed: (Number(tovault.payed) - Number(newdata.amount)),
         }
     })
-    console.log(editedfromvault, editedtovault)
+    clog(editedfromvault, editedtovault)
 
 
 
@@ -4363,7 +4686,7 @@ app.post('/delwtransaction', async (req, res) => {
             id: newdata.id
         }
     })
-    console.log(trans)
+    clog(trans)
     const fromvault = await prisma.vault.findUnique({
         where: {
             id: trans.fromid
@@ -4417,7 +4740,7 @@ app.post('/delwtransaction', async (req, res) => {
 
 
 app.get('/expensescategory', async (req, res) => {
-    console.log('product request')
+    clog('product request')
     const expensescategorys = await prisma.expensescategory.findMany({
     })
     res.json({ 'status': 200, expensescategorys })
@@ -4433,7 +4756,7 @@ app.post('/addexpensescategory', async (req, res) => {
 })
 app.post('/editexpensescategory', async (req, res) => {
     const { name, selid } = req.body
-    console.log(req.body)
+    clog(req.body)
     const editedexpensescategory = await prisma.expensescategory.update({
         where: {
             id: Number(selid)
@@ -4446,7 +4769,7 @@ app.post('/editexpensescategory', async (req, res) => {
 })
 app.post('/searchexpensescategory', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.expensescategory.findMany({
         where: {
             name: {
@@ -4471,20 +4794,20 @@ app.post('/searchexpensescategory', async (req, res) => {
 
 //done
 app.get('/expensescategory2', async (req, res) => {
-    console.log('product request')
+    clog('product request')
     const expensescategorys = await prisma.expensescategory2.findMany({
     })
     res.json({ 'status': 200, expensescategorys })
 })
 app.post('/addexpensescategory2', async (req, res) => {
     const { name, newsel } = req.body
-    console.log(req.body)
+    clog(req.body)
     const selection = await prisma.expensescategory.findMany({
         where: {
             name: newsel
         }
     })
-    console.log(selection)
+    clog(selection)
     const newexpensecategory = await prisma.expensescategory2.create({
         data: {
             name: name,
@@ -4496,13 +4819,13 @@ app.post('/addexpensescategory2', async (req, res) => {
 })
 app.post('/editexpensescategory2', async (req, res) => {
     const { name, newselid, sel } = req.body
-    console.log(req.body)
+    clog(req.body)
     const selection = await prisma.expensescategory.findMany({
         where: {
             name: newselid
         }
     })
-    console.log(selection)
+    clog(selection)
     const editedexpensescategory = await prisma.expensescategory2.update({
         where: {
             id: Number(sel)
@@ -4517,7 +4840,7 @@ app.post('/editexpensescategory2', async (req, res) => {
 })
 app.post('/searchexpensescategory2', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.expensescategory2.findMany({
         where: {
             name: {
@@ -4530,7 +4853,7 @@ app.post('/searchexpensescategory2', async (req, res) => {
 })
 app.post('/searchexpensescategory2byname', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.expensescategory2.findMany({
         where: {
             linkname: searchtext
@@ -4540,14 +4863,14 @@ app.post('/searchexpensescategory2byname', async (req, res) => {
     res.status(200).json({ "status": 200, foundproduts })
 })
 app.get('/expenses', async (req, res) => {
-    console.log('expenses request')
+    clog('expenses request')
     const expenses = await prisma.expenses.findMany({
     })
     res.json({ 'status': 200, expenses })
 })
 app.post('/addexpenses', async (req, res) => {
     const { name, value, refid, sel1, sel2, vault, transdate } = req.body
-    console.log(req.body)
+    clog(req.body)
     const date = new Date(transdate)
     const selection1 = await prisma.expensescategory.findMany({
         where: {
@@ -4586,13 +4909,13 @@ app.post('/addexpenses', async (req, res) => {
             time: date
         }
     })
-    console.log(selection1, selection2, newexpense, editedvault)
+    clog(selection1, selection2, newexpense, editedvault)
 
     res.status(200).json({ "status": 200 })
 })
 app.post('/editexpenses', async (req, res) => {
     const { name, expenses, code, secondvaultname, selected, esel1, esel2, edittransdate } = req.body
-    console.log(req.body)
+    clog(req.body)
 
 
     const selvault = await prisma.vault.findUnique({
@@ -4614,7 +4937,7 @@ app.post('/editexpenses', async (req, res) => {
             name: secondvaultname,
         }
     })
-    console.log({ sebewlvault })
+    clog({ sebewlvault })
     const editednewvault = await prisma.vault.update({
         where: {
             id: Number(sebewlvault[0].id),
@@ -4656,9 +4979,9 @@ app.post('/editexpenses', async (req, res) => {
     res.status(200).json({ "status": 200 })
 })
 app.post('/deleteexpenses', async (req, res) => {
-    console.log('delete expenses request')
+    clog('delete expenses request')
     const { data } = req.body
-    console.log(data)
+    clog(data)
     for (let index = 0; index < data.length; index++) {
         const sel = data[index]
         const selvault = await prisma.vault.findUnique({
@@ -4686,13 +5009,13 @@ app.post('/deleteexpenses', async (req, res) => {
 })
 app.post('/editexpensescategory2', async (req, res) => {
     const { name, newselid, sel } = req.body
-    console.log(req.body)
+    clog(req.body)
     const selection = await prisma.expensescategory.findMany({
         where: {
             name: newselid
         }
     })
-    console.log(selection)
+    clog(selection)
     const editedexpensescategory = await prisma.expensescategory2.update({
         where: {
             id: Number(sel)
@@ -4707,7 +5030,7 @@ app.post('/editexpensescategory2', async (req, res) => {
 })
 app.post('/searchexpenses', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.expenses.findMany({
         where: {
             refid: searchtext.toString()
@@ -4718,7 +5041,7 @@ app.post('/searchexpenses', async (req, res) => {
 })
 app.post('/searchexpensesnames', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.expenses.findMany({
         where: {
             name: {
@@ -4731,7 +5054,7 @@ app.post('/searchexpensesnames', async (req, res) => {
 })
 app.post('/searchexpensescategoryes', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.expenses.findMany({
         where: {
             nestedcategoryname: {
@@ -4757,14 +5080,14 @@ app.post('/searchexpensescategoryes', async (req, res) => {
 
 
 app.get('/productincome', async (req, res) => {
-    console.log('expenses request')
+    clog('expenses request')
     const productincome = await prisma.productincome.findMany({
     })
     res.json({ 'status': 200, productincome })
 })
 app.post('/addproductincome', async (req, res) => {
     const { amount, fromname, toname, refid, price, sel2 } = req.body
-    console.log(req.body)
+    clog(req.body)
     const selection1 = await prisma.inventoryproducts.findMany({
         where: {
             name: toname
@@ -4815,7 +5138,7 @@ app.post('/addproductincome', async (req, res) => {
     //         invoiceid: newimport.id
     //     }
     // })
-    console.log({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
+    clog({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
 
     res.status(200).json({ "status": 200 })
 })
@@ -4914,7 +5237,7 @@ app.post('/editproductincome', async (req, res) => {
 app.post('/addproductimport', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log(invoicetime)
+    clog(invoicetime)
 
 
 
@@ -4979,7 +5302,7 @@ app.post('/addproductimport', async (req, res) => {
         //     }
         // })
     }
-    // console.log({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
+    // clog({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
 
     res.status(200).json({ "status": 200 })
 })
@@ -5005,10 +5328,10 @@ app.post('/productimportrefid', async (req, res) => {
     //     })
     //     if (exports.length > 0) {
     //         used = true
-    //         console.log('used at export invoices : ' + exports)
+    //         clog('used at export invoices : ' + exports)
     //     }
     // }
-    console.log({ refid, count: newexport.length, editing: newexport.length > 0, used: false })
+    clog({ refid, count: newexport.length, editing: newexport.length > 0, used: false })
     res.status(200).json({ "status": 200, rows: newexport, refid, count: newexport.length, editing: newexport.length > 0, used: false })
 })
 app.post('/deleteproductimport', async (req, res) => {
@@ -5059,14 +5382,14 @@ app.post('/deleteproductimport', async (req, res) => {
         //     }
         // })
     }
-    // console.log({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
+    // clog({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
 
     res.status(200).json({ "status": 200 })
 })
 app.post('/editproductimport', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log(invoicetime, client)
+    clog(invoicetime, client)
     const imports = await prisma.productincome.findMany({
         where: {
             refid: refid.toString()
@@ -5118,12 +5441,12 @@ app.post('/editproductimport', async (req, res) => {
     //                     id: element.id
     //                 }
     //             })
-    //             console.log('reset for re export done!')
+    //             clog('reset for re export done!')
     //         }
     //         console.error('invoice is used')
     //     }
     // }
-    console.log('move on')
+    clog('move on')
     //delete and revert first
     for (let index = 0; index < imports.length; index++) {
         const element = imports[index];
@@ -5165,9 +5488,9 @@ app.post('/editproductimport', async (req, res) => {
         //         refid: refid.toString()
         //     }
         // })
-        console.log('reset for re import done!')
+        clog('reset for re import done!')
     }
-    // console.log({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
+    // clog({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
 
 
 
@@ -5234,7 +5557,7 @@ app.post('/editproductimport', async (req, res) => {
 
         //     }
         // })
-        console.log('creation of import done!')
+        clog('creation of import done!')
     }
 
 
@@ -5252,7 +5575,7 @@ app.post('/editproductimport', async (req, res) => {
     //         payed: true
     //     }
     // })
-    // console.log('need to re exp amount : ' + autoexports.length)
+    // clog('need to re exp amount : ' + autoexports.length)
     // var newlot = []
 
     // for (let i = 0; i < autoexports.length; i++) {
@@ -5280,31 +5603,31 @@ app.post('/editproductimport', async (req, res) => {
     //         average.push(v.price)
     //     })
     //     average = average.reduce((a, b) => a + b, 0) / average.length;
-    //     console.log({ sum, average })
+    //     clog({ sum, average })
     //     const totalamount = sum
-    //     console.log({ "evailable balance ": sum })
+    //     clog({ "evailable balance ": sum })
     //     if (rows.amount > totalamount) {
-    //         console.log('not enough')
+    //         clog('not enough')
     //         res.status(400)
     //         return
     //     }
     //     var remaining = element.amount
-    //     console.log('avail lots for re exp ' + lots.length)
+    //     clog('avail lots for re exp ' + lots.length)
     //     for (let index = 0; index < lots.length; index++) {
     //         const element = lots[index];
     //         const startremain = element.remaining
     //         var lotremain = element.remaining
-    //         console.log({ "Start remaining amount for transaction": remaining, "Start available in lot": lotremain })
+    //         clog({ "Start remaining amount for transaction": remaining, "Start available in lot": lotremain })
     //         if (lotremain < remaining) {
-    //             console.log('lot is smaller ++++++++++++++++++++')
+    //             clog('lot is smaller ++++++++++++++++++++')
     //             remaining = remaining - lotremain
     //             lotremain = 0
     //         } else if (lotremain > remaining) {
-    //             console.log('lot is bigger +++++++++++++++++++++')
+    //             clog('lot is bigger +++++++++++++++++++++')
     //             lotremain = lotremain - remaining
     //             remaining = 0
     //         } else if (lotremain == remaining) {
-    //             console.log('lot is equal ++++++++++++++++++++++')
+    //             clog('lot is equal ++++++++++++++++++++++')
     //             remaining = remaining - lotremain
     //             lotremain = 0
     //         }
@@ -5338,7 +5661,7 @@ app.post('/editproductimport', async (req, res) => {
     //                 }
     //             })
     //         }
-    //         console.log('created a new manual exp')
+    //         clog('created a new manual exp')
     //         const lotss = await prisma.products.findMany({
     //             where: {
     //                 toid: product[0].id
@@ -5356,14 +5679,14 @@ app.post('/editproductimport', async (req, res) => {
     //                 quantity: Number(sum)
     //             }
     //         })
-    //         console.log({ "new inv": newinvprod.quantity, "magic num": (Number(startremain) - lotremain) })
-    //         console.log({ "End remaining amount for transaction": remaining, "End available in lot": lotremain })
-    //         console.log({ "s": startremain, "e": lotremain, "d": startremain - lotremain })
-    //         console.log('cycle =================================================')
+    //         clog({ "new inv": newinvprod.quantity, "magic num": (Number(startremain) - lotremain) })
+    //         clog({ "End remaining amount for transaction": remaining, "End available in lot": lotremain })
+    //         clog({ "s": startremain, "e": lotremain, "d": startremain - lotremain })
+    //         clog('cycle =================================================')
     //     }
 
 
-    //     console.log({ refid, effected: newlot.length, lotscount: lots.length })
+    //     clog({ refid, effected: newlot.length, lotscount: lots.length })
     // }
 
     // await prisma.autoproductexports.updateMany({
@@ -5376,7 +5699,18 @@ app.post('/editproductimport', async (req, res) => {
     // })
     res.status(200).json({ "status": 200 })
 })
+app.post('/fridgeimportrefid', async (req, res) => {
+    const { refid } = req.body
+    var used = false
+    const newexport = await prisma.fridgeproducts.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
 
+    clog({ refid, count: newexport.length, editing: newexport.length > 0, used: false })
+    res.status(200).json({ "status": 200, rows: newexport, refid, count: newexport.length, editing: newexport.length > 0, used: false })
+})
 
 
 
@@ -5384,7 +5718,7 @@ app.post('/editproductimport', async (req, res) => {
 app.post('/addproductreturn', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log(invoicetime)
+    clog(invoicetime)
 
 
 
@@ -5449,7 +5783,7 @@ app.post('/addproductreturn', async (req, res) => {
         //     }
         // })
     }
-    // console.log({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
+    // clog({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
 
     res.status(200).json({ "status": 200 })
 })
@@ -5510,15 +5844,15 @@ app.post('/deleteproductreturn', async (req, res) => {
         //     }
         // })
     }
-    // console.log({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
+    // clog({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
 
     res.status(200).json({ "status": 200 })
 })
 app.post('/editproductreturn', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log('product return with retid of ' + refid)
-    console.log(invoicetime)
+    clog('product return with retid of ' + refid)
+    clog(invoicetime)
     const imports = await prisma.productincome.findMany({
         where: {
             refid: refid.toString()
@@ -5567,7 +5901,7 @@ app.post('/editproductreturn', async (req, res) => {
         //     }
         // })
     }
-    // console.log({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
+    // clog({ selection1, selection2, newimport, clientupdate, productupdate, newhistory })
 
 
 
@@ -5648,14 +5982,14 @@ app.post('/editproductreturn', async (req, res) => {
 
 
 app.get('/producthistory', async (req, res) => {
-    console.log('expenses request')
+    clog('expenses request')
     const products = await prisma.productincome.findMany({
     })
     res.json({ 'status': 200, products })
 })
 app.post('/searchproducthistoryexact', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productincome.findMany({
         where: {
             to: searchtext
@@ -5669,12 +6003,12 @@ app.post('/searchproducthistoryexact', async (req, res) => {
     var sum = 0
     sum = prod.length > 0 ? prod[0].quantity : 0
     const average = foundproduts.length > 0 ? foundproduts[foundproduts.length - 1].price : 0
-    console.log(average)
+    clog(average)
     res.status(200).json({ "status": 200, foundproduts, sum, average })
 })
 app.post('/searchproducthistory', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productincome.findMany({
         where: {
             to: {
@@ -5687,10 +6021,10 @@ app.post('/searchproducthistory', async (req, res) => {
 })
 app.post('/searchproducthistorygeneral', async (req, res) => {
     const { client, refid, product, date, fdate } = req.body
-    console.log(req.body)
+    clog(req.body)
     const time = date == '' ? new Date() : new Date(date);
     const ftime = fdate == '' ? new Date() : new Date(fdate);
-    console.log(new Date(date))
+    clog(new Date(date))
     if (refid) {
         var results = await prisma.productincome.findMany({
             where: {
@@ -5710,7 +6044,7 @@ app.post('/searchproducthistorygeneral', async (req, res) => {
         results.sort((a, b) => {
             return new Date(a.time) - new Date(b.time)
         })
-        console.log({ results: results.length })
+        clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
     } else {
         var results = await prisma.productincome.findMany({
@@ -5733,13 +6067,13 @@ app.post('/searchproducthistorygeneral', async (req, res) => {
         results.sort((a, b) => {
             return new Date(a.time) - new Date(b.time)
         })
-        console.log({ results: results.length })
+        clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
     }
 })
 app.post('/searchproducthistoryexactbyclient', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productincome.findMany({
         where: {
             from: searchtext
@@ -5750,7 +6084,7 @@ app.post('/searchproducthistoryexactbyclient', async (req, res) => {
 })
 app.post('/searchproducthistorybyclient', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productincome.findMany({
         where: {
             from: {
@@ -5763,7 +6097,7 @@ app.post('/searchproducthistorybyclient', async (req, res) => {
 })
 app.post('/searchproducthistorybyclientexact', async (req, res) => {
     const { searchtext, clientname } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productoutcome.findMany({
         where: {
             productname: searchtext,
@@ -5780,7 +6114,7 @@ app.post('/searchproducthistorybyclientexact', async (req, res) => {
 
 
 app.get('/productoutcome', async (req, res) => {
-    console.log('product request')
+    clog('product request')
     const products = await prisma.productoutcome.findMany({
     })
     res.json({ 'status': 200, products })
@@ -5792,7 +6126,7 @@ app.post('/addproductoutcome', async (req, res) => {
             id: Number(prodid)
         }
     })
-    console.log(req.body)
+    clog(req.body)
     // const selhistory = await prisma.products.findUnique({
     //     where: {
     //         id: Number(pricehistoryid)
@@ -5841,13 +6175,13 @@ app.post('/addproductoutcome', async (req, res) => {
 
         }
     })
-    console.log({ selection1, selclient, newexport, editedinvprod, edithistory, editedinvprod })
+    clog({ selection1, selclient, newexport, editedinvprod, edithistory, editedinvprod })
 
     res.status(200).json({ "status": 200 })
 })
 app.post('/searchproductoutcomeexact', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productoutcome.findMany({
         where: {
             productname: searchtext
@@ -5858,7 +6192,7 @@ app.post('/searchproductoutcomeexact', async (req, res) => {
 })
 app.post('/searchproductoutcome', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productoutcome.findMany({
         where: {
             productname: {
@@ -5871,7 +6205,7 @@ app.post('/searchproductoutcome', async (req, res) => {
 })
 app.post('/searchproductoutcomeexactbyclient', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productoutcome.findMany({
         where: {
             clientname: searchtext
@@ -5882,7 +6216,7 @@ app.post('/searchproductoutcomeexactbyclient', async (req, res) => {
 })
 app.post('/searchproductoutcomebyclient', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.productoutcome.findMany({
         where: {
             clientname: {
@@ -5896,7 +6230,7 @@ app.post('/searchproductoutcomebyclient', async (req, res) => {
 app.post('/addproductexport', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log(invoicetime)
+    clog(invoicetime)
     for (let index = 0; index < rows.length; index++) {
         const element = rows[index];
 
@@ -5959,7 +6293,7 @@ app.post('/addproductexport', async (req, res) => {
 
             }
         })
-        console.log({ selclient, newexport, editedinvprod, edithistory, editedinvprod })
+        clog({ selclient, newexport, editedinvprod, edithistory, editedinvprod })
 
 
 
@@ -5986,7 +6320,7 @@ app.post('/productexportreturnrefid', async (req, res) => {
 })
 app.post('/deleteproductexport', async (req, res) => {
     const { refid } = req.body
-    console.log('product export delete request with refid of ' + refid)
+    clog('product export delete request with refid of ' + refid)
     const data = await prisma.productoutcome.findMany({
         where: {
             refid: refid.toString()
@@ -6062,17 +6396,17 @@ app.post('/deleteproductexport', async (req, res) => {
 app.post('/editproductexport', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log(invoicetime)
+    clog(invoicetime)
 
 
-    console.log('product export edit request with refid of ' + refid)
+    clog('product export edit request with refid of ' + refid)
     const data = await prisma.productoutcome.findMany({
         where: {
             refid: refid.toString()
         }
     })
 
-    console.log(data)
+    clog(data)
     for (let index = 0; index < data.length; index++) {
         const element = data[index];
         const selection1 = await prisma.inventoryproducts.findUnique({
@@ -6090,7 +6424,7 @@ app.post('/editproductexport', async (req, res) => {
                 name: element.clientname
             }
         })
-        console.log({ 'product': selection1, 'client': selclient })
+        clog({ 'product': selection1, 'client': selclient })
         const editedinvprod = await prisma.inventoryproducts.update({
             where: {
                 id: selection1.id
@@ -6199,7 +6533,7 @@ app.post('/editproductexport', async (req, res) => {
                 returnid: element.returnid.toString()
             }
         })
-        console.log({ selection1, selclient, newexport, editedinvprod, edithistory, editedinvprod })
+        clog({ selection1, selclient, newexport, editedinvprod, edithistory, editedinvprod })
 
 
 
@@ -6210,11 +6544,11 @@ app.post('/editproductexport', async (req, res) => {
 app.post('/editproductexportreturn', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log(invoicetime)
+    clog(invoicetime)
 
 
-    console.log('product export return edit request with refid of ' + refid)
-    console.log(req.body)
+    clog('product export return edit request with refid of ' + refid)
+    clog(req.body)
     const data = await prisma.productoutcome.findMany({
         where: {
             returnid: refid.toString()
@@ -6238,7 +6572,7 @@ app.post('/editproductexportreturn', async (req, res) => {
                 name: element.clientname
             }
         })
-        console.log({ product: selection1, client: selclient })
+        clog({ product: selection1, client: selclient })
         const editedinvprod = await prisma.inventoryproducts.update({
             where: {
                 id: selection1.id
@@ -6278,7 +6612,7 @@ app.post('/editproductexportreturn', async (req, res) => {
 
     for (let index = 0; index < rows.length; index++) {
         const element = rows[index];
-        console.log(rows)
+        clog(rows)
 
         const selection1 = await prisma.inventoryproducts.findUnique({
             where: {
@@ -6333,7 +6667,7 @@ app.post('/editproductexportreturn', async (req, res) => {
                 returnid: refid
             }
         })
-        console.log({ selection1, selclient, newexport, editedinvprod, edithistory, editedinvprod })
+        clog({ selection1, selclient, newexport, editedinvprod, edithistory, editedinvprod })
 
 
 
@@ -6344,11 +6678,11 @@ app.post('/editproductexportreturn', async (req, res) => {
 
 //done
 app.post('/deleteworkerpayment', async (req, res) => {
-    console.log('delete worker payment request')
+    clog('delete worker payment request')
     const { deleteproduct } = req.body
     for (let index = 0; index < deleteproduct.length; index++) {
         const element = deleteproduct[index];
-        console.log(element)
+        clog(element)
         const id = Number(element.id)
         const workerid = Number(element.workerid)
         const total = Number(element.remaining)
@@ -6370,20 +6704,20 @@ app.post('/deleteworkerpayment', async (req, res) => {
                 payment: worker.payment - total
             }
         })
-        console.log(updatedworker)
+        clog(updatedworker)
     }
     const workers = await prisma.workerpayout.findMany({
     })
     res.json({ 'status': 200, workers })
 })
 app.get('/workerspay', async (req, res) => {
-    console.log('expenses request')
+    clog('expenses request')
     const products = await prisma.workerpayout.findMany({
     })
     res.json({ 'status': 200, products })
 })
 app.post('/createworkerinvoice', async (req, res) => {
-    console.log(req.body)
+    clog(req.body)
     const { workername, amount, price, total, nights, returns, date } = req.body
     const selection1 = await prisma.workers.findMany({
         where: {
@@ -6404,7 +6738,7 @@ app.post('/createworkerinvoice', async (req, res) => {
             time: new Date(date)
         }
     })
-    console.log(newpayout)
+    clog(newpayout)
 
     const editedworker = await prisma.workers.update({
         where: {
@@ -6419,7 +6753,7 @@ app.post('/createworkerinvoice', async (req, res) => {
     res.status(200).json({ "status": 200, workers, editedworker })
 })
 app.post('/editworkerinvoice', async (req, res) => {
-    console.log(req.body)
+    clog(req.body)
     const { newdata, amount, price, total, selid, returns, nights, date } = req.body
     const selection1 = await prisma.workers.findUnique({
         where: {
@@ -6443,7 +6777,7 @@ app.post('/editworkerinvoice', async (req, res) => {
             time: new Date(date)
         }
     })
-    console.log(newpayout)
+    clog(newpayout)
 
     const editedworker = await prisma.workers.update({
         where: {
@@ -6455,12 +6789,12 @@ app.post('/editworkerinvoice', async (req, res) => {
     })
     const workers = await prisma.workerpayout.findMany({
     })
-    console.log(selection1)
+    clog(selection1)
     res.status(200).json({ "status": 200, workers: workers })
 })
 app.post('/searchworkerspaysbynameexact', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.workerpayout.findMany({
         where: {
             workername: searchtext
@@ -6471,7 +6805,7 @@ app.post('/searchworkerspaysbynameexact', async (req, res) => {
 })
 app.post('/searchworkerspaysbydateexact', async (req, res) => {
     const { searchtext } = req.body
-    console.log(new Date(searchtext).setHours(24))
+    clog(new Date(searchtext).setHours(24))
     const foundproduts = await prisma.workerpayout.findMany({
         where: {
             time: {
@@ -6485,7 +6819,7 @@ app.post('/searchworkerspaysbydateexact', async (req, res) => {
 })
 app.post('/searchworkerspaysbyname', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.workerpayout.findMany({
         where: {
             workername: {
@@ -6502,18 +6836,18 @@ app.post('/searchworkerspaysbyname', async (req, res) => {
 
 
 app.get('/fridgeproducts', async (req, res) => {
-    console.log('product request')
-    console.log(1)
+    clog('product request')
+    clog(1)
     const products = await prisma.fridgeproducts.findMany({
     })
     res.json({ 'status': 200, products })
 })
 app.post('/searchfridgehistorygeneral', async (req, res) => {
     const { client, refid, product, date, fdate } = req.body
-    console.log(req.body)
+    clog(req.body)
     const time = date == '' ? new Date() : new Date(date);
     const ftime = fdate == '' ? new Date() : new Date(fdate);
-    console.log(new Date(date))
+    clog(new Date(date))
     if (refid) {
         const results = await prisma.fridgeproducts.findMany({
             where: {
@@ -6530,7 +6864,7 @@ app.post('/searchfridgehistorygeneral', async (req, res) => {
                 },
             }
         })
-        console.log({ results: results.length })
+        clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
     } else {
         const results = await prisma.fridgeproducts.findMany({
@@ -6550,7 +6884,7 @@ app.post('/searchfridgehistorygeneral', async (req, res) => {
                 },
             }
         })
-        console.log({ results: results.length })
+        clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
     }
 })
@@ -6571,7 +6905,7 @@ app.post('/addfridgeproduct', async (req, res) => {
                 }
 
 
-    console.log(mesure)
+    clog(mesure)
     const newproduct = await prisma.fridgeproducts.create({
         data: {
             name: name,
@@ -6599,7 +6933,7 @@ app.post('/editfridgeproduct', async (req, res) => {
                     mesure = 3
                 }
 
-    console.log(mesure, req.body)
+    clog(mesure, req.body)
     const editedproduct = await prisma.fridgeproducts.update({
         where: {
             id: Number(selid)
@@ -6617,8 +6951,8 @@ app.post('/editfridgeproduct', async (req, res) => {
 })
 app.post('/searchfridgeproduct', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
-    console.log(2)
+    clog(searchtext)
+    clog(2)
     const foundproduts = await prisma.fridgeproducts.findMany({
         where: {
             name: {
@@ -6630,15 +6964,15 @@ app.post('/searchfridgeproduct', async (req, res) => {
     res.status(200).json({ "status": 200, foundproduts })
 })
 app.get('/fridgeincome', async (req, res) => {
-    console.log('expenses request')
-    console.log(3)
+    clog('expenses request')
+    clog(3)
     const productincome = await prisma.fridgeproducts.findMany({
     })
     res.json({ 'status': 200, productincome })
 })
 app.post('/addfridgeincome', async (req, res) => {
     const { newdata, newamount, newexpenses, newloss, newtotal } = req.body
-    console.log(req.body)
+    clog(req.body)
     const newoutcome = await prisma.productoutcome.update({
         where: {
             id: Number(newdata.id)
@@ -6652,7 +6986,7 @@ app.post('/addfridgeincome', async (req, res) => {
             id: newdata.productid
         }
     })
-    console.log(product)
+    clog(product)
     const newhistory = await prisma.fridgeproducts.create({
         data: {
             from: newdata.clientname,
@@ -6666,7 +7000,7 @@ app.post('/addfridgeincome', async (req, res) => {
             amount: Number(newexpenses),
         }
     })
-    console.log({ newhistory })
+    clog({ newhistory })
 
     res.status(200).json({ "status": 200 })
 })
@@ -6677,14 +7011,14 @@ app.post('/addfridgeincome', async (req, res) => {
 
 
 app.get('/productlinks', async (req, res) => {
-    console.log('product link request')
+    clog('product link request')
     const links = await prisma.plink.findMany({
     })
     res.json({ 'status': 200, links })
 })
 app.post('/exportproduct', async (req, res) => {
     const { clientname, productname, amount } = req.body
-    console.log(req.body)
+    clog(req.body)
     const availablelots = await prisma.products.findMany({
         where: {
             to: productname
@@ -6695,7 +7029,7 @@ app.post('/exportproduct', async (req, res) => {
         sum += v.amount;
     })
     const totalamount = sum
-    console.log(sum)
+    clog(sum)
     if (amount > totalamount) {
         res.status(200).json({ "status": 400 })
         return
@@ -6704,23 +7038,23 @@ app.post('/exportproduct', async (req, res) => {
     for (let index = 0; index < availablelots.length; index++) {
         const element = availablelots[index];
         var lotremain = element.amount
-        console.log({ remaining, lotremain })
+        clog({ remaining, lotremain })
         if (lotremain < remaining) {
-            console.log('am')
+            clog('am')
             remaining = remaining - lotremain
             lotremain = 0
         } else {
-            console.log('lot')
+            clog('lot')
             lotremain = lotremain - remaining
             remaining = 0
         }
-        console.log('cycle')
-        console.log({ remaining, lotremain })
+        clog('cycle')
+        clog({ remaining, lotremain })
     }
 })
 app.post('/linkproducts', async (req, res) => {
     const { bigproductname, smallproductname, amount } = req.body
-    console.log(req.body)
+    clog(req.body)
 
 
 
@@ -6743,7 +7077,7 @@ app.post('/linkproducts', async (req, res) => {
             amount: Number(amount)
         }
     })
-    console.log({ selbprod, selsprod })
+    clog({ selbprod, selsprod })
     res.status(200).json({ "status": 200 })
 })
 
@@ -6758,7 +7092,7 @@ app.post('/linkproducts', async (req, res) => {
 app.post('/addfinalimport', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log(invoicetime)
+    clog(invoicetime)
     for (let index = 0; index < rows.length; index++) {
         const element = rows[index];
         const amount = Number(element.amount - element.return)
@@ -6828,37 +7162,37 @@ app.post('/addfinalimport', async (req, res) => {
 })
 app.post('/finalimportrefid', async (req, res) => {
     const { refid } = req.body
-    console.log(4)
+    clog(4)
     const newexport = await prisma.fridgeproducts.findMany({
         where: {
             refid: refid.toString()
         }
     })
-    console.log(newexport)
+    clog(newexport)
     res.status(200).json({ "status": 200, rows: newexport })
 })
 app.post('/finalimportdate', async (req, res) => {
     const { time } = req.body
     const invoicetime = new Date(time)
-    console.log(5)
+    clog(5)
     const newexport = await prisma.fridgeproducts.findMany({
         where: {
             time: invoicetime
         }
     })
-    console.log(newexport)
+    clog(newexport)
     res.status(200).json({ "status": 200, rows: newexport })
 })
 app.post('/deletefinalimport', async (req, res) => {
     const { refid } = req.body
-    console.log(6)
+    clog(6)
     const imports = await prisma.fridgeproducts.findMany({
         where: {
             refid: refid.toString()
         }
     })
 
-    console.log(imports)
+    clog(imports)
     for (let index = 0; index < imports.length; index++) {
         const element = imports[index];
         const selection2 = await prisma.clients.findUnique({
@@ -6885,14 +7219,14 @@ app.post('/deletefinalimport', async (req, res) => {
 app.post('/editfinalimport', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log(invoicetime)
-    console.log(7)
+    clog(invoicetime)
+    clog(7)
     const imports = await prisma.fridgeproducts.findMany({
         where: {
             refid: refid.toString()
         }
     })
-    console.log(imports)
+    clog(imports)
     for (let index = 0; index < imports.length; index++) {
         const element = imports[index];
         const selection2 = await prisma.clients.findUnique({
@@ -7076,7 +7410,7 @@ app.post('/autoproductexportrefid', async (req, res) => {
             refid: refid.toString()
         }
     })
-    console.log({ refid, count: newexport.length, editing: newexport.length > 0, used: false })
+    clog({ refid, count: newexport.length, editing: newexport.length > 0, used: false })
     res.status(200).json({ "status": 200, rows: newexport, refid, count: newexport.length, editing: newexport.length > 0, used: false })
 
 })
@@ -7095,7 +7429,7 @@ app.post('/productimportrefid', async (req, res) => {
             refid: refid.toString()
         }
     })
-    console.log({ refid, count: newexport.length, editing: newexport.length > 0, used: false })
+    clog({ refid, count: newexport.length, editing: newexport.length > 0, used: false })
     res.status(200).json({ "status": 200, rows: newexport, refid, count: newexport.length, editing: newexport.length > 0, used: false })
 })
 
@@ -7104,7 +7438,7 @@ app.post('/productimportrefid', async (req, res) => {
 
 app.post('/autoproductexportdelete', async (req, res) => {
     const { refid } = req.body
-    console.log("auto product export delete with refid of " + refid)
+    clog("auto product export delete with refid of " + refid)
     const autoexports = await prisma.autoproductexports.findMany({
         where: {
             refid: refid.toString()
@@ -7145,15 +7479,15 @@ app.post('/autoproductexportdelete', async (req, res) => {
 app.post('/autoexportproductsreturn', async (req, res) => {
     const { rows, refid, client, time } = req.body
     const invoicetime = new Date(time)
-    console.log('product export return edit with refid of : ' + refid)
-    console.log(invoicetime)
+    clog('product export return edit with refid of : ' + refid)
+    clog(invoicetime)
     const imports = await prisma.productincome.findMany({
         where: {
             refid: refid.toString(),
             type: 1
         }
     })
-    console.log('delete and revert first')
+    clog('delete and revert first')
     //delete and revert first
     for (let index = 0; index < imports.length; index++) {
         const element = imports[index];
@@ -7178,7 +7512,7 @@ app.post('/autoexportproductsreturn', async (req, res) => {
         })
     }
 
-    console.log('create everything again')
+    clog('create everything again')
     //create everything again
     for (let index = 0; index < rows.length; index++) {
         const element = rows[index];
@@ -7237,7 +7571,7 @@ app.post('/searchpout', async (req, res) => {
     })
     average = average.reduce((a, b) => a + b, 0) / average.length;
     average = 10000
-    console.log({ "status": 200, foundproduts, sum, average })
+    clog({ "status": 200, foundproduts, sum, average })
     res.status(200).json({ "status": 200, foundproduts, sum, average })
 })
 
@@ -7249,7 +7583,7 @@ app.post('/searchlotsbyrefid', async (req, res) => {
             refid: refid.toString()
         }
     })
-    console.log({ "status": 200, refid })
+    clog({ "status": 200, refid })
     res.status(200).json({ "status": 200, foundproduts })
 })
 app.post('/searchautoexportsbyrefid', async (req, res) => {
@@ -7259,15 +7593,15 @@ app.post('/searchautoexportsbyrefid', async (req, res) => {
             refid: refid.toString()
         }
     })
-    console.log({ "status": 200, refid })
+    clog({ "status": 200, refid })
     res.status(200).json({ "status": 200, foundproduts })
 })
 
 app.post('/clientsummery', async (req, res) => {
     const { clientname, date } = req.body
     const time = date == '' ? new Date() : new Date(date)
-    console.log(date)
-    console.log('client summery request fro client : ' + clientname)
+    clog(date)
+    clog('client summery request fro client : ' + clientname)
     const client = await prisma.clients.findMany({
         where: {
             name: clientname
@@ -7281,7 +7615,7 @@ app.post('/clientsummery', async (req, res) => {
             }
         }
     })
-    console.log(8)
+    clog(8)
     const imports = await prisma.fridgeproducts.findMany({
         where: {
             fromid: client[0].id,
@@ -7301,7 +7635,8 @@ app.post('/clientsummery', async (req, res) => {
     })
 
 
-
+    var cmoney = 0
+    var vmoney = 0
     var balance = 0;
     const vault = client[0]
     var sumarray = [];
@@ -7349,6 +7684,8 @@ app.post('/clientsummery', async (req, res) => {
             "TotalPrice": (element.amount - element.return) * element.price,
             "Notes": 'وارد خام'
         })
+        cmoney = cmoney + ((element.amount - element.return) * element.price)
+
     }
     //vault outcome transactions
     for (let index = 0; index < vaultout.length; index++) {
@@ -7426,8 +7763,7 @@ app.post('/clientsummery', async (req, res) => {
             "Notes": ''
         })
     }
-    var cmoney = 0
-    var vmoney = 0
+
     //clientstransactions transactions
     for (let index = 0; index < clientstransactions.length; index++) {
         const element = clientstransactions[index];
@@ -7581,14 +7917,14 @@ app.post('/clientsummery', async (req, res) => {
         else acc.push(curr);
         return acc;
     }, []);
-    console.log(sumarray)
+    clog(sumarray)
     res.status(200).json({ "status": 200, retsum, client, imports, exports, importsum, exportsum, combined, diff, sumarray })
 })
 
 
 app.post('/selfinalimportclient', async (req, res) => {
     const { clientname } = req.body
-    console.log('client sel for final import with name : ' + clientname)
+    clog('client sel for final import with name : ' + clientname)
     const client = await prisma.clients.findMany({
         where: {
             name: clientname
@@ -7599,7 +7935,7 @@ app.post('/selfinalimportclient', async (req, res) => {
             clientid: client[0].id
         }
     })
-    console.log(9)
+    clog(9)
     const imports = await prisma.fridgeproducts.findMany({
         where: {
             fromid: client[0].id
@@ -7667,13 +8003,26 @@ app.post('/selfinalimportclient', async (req, res) => {
 })
 app.post('/editlot', async (req, res) => {
     const { lotid, newprice, newamount } = req.body
-    console.log(req.body)
+    clog(req.body)
     const invoice = await prisma.productincome.findUnique({
         where: {
             id: lotid
         }
     })
-    console.log({ invoice })
+    const invprod = await prisma.inventoryproducts.findUnique({
+        where: {
+            id: invoice.toid
+        }
+    })
+    const updinvprod = await prisma.inventoryproducts.update({
+        where: {
+            id: invprod.id
+        },
+        data: {
+            quantity: invprod.quantity - invoice.amount + Number(newamount)
+        }
+    })
+    clog({ invoice })
     const editinvoice = await prisma.productincome.update({
         where: {
             id: lotid
@@ -7686,15 +8035,6 @@ app.post('/editlot', async (req, res) => {
             remaining: invoice.remaining - invoice.amount + Number(newamount)
         }
     })
-
-    // const exportedinvoices = await prisma.productoutcome.updateMany({
-    //     where: {
-    //         lotid: lot.id
-    //     },
-    //     data: {
-    //         price: editlot.price
-    //     }
-    // })
     const client = await prisma.clients.findUnique({
         where: {
             id: invoice.fromid
@@ -7716,12 +8056,127 @@ app.post('/editlot', async (req, res) => {
             expense: Number(clientupdate.expense) + Number(editinvoice.price * editinvoice.amount)
         }
     })
-    res.status(200).json({ "status": 200 })
+
+    res.status(200).json({ "status": 200, newdata: editinvoice })
+})
+app.post('/editexportlot', async (req, res) => {
+    const { lotid, newprice, newamount } = req.body
+    clog(req.body)
+    const invoice = await prisma.autoproductexports.findUnique({
+        where: {
+            id: lotid
+        }
+    })
+    const invprod = await prisma.inventoryproducts.findUnique({
+        where: {
+            id: invoice.productid
+        }
+    })
+    const updinvprod = await prisma.inventoryproducts.update({
+        where: {
+            id: invprod.id
+        },
+        data: {
+            quantity: invprod.quantity + invoice.amount
+        }
+    })
+    clog({ invoice })
+    const editinvoice = await prisma.autoproductexports.update({
+        where: {
+            id: lotid
+        },
+        data: {
+            price: Number(newprice),
+            totalprice: Number(newprice * newamount),
+            amount: Number(newamount),
+            remaining: Number(newamount)
+        }
+    })
+    const newinvprod = await prisma.inventoryproducts.update({
+        where: {
+            id: invprod.id
+        },
+        data: {
+            quantity: updinvprod.quantity - Number(newamount)
+        }
+    })
+    res.status(200).json({ "status": 200, newdata: editinvoice })
+})
+app.post('/editfinalimportlot', async (req, res) => {
+    const { lotid, newprice, newamount, newreturn } = req.body
+    clog(req.body)
+    const invoice = await prisma.fridgeproducts.findUnique({
+        where: {
+            id: lotid
+        }
+    })
+    const client = await prisma.clients.findUnique({
+        where: {
+            id: invoice.fromid
+        }
+    })
+    const updateinvoice = await prisma.clients.update({
+        where: {
+            id: client.id
+        },
+        data: {
+            expense: client.expense - invoice.totalprice + (Number(newamount) - Number(newreturn)) * Number(newprice)
+        }
+    })
+    clog({ invoice })
+    const editinvoice = await prisma.fridgeproducts.update({
+        where: {
+            id: lotid
+        },
+        data: {
+            price: Number(newprice),
+            totalprice: (Number(newamount) - Number(newreturn)) * Number(newprice),
+            amount: Number(newamount),
+            remaining: (Number(newamount) - Number(newreturn)),
+            return: Number(newreturn)
+        }
+    })
+    res.status(200).json({ "status": 200, newdata: editinvoice })
 })
 
 
 
-
+app.post('/checkifmergable', async (req, res) => {
+    const { first, second } = req.body
+    var error1 = false;
+    var error2 = false;
+    const firstprod = await prisma.inventoryproducts.findMany({
+        where: {
+            name: first.toString()
+        }
+    })
+    const secondprod = await prisma.inventoryproducts.findMany({
+        where: {
+            name: second.toString()
+        }
+    })
+    if (firstprod.length !== 1) {
+        error1 = true;
+    }
+    if (secondprod.length !== 1) {
+        error2 = true;
+    }
+    if (firstprod.length > 0 && secondprod.length > 0) {
+        if (firstprod[0].id == secondprod[0].id) {
+            error1 = true;
+            error2 = true;
+        }
+    }
+    if (error1 || error2) {
+        res.status(200).json({ "status": 400, error1, error2 })
+        return
+    }
+    const firstamount = firstprod[0].quantity
+    const secondamount = secondprod[0].quantity
+    const equal = (firstamount == secondamount)
+    clog(req.body)
+    res.status(200).json({ "status": 200, error1, error2, firstamount, secondamount, equal })
+})
 
 
 
@@ -7729,14 +8184,14 @@ app.post('/editlot', async (req, res) => {
 
 
 app.get('/autoproductexportslist', async (req, res) => {
-    console.log('expenses request')
+    clog('expenses request')
     const products = await prisma.autoproductexports.findMany({
     })
     res.json({ 'status': 200, products })
 })
 app.post('/searchautoexportsexact', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.autoproductexports.findMany({
         where: {
             productname: searchtext
@@ -7749,12 +8204,12 @@ app.post('/searchautoexportsexact', async (req, res) => {
         average.push(v.price)
     })
     average = average.reduce((a, b) => a + b, 0) / average.length;
-    console.log(average)
+    clog(average)
     res.status(200).json({ "status": 200, foundproduts, sum, average })
 })
 app.post('/searchautoexportsexactbyclient', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.autoproductexports.findMany({
         where: {
             clientname: searchtext
@@ -7766,10 +8221,10 @@ app.post('/searchautoexportsexactbyclient', async (req, res) => {
 
 app.post('/searchproductexportgeneral', async (req, res) => {
     const { client, refid, product, date, fdate } = req.body
-    console.log(req.body)
+    clog(req.body)
     const time = date == '' ? new Date() : new Date(date);
     const ftime = fdate == '' ? new Date() : new Date(fdate);
-    console.log(new Date(date))
+    clog(new Date(date))
     if (refid) {
         const results = await prisma.autoproductexports.findMany({
             where: {
@@ -7786,7 +8241,7 @@ app.post('/searchproductexportgeneral', async (req, res) => {
                 }
             }
         })
-        console.log({ results: results.length })
+        clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
     } else {
         const results = await prisma.autoproductexports.findMany({
@@ -7806,13 +8261,13 @@ app.post('/searchproductexportgeneral', async (req, res) => {
                 }
             }
         })
-        console.log({ results: results.length })
+        clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
     }
 })
 app.post('/searchautoproductexportsbyclientexact', async (req, res) => {
     const { searchtext, clientname } = req.body
-    console.log(searchtext)
+    clog(searchtext)
     const foundproduts = await prisma.autoproductexports.findMany({
         where: {
             productname: searchtext,
@@ -7835,16 +8290,16 @@ app.post('/searchautoproductexportsbyclientexact', async (req, res) => {
 
 
 app.get('/fridgelist', async (req, res) => {
-    console.log('expenses request')
-    console.log(10)
+    clog('expenses request')
+    clog(10)
     const products = await prisma.fridgeproducts.findMany({
     })
     res.json({ 'status': 200, products })
 })
 app.post('/searchfridgeexact', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
-    console.log(11)
+    clog(searchtext)
+    clog(11)
     const foundproduts = await prisma.fridgeproducts.findMany({
         where: {
             to: searchtext
@@ -7857,13 +8312,13 @@ app.post('/searchfridgeexact', async (req, res) => {
         average.push(v.price)
     })
     average = average.reduce((a, b) => a + b, 0) / average.length;
-    console.log(average)
+    clog(average)
     res.status(200).json({ "status": 200, foundproduts, sum, average })
 })
 app.post('/searchfridgebyclient', async (req, res) => {
     const { searchtext } = req.body
-    console.log(searchtext)
-    console.log(12)
+    clog(searchtext)
+    clog(12)
     const foundproduts = await prisma.fridgeproducts.findMany({
         where: {
             from: searchtext
@@ -7874,8 +8329,8 @@ app.post('/searchfridgebyclient', async (req, res) => {
 })
 app.post('/searchfridgebyrefid', async (req, res) => {
     const { refid } = req.body
-    console.log(refid)
-    console.log(13)
+    clog(refid)
+    clog(13)
     const foundproduts = await prisma.fridgeproducts.findMany({
         where: {
             refid: refid
@@ -7921,7 +8376,7 @@ const resetamounts = async () => {
         average = average.reduce((a, b) => a + b, 0) / average.length;
         const totalamount = sum
         if (ele.amount > totalamount) {
-            console.log('not enough')
+            clog('not enough')
             res.status(400)
             return
         }
@@ -7993,7 +8448,7 @@ const resetamounts = async () => {
 
 
 
-        console.log(ele.refid)
+        clog(ele.refid)
     }
 }
 
@@ -8006,7 +8461,7 @@ app.post('/expensescheckrefid', async (req, res) => {
             refid: refid ? refid.toString() : ''
         }
     })
-    console.log('exp refid check ' + refid + ' ' + expenses.length)
+    clog('exp refid check ' + refid + ' ' + expenses.length)
     const avail = expenses.length > 0
     res.status(200).json({ "status": 200, avail })
 })
@@ -8023,7 +8478,7 @@ app.post('/expensescheckrefid', async (req, res) => {
 
 app.post('/vaultsummery', async (req, res) => {
     const { vaultname } = req.body
-    console.log(vaultname)
+    clog(vaultname)
     var vaultt = await prisma.vault.findMany({
         where: {
             name: vaultname
@@ -8283,13 +8738,171 @@ app.post('/vaultsummery', async (req, res) => {
         val = val + element.Income;
         summeryarray[index].Value = val;
     }
-    console.log(summeryarray[summeryarray.length - 1])
+    clog(summeryarray[summeryarray.length - 1])
     res.status(200).json({ "status": 200, summeryarray })
 })
 
 
 
 
+
+
+
+//product income return
+app.post('/productimportreturnrefid', async (req, res) => {
+    const { refid } = req.body
+    const newexport = await prisma.productoutcomereturn.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+    clog('product import return refid search', { refid, count: newexport.length, editing: newexport.length > 0, used: false })
+    res.status(200).json({ "status": 200, rows: newexport, refid, count: newexport.length, editing: newexport.length > 0 })
+
+})
+app.post('/editproductincomereturn', async (req, res) => {
+    const { rows, refid, clientname, time } = req.body
+
+
+    const autoexports = await prisma.productoutcomereturn.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+
+    for (let i = 0; i < autoexports.length; i++) {
+        const element = autoexports[i];
+        const prod = await prisma.inventoryproducts.findUnique({
+            where: {
+                id: element.toid
+            }
+        })
+        const client = await prisma.clients.findUnique({
+            where: {
+                id: element.fromid
+            }
+        })
+        const updprod = await prisma.inventoryproducts.update({
+            where: {
+                id: prod.id
+            },
+            data: {
+                quantity: prod.quantity + element.amount
+            }
+        })
+        const updclient = await prisma.clients.update({
+            where: {
+                id: client.id
+            },
+            data: {
+                expense: client.expense + element.totalprice
+            }
+        })
+        await prisma.productoutcomereturn.delete({
+            where: {
+                id: element.id
+            }
+        })
+    }
+
+
+    for (let i = 0; i < rows.length; i++) {
+        const element = rows[i];
+        const product = await prisma.inventoryproducts.findMany({
+            where: {
+                name: element.to
+            }
+        })
+        const client = await prisma.clients.findMany({
+            where: {
+                name: clientname
+            }
+        })
+        const newinvprod = await prisma.inventoryproducts.update({
+            where: {
+                id: product[0].id
+            },
+            data: {
+                quantity: product[0].quantity - element.amount
+            }
+        })
+        const updclient = await prisma.clients.update({
+            where: {
+                id: client[0].id
+            },
+            data: {
+                expense: client[0].expense - Number(element.price) * Number(element.amount)
+            }
+        })
+        const newautoexp = await prisma.productoutcomereturn.create({
+            data: {
+                refid: refid.toString(),
+                toid: product[0].id,
+                fromid: client[0].id,
+                to: product[0].name,
+                from: client[0].name,
+                totalprice: Number(element.price) * Number(element.amount),
+                price: Number(element.price),
+                amount: Number(element.amount),
+                remaining: Number(element.amount),
+                time: new Date(time),
+                remainigtotal: Number(element.price) * Number(element.amount)
+            }
+        })
+    }
+
+
+    res.status(200).json({ "status": 200 })
+})
+app.post('/productincomereturndelete', async (req, res) => {
+    const { refid } = req.body
+    clog('product income return delete with refid of ' + refid)
+
+    const autoexports = await prisma.productoutcomereturn.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+
+    for (let i = 0; i < autoexports.length; i++) {
+        const element = autoexports[i];
+        const prod = await prisma.inventoryproducts.findUnique({
+            where: {
+                id: element.toid
+            }
+        })
+        const client = await prisma.clients.findUnique({
+            where: {
+                id: element.fromid
+            }
+        })
+        const updprod = await prisma.inventoryproducts.update({
+            where: {
+                id: prod.id
+            },
+            data: {
+                quantity: prod.quantity + element.amount
+            }
+        })
+        const updclient = await prisma.clients.update({
+            where: {
+                id: client.id
+            },
+            data: {
+                expense: client.expense + element.totalprice
+            }
+        })
+        await prisma.productoutcomereturn.delete({
+            where: {
+                id: element.id
+            }
+        })
+    }
+
+
+
+    res.status(200).json({ "status": 200 })
+})
 
 
 
@@ -8337,7 +8950,7 @@ const resetworkers = async () => {
             }
         })
     }
-    console.log('finished')
+    clog('finished')
 }
 const rrrr = async () => {
     await prisma.clients.updateMany({
@@ -8346,7 +8959,7 @@ const rrrr = async () => {
             expense: 0
         }
     })
-    console.log('clients reset')
+    clog('clients reset')
     const income = await prisma.productincome.findMany({})
     const fridgereset = await prisma.fridgeproducts.updateMany({
         data: {
@@ -8354,7 +8967,7 @@ const rrrr = async () => {
             totalprice: 0
         }
     })
-    console.log('income invoices started with amount of : ' + income.length);
+    clog('income invoices started with amount of : ' + income.length);
     for (let index = 0; index < income.length; index++) {
         const element = income[index];
         const cl = await prisma.clients.findUnique({
@@ -8371,9 +8984,9 @@ const rrrr = async () => {
             }
         })
     }
-    console.log('income done')
+    clog('income done')
     const clientvaulttransaction = await prisma.clientvaulttransaction.findMany({})
-    console.log('clientvaulttransaction invoices started with amount of : ' + clientvaulttransaction.length);
+    clog('clientvaulttransaction invoices started with amount of : ' + clientvaulttransaction.length);
     for (let index = 0; index < clientvaulttransaction.length; index++) {
         const element = clientvaulttransaction[index];
         const cl = await prisma.clients.findUnique({
@@ -8390,7 +9003,7 @@ const rrrr = async () => {
             }
         })
     }
-    console.log('clientvaulttransaction done')
+    clog('clientvaulttransaction done')
 
     const clientmtrans = await prisma.clientm.findMany({})
     for (let index = 0; index < clientmtrans.length; index++) {
@@ -8420,7 +9033,7 @@ const rrrr = async () => {
             })
         }
     }
-    console.log('clientm done')
+    clog('clientm done')
 }
 const dd = async () => {
     const mm = await prisma.mtransaction.findMany({})
@@ -8440,8 +9053,8 @@ const dd = async () => {
             }
         })
     }
-    console.log('done')
+    clog('done')
 }
 app.listen(1024, () =>
-    console.log(`b2b app listening on port ${1024}!`),
+    clog(`b2b app listening on port ${1024}!`),
 );

@@ -32,9 +32,9 @@ import DataTable, { createTheme } from 'react-data-table-component';
 import { FormControlLabel, FormGroup } from '@mui/material';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#000000');
-        document.documentElement.style.setProperty('--seconscolor', '#1f1f1f');
-        document.documentElement.style.setProperty('--headercolor', '#00000018'); createTheme('newtheme', {
+        document.documentElement.style.setProperty('--firstcolor', '#23282e');
+        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
                 primary: '#fff',
@@ -285,16 +285,22 @@ function Poutcome() {
             return
         }
         console.log(newdata)
-        axios.post('http://localhost:1024/editlot', { lotid: newdata.id, newprice: newpayments, newamount: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/editexportlot', { lotid: newdata.id, newprice: newpayments, newamount: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
+                const index = rows.findIndex(obj => obj.id == resp.data.newdata.id)
+                var newrows = rows
+                newrows[index] = resp.data.newdata
+                console.log({ data: newrows[index] })
+                setrows([])
+                setrows([...newrows])
                 setloadrn3(false)
                 seteditrn(false)
             } else {
                 setloadrn(false)
                 alert('failed')
             }
-        })
+        }).catch(e => { alert(e.message) ;setloadrn(false) })
     }
     const searchprod = () => {
         setloadrn(true);
@@ -710,7 +716,7 @@ function Poutcome() {
                     data={rows}
                     onRowDoubleClicked={(data) => {
                         setnewdata(data);
-                        seteditrn(false);
+                        seteditrn(true);
                         setnewexpenses(data.amount);
                         setnewpayments(data.price)
                     }}
@@ -750,7 +756,7 @@ function Poutcome() {
                         fullWidth
                         label="اسم الصنف"
                         type="text"
-                        value={newdata.to}
+                        value={newdata.productname}
                         variant="outlined"
                         disabled
                     />

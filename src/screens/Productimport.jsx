@@ -23,9 +23,9 @@ import Autocomplete from '@mui/material/Autocomplete'
 import DataTable, { createTheme } from 'react-data-table-component';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#000000');
-        document.documentElement.style.setProperty('--seconscolor', '#1f1f1f');
-        document.documentElement.style.setProperty('--headercolor', '#00000018'); createTheme('newtheme', {
+        document.documentElement.style.setProperty('--firstcolor', '#23282e');
+        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
                 primary: '#fff',
@@ -265,7 +265,7 @@ function Productimport() {
                 setlotsid('')
                 setrows([])
                 setrefid(Math.floor(Math.random(1) * 1000000))
-                setnewexpenses('')
+                setnewexpenses(new Date().toISOString().split('T')[0])
                 setsubmit(false)
                 setfirstvaultname('')
             } else if (resp.data.status == 400) {
@@ -305,7 +305,7 @@ function Productimport() {
                 setlotsid('')
                 setrows([])
                 setrefid(Math.floor(Math.random(1) * 1000000))
-                setnewexpenses('')
+                setnewexpenses(new Date().toISOString().split('T')[0])
                 setsubmit(false)
                 setfirstvaultname('')
             } else if (resp.data.status == 400) {
@@ -540,7 +540,6 @@ function Productimport() {
                                 searchrefid(e.currentTarget.value);
                             }}
                             variant="outlined"
-                            onDoubleClick={() => { setrefid(Math.floor(Math.random(1) * 1000000)) }}
                         />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'baseline' }}>
@@ -587,7 +586,7 @@ function Productimport() {
                                     setlotsid('')
                                     setrows([])
                                     setrefid(Math.floor(Math.random(1) * 1000000))
-                                    setnewexpenses('')
+                                    setnewexpenses(new Date().toISOString().split('T')[0])
                                     setsubmit(false)
                                     setfirstvaultname('')
                                 }

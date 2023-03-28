@@ -32,9 +32,9 @@ import { FormControlLabel, FormGroup } from '@mui/material';
 
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#000000');
-        document.documentElement.style.setProperty('--seconscolor', '#1f1f1f');
-        document.documentElement.style.setProperty('--headercolor', '#00000018'); createTheme('newtheme', {
+        document.documentElement.style.setProperty('--firstcolor', '#23282e');
+        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
                 primary: '#fff',
@@ -154,7 +154,7 @@ function Fridge() {
         { icon: <SaveIcon onClick={(e) => { exportToCsv(e) }} />, name: 'Save' },
         {
             icon: <PrintIcon onClick={(e) => {
-                axios.post('http://localhost:1024/print/fridgeimports', { rows: rows , rows2 : rows}).then((resp) => {
+                axios.post('http://localhost:1024/print/fridgeimports', { rows: rows, rows2: rows }).then((resp) => {
                     setTimeout(() => {
                         window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                     }, 500);
@@ -288,6 +288,7 @@ function Fridge() {
     const [newexpenses, setnewexpenses] = useState('0')
     const [newcamount, setnewcamount] = useState(0)
     const [newpayments, setnewpayments] = useState('0')
+    const [newreturn, setnewreturn] = useState('0')
     const [newcode, setnewcode] = useState()
     const [newselid, setnewselid] = useState()
     const [newloadrn, setnewloadrn] = useState(false)
@@ -351,20 +352,33 @@ function Fridge() {
             alert('please enter an amount')
             return
         }
+        if (newreturn === '') {
+            alert('please enter a return amount')
+            return
+        }
         if (newpayments === '') {
             alert('please enter a price')
             return
         }
         console.log(newdata)
-        axios.post('http://localhost:1024/editlot', { lotid: newdata.id, newprice: newpayments, newamount: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/editfinalimportlot', { lotid: newdata.id, newprice: newpayments, newamount: newexpenses, newreturn }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
+                const index = rows.findIndex(obj => obj.id == resp.data.newdata.id)
+                var newrows = rows
+                newrows[index] = resp.data.newdata
+                console.log({ data: newrows[index] })
+                setrows([])
+                setrows([...newrows])
                 setloadrn3(false)
                 seteditrn(false)
             } else {
                 setloadrn(false)
                 alert('failed')
             }
+        }).catch(e => {
+            setloadrn(false)
+            alert(e.message)
         })
     }
     const searchprod = () => {
@@ -724,9 +738,10 @@ function Fridge() {
                     data={rows}
                     onRowDoubleClicked={(data) => {
                         setnewdata(data);
-                        seteditrn(false);
+                        seteditrn(true);
                         setnewexpenses(data.amount);
                         setnewpayments(data.price)
+                        setnewreturn(data.return)
                     }}
                 />
                 <div style={{ display: 'flex', width: '100%', justifyContent: 'start', alignItems: 'center' }}>
@@ -786,6 +801,18 @@ function Fridge() {
                         margin="dense"
                         size='small'
                         id="expenses"
+                        label="المرتجع"
+                        type="number"
+                        value={newreturn}
+                        onChange={(e) => { setnewreturn(e.currentTarget.value) }}
+                        variant="outlined"
+                    />
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        margin="dense"
+                        size='small'
+                        id="expenses"
                         label="السعر"
                         type="number"
                         value={newpayments}
@@ -801,7 +828,7 @@ function Fridge() {
                         label="total"
                         type="number"
                         disabled
-                        value={newpayments * newexpenses}
+                        value={(newexpenses - newreturn) * newpayments}
                         variant="outlined"
                     />
                 </DialogContent>
