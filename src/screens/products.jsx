@@ -76,7 +76,7 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme','light')
+            localStorage.setItem('Theme', 'light')
         }
 }
 
@@ -278,7 +278,9 @@ function Products() {
             }}>delete</Button>
             <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
                 axios.post('http://localhost:1024/print/productssum', {}).then((resp) => {
-                    window.open('localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
+                    setTimeout(() => {
+                        window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
+                    }, 500);
                 })
             }}> print</Button>
         </>
@@ -426,11 +428,9 @@ function Products() {
                         onChange={(e) => { setsearchtext(e.target.value); search(e.target.value) }}
                         variant="outlined"
                     />
-                    <Button style={{ marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
+                    <Button style={{ margin: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
                         setsearchtext(''); axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
                     }}>Clear</Button>
-                    <Button style={{ marginLeft: 20 }} variant='contained' color='success' onClick={() => { setprt(true) }}>PRINT</Button>
-
                 </div>
             </div>
             <div style={{ width: '100%' }}>

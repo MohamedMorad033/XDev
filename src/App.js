@@ -23,13 +23,6 @@ import Workers from './screens/Workers';
 import WorkerPayout from './screens/WorkerPayout';
 import Fridge from './screens/Fridge';
 import FridgeIncome from './screens/FridgeIncome';
-
-
-
-
-
-
-
 import { styled, alpha } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -91,6 +84,7 @@ import ClientAdvance from './screens/ClientAdvance';
 import Productincomereturn from './screens/Productincomereturn';
 import Productsmerge from './screens/Productsmerge';
 import WorkerAdvance from './screens/WorkerAdvance';
+import FrigeItems from './screens/FrigeItems';
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -375,6 +369,16 @@ function Home() {
                       {value == 0 ? <Star color='primary' /> : <StarBorder />}
                     </ListItemIcon>
                     <ListItemText primary="الاصناف" />
+                  </ListItemButton>
+
+                  <ListItemButton onClick={() => {
+                    settitle("اكواد الثلاجه")
+                    setValue(33)
+                  }} sx={{ pl: 4 }}>
+                    <ListItemIcon color='#aaaaaa'>
+                      {value == 33 ? <Star color='primary' /> : <StarBorder />}
+                    </ListItemIcon>
+                    <ListItemText primary="الثلاجه" />
                   </ListItemButton>
 
                   <ListItemButton onClick={() => {
@@ -950,6 +954,9 @@ function Home() {
             : null}
           {value == 32 ?
             <WorkerAdvance />
+            : null}
+          {value == 33 ?
+            <FrigeItems />
             : null}
 
         </div>

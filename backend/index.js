@@ -21,6 +21,9 @@ const clog = (d) => {
     myLogger.log(d);
     console.log(d);
 }
+app.get('/ping', async (req, res) => {
+    res.json({ 'Status': 200 })
+});
 app.all('/*', function (req, res, next) {
     next()
 });
@@ -196,12 +199,9 @@ var invoice = {
     invoice_nr: 1234
 };
 
-app.get('/', async (req, res) => {
-    res.json({ 'Status': 200 })
-});
-app.get('/ping', async (req, res) => {
-    res.json({ 'Status': 200 })
-});
+
+
+
 app.post('/print/productssum', async (req, res) => {
     let doc = new pdfkit({ size: "A4", margin: 20 });
     invoice.items = await prisma.inventoryproducts.findMany({})
@@ -215,10 +215,8 @@ app.post('/print/productssum', async (req, res) => {
     for (let index = 0; index < pages; index++) {
         //draw header
         doc
-            .image("logo.png", 20, 45, { width: 50 })
+            .image("newlogo.png", 20, 45, { width: 200 })
             .fillColor("#444444")
-            .fontSize(20)
-            .text("B2B Corp.", 80, 57)
             .fontSize(10)
             .text("B2B Corp.", 200, 50, { align: "right" })
             .text("kom hamada", 200, 65, { align: "right" })
@@ -226,47 +224,35 @@ app.post('/print/productssum', async (req, res) => {
             .moveDown();
 
 
-
         // draw detaild
         doc
             .fillColor("#444444")
             .fontSize(20)
-            .text("Report", 20, 100);
+            .text("Inventory Report", 20, 100);
 
         generateHr(doc, 125);
 
-        const customerInformationTop = 140;
+
+        const customerInformationTop = 125;
 
         doc
             .fontSize(10)
-            .text("Report Number:", 20, customerInformationTop)
-            .font("Helvetica-Bold")
-            .text(invoicenum, 120, customerInformationTop)
             .font("Helvetica")
-            .text("Report Date:", 20, customerInformationTop + 15)
-            .text(formatDate(new Date()), 120, customerInformationTop + 15)
-            .text("Page Number : ", 20, customerInformationTop + 30)
+            .text("Report Number:", 20, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text('IR' + invoicenum, 120, customerInformationTop + 15)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(formatDate(new Date()), 120, customerInformationTop + 30)
+            .font("Helvetica")
+            .text("Page Number : ", 20, customerInformationTop + 45)
+            .font("Helvetica-Bold")
             .text(
                 index + 1,
                 120,
-                customerInformationTop + 30
+                customerInformationTop + 45
             )
-
-        // .font("Helvetica-Bold")
-        // .text(invoice.shipping.name, 300, customerInformationTop)
-        // .font("Helvetica")
-        // .text(invoice.shipping.address, 300, customerInformationTop + 15)
-        // .text(
-        //     invoice.shipping.city +
-        //     ", " +
-        //     invoice.shipping.state +
-        //     ", " +
-        //     invoice.shipping.country,
-        //     300,
-        //     customerInformationTop + 30
-        // )
-        // .moveDown();
-
         generateHr(doc, 192);
 
 
@@ -274,7 +260,7 @@ app.post('/print/productssum', async (req, res) => {
 
         //draw table
         let i;
-        const invoiceTableTop = 230;
+        const invoiceTableTop = 195;
 
         doc.font("Helvetica-Bold");
         doc
@@ -322,7 +308,110 @@ app.post('/print/productssum', async (req, res) => {
     res.json({ 'Status': 200, file })
 });
 
+app.post('/print/fridgesum', async (req, res) => {
+    let doc = new pdfkit({ size: "A4", margin: 20 });
+    invoice.items = await prisma.products.findMany({})
+    const invoicenum = Math.floor(Math.random() * 1000000)
+    const rowsperpage = 35
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
+    clog(pages)
+    const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
+    doc.registerFont(`Tajawal-Light`, customFont);
+    var index1 = 0
+    for (let index = 0; index < pages; index++) {
+        //draw header
+        doc
+            .image("newlogo.png", 20, 45, { width: 200 })
+            .fillColor("#444444")
+            .fontSize(10)
+            .text("B2B Corp.", 200, 50, { align: "right" })
+            .text("kom hamada", 200, 65, { align: "right" })
+            .text("egypt, behira , 22821", 200, 80, { align: "right" })
+            .moveDown();
 
+
+        // draw detaild
+        doc
+            .fillColor("#444444")
+            .fontSize(20)
+            .text("Fridge Items", 20, 100);
+
+        generateHr(doc, 125);
+
+
+        const customerInformationTop = 125;
+
+        doc
+            .fontSize(10)
+            .font("Helvetica")
+            .text("Report Number:", 20, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text('FI' + invoicenum, 120, customerInformationTop + 15)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(formatDate(new Date()), 120, customerInformationTop + 30)
+            .font("Helvetica")
+            .text("Page Number : ", 20, customerInformationTop + 45)
+            .font("Helvetica-Bold")
+            .text(
+                index + 1,
+                120,
+                customerInformationTop + 45
+            )
+        generateHr(doc, 192);
+
+
+
+
+        //draw table
+        let i;
+        const invoiceTableTop = 195;
+        doc.font("Helvetica-Bold");
+        doc
+            .fontSize(10)
+            .text('id', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('Item Name', 50, invoiceTableTop, { features: ['rtla'] })
+            .text('Quantity', 490, invoiceTableTop, { width: 90, align: "right" });
+        generateHr(doc, invoiceTableTop + 10);
+        doc.font("Tajawal-Light");
+        for (i = 1; i <= rowsperpage; i++) {
+            if (index1 >= invoice.items.length) {
+                clog('end')
+            } else {
+                const item = invoice.items[index1];
+                var position = invoiceTableTop + (i) * 15;
+                doc
+                    .fontSize(10)
+                    .text(index1 + 1, 20, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.to), 50, position, {})
+                    .text(item.amount, 490, position, { width: 90, align: "right" });
+                generateHr(doc, invoiceTableTop + 10);
+                generateHr(doc, position + 10);
+                index1++
+                clog(index1)
+            }
+        }
+        doc
+            .fontSize(10)
+            .text(
+                "Thank you for your business.",
+                50,
+                770,
+                { align: "center", width: 500 }
+            );
+        if (index < pages - 1) {
+            doc.addPage()
+        }
+    }
+    doc.end();
+    const date = await new Date()
+
+    clog(date.toJSON())
+    const file = 'FI' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
+    doc.pipe(fs.createWriteStream('files/' + file));
+    res.json({ 'Status': 200, file })
+});
 
 app.post('/print/clientsum', async (req, res) => {
     let doc = new pdfkit({ size: "A4", margin: 50 });
@@ -2585,6 +2674,162 @@ app.post('/workeradvance', async (req, res) => {
 
     res.json({ 'Status': 200, summeryarray })
 });
+
+
+
+
+app.post('/print/vaultclienttransactions', async (req, res) => {
+    const { rows } = req.body
+    let doc = new pdfkit({ size: "A4", margin: 20, layout: 'portrait' });
+    var index1 = 0
+    var newobj = null;
+    var add = 0;
+    var sub = 0;
+    var newrows = rows
+    for (let index = 0; index < newrows.length; index++) {
+        const element = newrows[index];
+        if (element.way == 'out') {
+            newrows[index].sub = element.amount
+            newrows[index].add = ''
+            sub = sub + element.amount
+        } else {
+            newrows[index].add = element.amount
+            newrows[index].sub = ''
+            add = add + element.amount
+        }
+    }
+    newobj = {
+        "toname": 'اجمالي',
+        "time": new Date().toISOString().toString().split('T')[0],
+        add,
+        sub,
+    }
+    invoice.items = [...newrows, newobj]
+    const invoicenum = Math.floor(Math.random() * 1000000)
+    const rowsperpage = 35
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
+    clog(pages)
+    const customFontt = fs.readFileSync(`Tajawal-Bold.ttf`);
+    doc.registerFont(`Tajawal-Bold`, customFontt);
+    const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
+    doc.registerFont(`Tajawal-Light`, customFont);
+    for (let index = 0; index < pages; index++) {
+        //draw header
+        doc
+            .image("newlogo.png", 20, 45, { width: 200 })
+            .fillColor("#444444")
+            .fontSize(10)
+            .text("B2B Corp.", 200, 50, { align: "right" })
+            .text("kom hamada", 200, 65, { align: "right" })
+            .text("egypt, behira , 22821", 200, 80, { align: "right" })
+            .moveDown();
+
+
+        // draw detaild
+        doc
+            .fillColor("#444444")
+            .fontSize(20)
+            .text("Client Transactions", 20, 100);
+
+        generateHr(doc, 125);
+
+
+        const customerInformationTop = 125;
+
+        doc
+            .fontSize(10)
+            .font("Helvetica")
+            .font("Tajawal-Bold")
+            .text(
+                rows.length > 0 ? rows[0].Name : 'Empty',
+                120,
+                customerInformationTop,
+                { features: ['rtla'] }
+            )
+            .font("Helvetica")
+            .text("Report Number:", 20, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text('CT' + invoicenum, 120, customerInformationTop + 15)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(formatDate(new Date()), 120, customerInformationTop + 30)
+            .font("Helvetica")
+            .text("Page Number : ", 20, customerInformationTop + 45)
+            .font("Helvetica-Bold")
+            .text(
+                index + 1,
+                120,
+                customerInformationTop + 45
+            )
+        generateHr(doc, 192);
+
+
+
+
+        //draw table
+        let i;
+        const invoiceTableTop = 195;
+
+        doc.font("Tajawal-Bold");
+        doc
+            .fontSize(10)
+            .text('م', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('فاتوره', 45, invoiceTableTop, { features: ['rtla'] })
+            .text('الاسم', 105, invoiceTableTop, { features: ['rtla'] })
+            .text('وارد', 315, invoiceTableTop, { features: ['rtla'] })
+            .text('منصرف', 430, invoiceTableTop, { features: ['rtla'] })
+            .text('التاريخ', 540, invoiceTableTop, { features: ['rtla'], align: 'right' });
+        generateHr(doc, invoiceTableTop + 10);
+        doc.font("Tajawal-Bold");
+        for (i = 1; i <= rowsperpage; i++) {
+            if (index1 >= invoice.items.length) {
+                clog('end')
+            } else {
+                const item = invoice.items[index1];
+                var position = invoiceTableTop + (i) * 16;
+                doc
+                    .font("Tajawal-Bold")
+                    .fontSize(10)
+                    .text(index1 + 1, 20, position)
+                    .text(maybeRtlize(item.toname), 100, position)
+                    .font("Helvetica-Bold")
+                    .text(item.refid, 45, position, { features: ['rtla'] })
+                    .text(item.add, 315, position, { features: ['rtla'] })
+                    .text(item.sub, 430, position, { features: ['rtla'] })
+                    .text(item.time.toString().split('T')[0], 520, position, { features: ['rtla'], align: 'right' });
+                generateHr(doc, invoiceTableTop + 11);
+
+                index1++
+                if (item.toname !== 'اجمالي') {
+                    generateHr(doc, position + 11);
+                } else {
+                    generateHr(doc, position - 4);
+                }
+                clog(index1)
+            }
+        }
+        doc
+            .fontSize(10)
+            .text(
+                "Thank you for your business.",
+                50,
+                770,
+                { align: "center", width: 500 }
+            );
+        if (index < pages - 1) {
+            doc.addPage()
+        }
+    }
+    doc.end();
+    const date = await new Date()
+
+    clog(date.toJSON())
+    const file = 'CT' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
+    doc.pipe(fs.createWriteStream('files/' + file));
+    res.json({ 'Status': 200, file })
+});
+
 const generatepages = (doc, invoice) => {
 }
 
@@ -2796,8 +3041,27 @@ function formatDate(date) {
 
 
 
+app.get('/fridge', async (req, res) => {
+    var ip = req.headers['x-forwarded-for'] || req.socket.remoteAdress
 
+    clog('fridge request from : ' + ip)
+    const products = await prisma.products.findMany({
+    })
+    res.json({ 'status': 200, products })
+})
+app.post('/searchfridge', async (req, res) => {
+    const { searchtext } = req.body
+    clog(searchtext)
+    const foundproduts = await prisma.products.findMany({
+        where: {
+            to: {
+                contains: searchtext
+            }
+        }
+    })
 
+    res.status(200).json({ "status": 200, foundproduts })
+})
 
 
 
@@ -6108,7 +6372,58 @@ app.post('/searchproducthistorybyclientexact', async (req, res) => {
     res.status(200).json({ "status": 200, foundproduts })
 })
 
-
+app.post('/searchcvtransgeneral', async (req, res) => {
+    const { client, refid, product, date, fdate } = req.body
+    clog(req.body)
+    const time = date == '' ? new Date() : new Date(date);
+    const ftime = fdate == '' ? new Date() : new Date(fdate);
+    clog(new Date(date))
+    if (refid) {
+        var results = await prisma.clientvaulttransaction.findMany({
+            where: {
+                refid: refid.toString(),
+                toname: {
+                    contains: product
+                },
+                fromname: {
+                    contains: client
+                },
+                time: {
+                    lte: time,
+                    gte: ftime
+                }
+            },
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
+        clog({ results: results.length })
+        res.status(200).json({ "status": 200, results })
+    } else {
+        var results = await prisma.clientvaulttransaction.findMany({
+            where: {
+                refid: {
+                    contains: refid
+                },
+                toname: {
+                    contains: product
+                },
+                fromname: {
+                    contains: client
+                },
+                time: {
+                    lte: time,
+                    gte: ftime
+                }
+            }
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
+        clog({ results: results.length })
+        res.status(200).json({ "status": 200, results })
+    }
+})
 
 
 
@@ -9055,6 +9370,55 @@ const dd = async () => {
     }
     clog('done')
 }
+
+const calc_fridge = async () => {
+    const fridgein = await prisma.fridgeproducts.findMany({})
+    await prisma.products.deleteMany({})
+    for (let index = 0; index < fridgein.length; index++) {
+        const element = fridgein[index];
+        const prod = await prisma.products.findMany({
+            where: {
+                fromid: element.toid
+            }
+        })
+        if (!prod.length > 0) {
+            const createprod = await prisma.products.create({
+                data: {
+                    fromid: element.toid,
+                    toid: element.toid,
+                    amount: 0,
+                    from: element.to,
+                    to: element.to,
+                    price: 0,
+                    invoiceid: Math.floor(Math.random() * 10000),
+                    refid: '',
+                    totalprice: 0,
+                    remainigtotal: 0,
+                    remaining: 0,
+                    type: 0,
+                }
+            })
+        }
+    }
+    for (let index = 0; index < fridgein.length; index++) {
+        const element = fridgein[index];
+        const prod = await prisma.products.findMany({
+            where: {
+                fromid: element.toid
+            }
+        })
+        const createprod = await prisma.products.updateMany({
+            where: {
+                toid: prod[0].toid
+            },
+            data: {
+                amount: prod[0].amount + element.amount - element.return,
+            }
+        })
+    }
+    clog('recalculate fridge done')
+}
+
 app.listen(1024, () =>
     clog(`b2b app listening on port ${1024}!`),
 );

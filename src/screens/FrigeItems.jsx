@@ -97,12 +97,12 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme','light')
+            localStorage.setItem('Theme', 'light')
         }
 }
 
 updatetheme(localStorage.getItem('Theme'))
-function Products() {
+function FrigeItems() {
     const componentRef = useRef();
 
     const [dark_theme_en, set_dark_theme_en] = useState('light')
@@ -126,31 +126,24 @@ function Products() {
                 return { textAlign: "center" };   // removed partial line here
             },
             width: "55px"                       // another for example
-
-
         },
         {
             name: 'اسم الصنف',
-            selector: row => row.name,
+            selector: row => row.to,
             sortable: true,
             size: 20
         },
         {
             name: 'الكمية',
-            selector: row => row.quantity,
+            selector: row => row.amount,
             sortable: true,
 
-        },
-        {
-            name: 'وحده القياس',
-            selector: row => row.wayofmesure == 2 ? 'M' : row.wayofmesure == 0 ? 'Unit' : row.wayofmesure == 1 ? 'Kg' : 'M2',
-            sortable: true,
         },
     ];
 
 
     useEffect(() => {
-        axios.get('http://localhost:1024/products').then((resp) => {
+        axios.get('http://localhost:1024/fridge').then((resp) => {
             setrows(resp.data.products); setnewcode(resp.data.products.length + 1);
         })
     }, [])
@@ -231,7 +224,7 @@ function Products() {
 
     const search = (text) => {
         setsearchload(true)
-        axios.post('http://localhost:1024/searchproduct', { searchtext: text }).then((resp) => {
+        axios.post('http://localhost:1024/searchfridge', { searchtext: text }).then((resp) => {
             if (resp.data.status == 200) {
                 setsearchload(false)
                 console.log(resp.data)
@@ -241,7 +234,7 @@ function Products() {
                 setloadrn(false)
                 alert('failed')
                 setsearchload(false)
-                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
+                axios.get('http://localhost:1024/fridge').then((resp) => { setrows(resp.data.products) })
 
             }
         })
@@ -258,101 +251,21 @@ function Products() {
                         setrows(resp.data.products)
                     } else {
                         alert('failed')
-                        axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
+                        axios.get('http://localhost:1024/fridge').then((resp) => { setrows(resp.data.products) })
 
                     }
                 })
             }}>delete</Button>
             <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
-                setprt(true); setTimeout(() => {
-                    window.print()
-                }, 200);
+                axios.post('http://localhost:1024/print/lots', { rows: rows }).then((resp) => {
+                    setTimeout(() => {
+                        window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
+                    }, 500);
+                })
             }}>print</Button>
         </>
     );
-    const actions = () => (
-        <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'start', flexDirection: 'row' }}>
-            <TextField
 
-                vault
-                margin="dense"
-                id="code"
-                size='small'
-                type="number"
-                value={newcode}
-
-                style={{ width: 150, marginRight: 20, marginLeft: 20, color: '#fff' }}
-                onChange={(e) => { setnewcode(e.currentTarget.value) }}
-                variant="outlined"
-                InputProps={{
-                    endAdornment: <InputAdornment style={{ color: '#000' }} position="end">كود الصنف</InputAdornment>,
-                }}
-                disabled
-            />
-            <TextField
-                style={{ marginRight: 20 }}
-                vault
-                margin="dense"
-                id="name"
-                size='small'
-                autoFocus
-                label="اسم الصنف"
-                type="text"
-                value={newname}
-                onChange={(e) => { setnewname(e.currentTarget.value) }}
-                variant="outlined"
-            />
-            <Select
-                style={{ marginRight: 20 }}
-                variant='outlined'
-                size='small'
-
-                label="Age"
-                value={newsel}
-                onChange={(e) => { setnewsel(e.target.value) }}
-            >
-                {mesures.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                    </MenuItem>
-                ))}
-            </Select>
-            <TextField
-                style={{ marginRight: 20 }}
-                vault
-                size='small'
-
-                margin="dense"
-                id="Amount"
-                InputProps={{
-                    endAdornment: <InputAdornment position="end">{newsel}</InputAdornment>,
-                }}
-                label="Amount"
-                type="number"
-                value={newamount}
-                onChange={(e) => { setnewamount(e.currentTarget.value) }}
-                variant="outlined"
-            />
-            <TextField
-                style={{ marginRight: 20 }}
-                vault
-                margin="dense"
-                id="Price"
-                size='small'
-
-                label="Price"
-                type="number"
-                value={newprice}
-                onChange={(e) => { setnewprice(e.currentTarget.value) }}
-                variant="outlined"
-            />
-            <Button disabled={newloadrn} variant='contained' onClick={() => { createnew() }}>Create</Button>
-            <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
-                setrefreshloading(true);
-                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products); setrefreshloading(false) })
-            }} endIcon={<Refresh />}>Refresh</Button>
-        </div>
-    );
     const [totalprice, settotalprice] = useState(0)
     const [totalamount, settotalamount] = useState(0)
     const [selectedRows, setselectedRows] = useState([])
@@ -365,42 +278,6 @@ function Products() {
     const [refreshloading, setrefreshloading] = useState(false)
     return (
         <div style={{ width: '100%' }}>
-            <Modal open={prt} onClose={() => { setprt(false) }}>
-                <div style={{ height: '200%', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div style={{ width: '100%' }}>
-                        <div className='NavContainer' style={{ position: 'sticky', top: 0, backgroundColor: '#eee' }}>
-                            <div>
-                                <img onClick={(e) => {
-                                    e.preventDefault();
-                                    window.location.href = 'http://localhost:3000/';
-                                }} src={logo} width={65.61} height={40} style={{ marginLeft: 5 }} />
-                            </div>
-                            <div style={{ marginRight: 20 }}>
-                                <h4>اكواد اصناف</h4>
-                            </div>
-                        </div>
-                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                            <DataTable
-                                dense
-                                fixedHeader
-                                fixedHeaderScrollHeight='350px'
-                                selectableRowsHighlight
-                                direction="rtl"
-                                columns={columns}
-                                data={rows}
-                            />
-                            <div style={{ display: 'flex', width: '100%', justifyContent: 'start' }}>
-                                <Typography color={'#000'} style={{ marginLeft: 50 }}>
-                                    اجمالي الاصناف : {selectedRows.length}
-                                </Typography>
-                            </div>
-                        </div>
-                    </div>
-                    <h1>{totalprice}</h1>
-                </div>
-            </Modal>
-            <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'start', flexDirection: 'row' }}>
-            </div>
             <div style={{ width: '100%', display: 'flex', marginTop: 10, alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', marginTop: 10, alignItems: 'baseline', width: '100%', justifyContent: 'end' }}>
                     <TextField
@@ -416,9 +293,15 @@ function Products() {
                         variant="outlined"
                     />
                     <Button style={{ marginLeft: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
+                        setsearchtext(''); axios.get('http://localhost:1024/fridge').then((resp) => { setrows(resp.data.products) })
                     }}>Clear</Button>
-                    <Button style={{ marginLeft: 20 }} variant='contained' color='success' onClick={() => { setprt(true) }}>PRINT</Button>
+                    <Button style={{ marginLeft: 20 }} variant='contained' color='success' onClick={() => {
+                        axios.post('http://localhost:1024/print/fridgesum', {}).then((resp) => {
+                            setTimeout(() => {
+                                window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
+                            }, 500);
+                        })
+                    }}>Print</Button>
 
                 </div>
             </div>
@@ -427,8 +310,6 @@ function Products() {
                     pagination
                     dense
                     paginationPerPage={100}
-                    contextActions={contextActions()}
-                    actions={actions()}
                     highlightOnHover
                     pointerOnHover
                     fixedHeader
@@ -453,9 +334,8 @@ function Products() {
                     theme='newtheme'
                     selectableRowsComponent={Checkbox}
                     columns={columns}
-                    selectableRows
                     data={rows}
-                    onRowDoubleClicked={(data) => { seteditrn(true); setelected(data); console.log(data); setcode(data.code); setamount(data.quantity); setname(data.name); setprice(data.price); setsel(mesures[data.wayofmesure].value); setselid(data.id) }}
+                    onRowDoubleClicked={(data) => { seteditrn(false); setelected(data); console.log(data); setcode(data.code); setamount(data.quantity); setname(data.name); setprice(data.price); setsel(mesures[data.wayofmesure].value); setselid(data.id) }}
                 />
             </div>
             <Dialog open={editrn}>
@@ -533,4 +413,4 @@ function Products() {
     )
 }
 
-export default Products
+export default FrigeItems
