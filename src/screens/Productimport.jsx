@@ -23,8 +23,8 @@ import Autocomplete from '@mui/material/Autocomplete'
 import DataTable, { createTheme } from 'react-data-table-component';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -77,7 +77,7 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme','light')
+            localStorage.setItem('Theme', 'light')
         }
 }
 
@@ -86,7 +86,7 @@ function Productimport() {
 
     const [dark_theme_en, set_dark_theme_en] = useState('light')
     const [AccesToken, setAccesToken] = useState([]);
-    
+
 
     const types = [
         {
@@ -283,7 +283,11 @@ function Productimport() {
 
 
     const editsubmit = () => {
-        if (!rows) {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
+        if (rows == []) {
             alert('data cannot be empty')
             return
         }
@@ -357,7 +361,8 @@ function Productimport() {
         })
     }
     const [prt, setprt] = useState(false)
-
+    const [date1, setdate1] = useState('primary')
+    const [date2, setdate2] = useState('primary')
 
     const addtolist = () => {
         if (!secondvaultname) {
@@ -570,8 +575,13 @@ function Productimport() {
                             id="expenses"
                             label="التاريخ"
                             type="date"
+                            color={date1}
+                            focused={date1 !== 'primary'}
                             value={newexpenses}
-                            onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
+                            onChange={(e) => {
+                                setnewexpenses(e.currentTarget.value)
+                                setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }}
                             variant="outlined"
                         />
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { editsubmit() }} color='success'>تأكيد</Button>

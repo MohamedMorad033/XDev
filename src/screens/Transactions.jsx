@@ -22,8 +22,8 @@ import Autocomplete from '@mui/material/Autocomplete'
 import DataTable, { createTheme } from 'react-data-table-component';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -223,6 +223,10 @@ function Transactions() {
         })
     }
     const createnewtransaction = () => {
+        if (refid == '') {
+            alert('refid cannot be empty')
+            return;
+        }
         if (!firstvaultname) {
             alert('name cannot be empty')
             return
@@ -235,11 +239,19 @@ function Transactions() {
             alert('amount cannot be empty')
             return;
         }
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         setloadrn(true);
         axios.post('http://localhost:1024/addTransaction', { amount: expenses, fromname: firstvaultdata[0].id, toname: secondvaultdata[0].id, date: newexpenses, refid }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setloadrn(false);
+                setexpenses(0)
+                setrefid(Number(refid) + 1)
+                setfirstvaultname('')
+                setsecondvaultname('')
                 axios.get('http://localhost:1024/transaction').then((resp) => {
                     setrows(resp.data.transaction);
                 })
@@ -291,7 +303,8 @@ function Transactions() {
     const [editrefiderr, seteditrefiderr] = useState('primary')
     const [transtoname, settranstoname] = useState('')
     const [transtodata, settranstodata] = useState([])
-
+    const [date1, setdate1] = useState('primary')
+    const [date2, setdate2] = useState('primary')
     const [transval, settransval] = useState(0)
     const searchrefid = (refid) => {
         axios.post('http://localhost:1024/searchrefidvaulttransaction', { refid: refid.toString() }).then((resp) => {
@@ -386,14 +399,18 @@ function Transactions() {
                     />
                     <TextField
                         style={{ marginRight: 20 }}
-                        autoFocus
                         margin="dense"
                         size='small'
                         id="expenses"
                         label="التاريخ"
                         type="date"
+                        color={date1}
+                        focused={date1 !== 'primary'}
                         value={newexpenses}
-                        onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
+                        onChange={(e) => {
+                            setnewexpenses(e.currentTarget.value)
+                            setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                        }}
                         variant="outlined"
                     />
                     <Button disabled={loadrn} variant='contained' onClick={() => { createnewtransaction() }}>تأكيد</Button>
@@ -615,7 +632,12 @@ function Transactions() {
                             label="التاريخ"
                             type="date"
                             value={date}
-                            onChange={(e) => { setdate(e.currentTarget.value) }}
+                            color={date2}
+                            focused={date2 !== 'primary'}
+                            onChange={(e) => {
+                                setdate(e.currentTarget.value)
+                                setdate2(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }}
                             variant="outlined"
                         />
                     </div>
@@ -638,6 +660,10 @@ function Transactions() {
                         color='error'
                     >حذف</Button>
                     <Button disabled={loadrn} variant='contained' onClick={async () => {
+                        if (date2 !== 'primary') {
+                            alert('date is wrong')
+                            return
+                        }
                         axios.post('http://localhost:1024/edittransaction', { newdata, transfromname, transtoname, transval, date, refid: editrefid }).then(resp => {
                             if (resp.data.status == 200) {
                                 setedittrans(false);

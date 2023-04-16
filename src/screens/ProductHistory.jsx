@@ -32,8 +32,8 @@ import DataTable, { createTheme } from 'react-data-table-component';
 import { FormControlLabel, FormGroup } from '@mui/material';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -262,7 +262,7 @@ function ProductHistory() {
         { icon: <SaveIcon onClick={(e) => { exportToCsv(e) }} />, name: 'Save' },
         {
             icon: <PrintIcon onClick={(e) => {
-                axios.post('http://localhost:1024/print/lots', { rows: rows }).then((resp) => {
+                axios.post('http://localhost:1024/print/lots', { rows: rows, rows2: rows }).then((resp) => {
                     setTimeout(() => {
                         window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                     }, 500);
@@ -388,7 +388,7 @@ function ProductHistory() {
                 setloadrn(false)
                 alert('failed')
             }
-        }).catch(e=>{
+        }).catch(e => {
             setloadrn(false)
             alert(e.message)
         })
@@ -496,7 +496,7 @@ function ProductHistory() {
 
 
     const [newdata, setnewdata] = useState({})
-    const [filter, setfilter] = useState(true)
+    const [filter, setfilter] = useState(false)
 
     return (
         <div style={{ width: '100%', flexDirection: 'row', display: 'flex', alignItems: 'flex-start' }}>

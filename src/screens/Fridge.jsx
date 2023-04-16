@@ -28,12 +28,13 @@ import SaveIcon from '@mui/icons-material/Save';
 import PrintIcon from '@mui/icons-material/Print';
 import ShareIcon from '@mui/icons-material/Share';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import { FormControlLabel, FormGroup } from '@mui/material';
+import { FormControlLabel, FormGroup, ListItemButton, ListItemText } from '@mui/material';
+import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -103,7 +104,7 @@ function Fridge() {
     const [h, sh] = useState(true)
     const [i, si] = useState(true)
     const [j, sj] = useState(true)
-    const [filter, setfilter] = useState(true)
+    const [filter, setfilter] = useState(false)
 
     const downloadFile = ({ data, fileName, fileType }) => {
         const blob = new Blob([data], { type: fileType })
@@ -267,7 +268,7 @@ function Fridge() {
 
     const [dark_theme_en, set_dark_theme_en] = useState('light')
     const [AccesToken, setAccesToken] = useState([]);
-
+    const [type, settype] = useState(false);
     const [firstvaultname, setfirstvaultname] = useState('')
     const [secondvaultname, setsecondvaultname] = useState('')
     const [theirdvaultname, settheirdvaultname] = useState('')
@@ -461,9 +462,9 @@ function Fridge() {
 
 
     const [refreshloading, setrefreshloading] = useState(false)
-    const generalsearch = (cln, prd, rfd, dat, fdt) => {
+    const generalsearch = (cln, prd, rfd, dat, fdt, typ) => {
         setsearchload(true);
-        axios.post('http://localhost:1024/searchfridgehistorygeneral', { product: prd, client: cln, refid: rfd, date: dat, fdate: fdt }).then((resp) => {
+        axios.post('http://localhost:1024/searchfridgehistorygeneral', { product: prd, client: cln, refid: rfd, date: dat, fdate: fdt, type: typ}).then((resp) => {
             if (resp.data.status == 200) {
                 setrows(resp.data.results)
                 setsearchload(false)
@@ -526,7 +527,7 @@ function Fridge() {
                         fullWidth
                         onChange={(e) => {
                             setrefid(e.currentTarget.value)
-                            generalsearch(firstvaultname, secondvaultname, e.currentTarget.value, new Date(date), new Date(fdate))
+                            generalsearch(firstvaultname, secondvaultname, e.currentTarget.value, new Date(date), new Date(fdate), type)
                         }}
                         variant="outlined"
                         label='الرقم المرجعى'
@@ -546,7 +547,7 @@ function Fridge() {
                         onInputChange={(event, newInputValue) => {
                             setfirstvaultname(newInputValue);
                             search1(newInputValue)
-                            generalsearch(newInputValue, secondvaultname, refid, new Date(date), new Date(fdate))
+                            generalsearch(newInputValue, secondvaultname, refid, new Date(date), new Date(fdate), type)
                         }}
                         options={firstvaultdata.map((option) => option.name)}
                         size='small'
@@ -567,12 +568,22 @@ function Fridge() {
                         onInputChange={(event, newInputValue) => {
                             setsecondvaultname(newInputValue);
                             search2(newInputValue)
-                            generalsearch(firstvaultname, newInputValue, refid, new Date(date), new Date(fdate))
+                            generalsearch(firstvaultname, newInputValue, refid, new Date(date), new Date(fdate), type)
                         }}
                         options={secondvaultdata.map((option) => option.name)}
                         size='small'
                         renderInput={(params) => <TextField {...params} label="الصنف" />}
                     />
+                    <ListItemButton
+                        style={{ marginBottom: 10 }}
+                        onClick={() => {
+                            generalsearch(firstvaultname, secondvaultname, refid, new Date(date), new Date(fdate), !type)
+                            settype(!type);
+
+                        }}>
+                        {type ? <CheckBox /> : <CheckBoxOutlineBlank />}
+                        <ListItemText style={{ marginLeft: 5 }} primary="وزن؟" />
+                    </ListItemButton>
                     <TextField
                         style={{ marginBottom: 10 }}
                         autoFocus
@@ -587,7 +598,7 @@ function Fridge() {
                             setfdate(e.currentTarget.value)
                             if (new Date(date)) {
                                 console.log({ date, datee: new Date(date) })
-                                generalsearch(firstvaultname, secondvaultname, refid, new Date(date), new Date(e.currentTarget.value),)
+                                generalsearch(firstvaultname, secondvaultname, refid, new Date(date), new Date(e.currentTarget.value), type)
 
                             }
                         }}
@@ -613,7 +624,7 @@ function Fridge() {
                             setdate(e.currentTarget.value)
                             if (new Date(date)) {
                                 console.log({ date, datee: new Date(date) })
-                                generalsearch(firstvaultname, secondvaultname, refid, new Date(e.currentTarget.value), new Date(fdate))
+                                generalsearch(firstvaultname, secondvaultname, refid, new Date(e.currentTarget.value), new Date(fdate), type)
 
                             }
                         }}
@@ -639,7 +650,7 @@ function Fridge() {
                             setsecondvaultname('')
                             setrefid('')
                             setdate(new Date().toISOString().split('T')[0])
-                            generalsearch('', '', '', new Date(), new Date('01-01-2000'))
+                            generalsearch('', '', '', new Date(), new Date('01-01-2000'), type)
                         }}>
                         All
                     </Button>

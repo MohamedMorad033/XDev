@@ -45,8 +45,8 @@ createTheme('solarized', {
 }, 'dark');
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -321,6 +321,17 @@ function Summery() {
                 arr = [...arr, stop, hed, ...resp.data.importsum]
                 arr = [...arr, stop, hed, ...resp.data.retsum]
                 arr = [...arr, stop, hed, ...resp.data.diff]
+                arr = [...arr, stop, hed, {
+                    'id': 'م',
+                    'product': 'العمليه',
+                    'vmoney': 'منصرف',
+                    'cmoney': 'وارد',
+                    'clientm': 'مستحقات له',
+                    'vaultm': 'مستحقات عليه',
+                    'totalc': 'اجمالي ما له',
+                    'totalv': 'اجمالي ما عليه',
+                    'balance': 'الرصيد'
+                }, ...resp.data.sumarray]
                 console.log(arr)
                 setsumarr(arr)
                 setrows(resp.data.exportsum)

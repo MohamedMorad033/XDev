@@ -19,8 +19,11 @@ import logo from './../static/b2b.png'
 import Refresh from '@mui/icons-material/RefreshRounded'
 import Typography from '@mui/material/Typography';
 import Autocomplete from '@mui/material/Autocomplete'
+import Collapse from '@mui/material/Collapse';
 
 import DataTable, { createTheme } from 'react-data-table-component';
+import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
+import { CheckBox, CheckBoxOutlineBlank, CheckBoxOutlined, ExpandLess, ExpandMore } from '@mui/icons-material';
 function Finalimport() {
 
     const types = [
@@ -57,11 +60,34 @@ function Finalimport() {
     ];
     const columns = [
         {
+            name: 'النوع',
+            selector: row => row.type == 0 ? 'كرتون' : 'وزن',
+            sortable: true,
+            grow: 1,
+            conditionalCellStyles: [
+                {
+                    when: row => row.type == 1,
+                    style: {
+                        backgroundColor: 'rgba(255, 70, 70, 1)',
+                        color: 'white'
+                    }
+                },
+                {
+                    when: row => row.type == 0,
+                    style: {
+                        backgroundColor: 'rgb(70, 255, 103)',
+                        color: 'black',
+                    }
+                }
+            ]
+        },
+        {
             name: 'الصنف',
             selector: row => row.to,
             sortable: true,
             grow: 3,
         },
+
         {
             name: 'العميل',
             selector: row => row.from,
@@ -93,8 +119,8 @@ function Finalimport() {
             name: 'السعر الكلي',
             selector: row => row.totalprice,
             sortable: true,
-        }];
-
+        },
+    ]
 
 
 
@@ -119,8 +145,8 @@ function Finalimport() {
     const updatetheme = (theme) => {
         if (theme == 'dark') {
             set_dark_theme_en('dark')
-            document.documentElement.style.setProperty('--firstcolor', '#23282e');
-            document.documentElement.style.setProperty('--seconscolor', '#16161e');
+            document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+            document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
             document.documentElement.style.setProperty('--headercolor', '#23282e18');
             createTheme('newtheme', {
                 text: {
@@ -264,6 +290,10 @@ function Finalimport() {
     const componentRef = useRef();
 
     const createnewexport = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (!rows) {
             alert('data cannot be empty')
             return
@@ -286,8 +316,7 @@ function Finalimport() {
                 setloss(0)
                 setlotsid('')
                 setrows([])
-                setrefid(Math.floor(Math.random(1) * 1000000))
-                setnewexpenses(new Date().toISOString().split('T')[0])
+                setrefid(Number(refid) + 1)
                 setsubmit(false)
                 setfirstvaultname('')
             } else if (resp.data.status == 400) {
@@ -303,8 +332,13 @@ function Finalimport() {
         })
     }
 
+    const [date1, setdate1] = useState('primary')
 
     const editsubmit = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (!rows) {
             alert('data cannot be empty')
             return
@@ -319,15 +353,14 @@ function Finalimport() {
         }
         setsubmit(true)
         console.log(rows)
-        axios.post('http://localhost:1024/editfinalimport', { rows, refid, client: firstvaultname, time: newexpenses }).then((resp) => {
+        axios.post('http://localhost:1024/editfinalimport', { rows, refid, client: firstvaultname, time: newexpenses, type: type ? 1 : 0 }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
                 setsecondvaultname('')
                 setnewamount(0)
                 setlotsid('')
                 setrows([])
-                setrefid(Math.floor(Math.random(1) * 1000000))
-                setnewexpenses(new Date().toISOString().split('T')[0])
+                setrefid(Number(refid) + 1)
                 setsubmit(false)
                 setfirstvaultname('')
             } else if (resp.data.status == 400) {
@@ -424,19 +457,23 @@ function Finalimport() {
 
     const addtolist = () => {
         if (!secondvaultname) {
-            console.log('client cannot be empty')
+            alert('client cannot be empty')
             return
         }
         if (newamount === '') {
-            console.log('amount cannot be empty')
+            alert('amount cannot be empty')
             return
         }
         if (newprice === '') {
-            console.log('price cannot empty')
+            alert('price cannot empty')
             return
         }
         if (!firstvaultname) {
-            console.log('product cannot be empty')
+            alert('product cannot be empty')
+            return
+        }
+        if (loss === '') {
+            alert('loss cannot be empty')
             return
         }
         const name = secondvaultname
@@ -450,7 +487,8 @@ function Finalimport() {
             "totalprice": (amount - loss) * price,
             "price": price,
             "from": client,
-            "return": loss
+            "return": loss,
+            "type": type ? 1 : 0
         }])
         setsecondvaultname('')
         setnewamount(0)
@@ -463,9 +501,17 @@ function Finalimport() {
     const [loss, setloss] = useState(0)
     const [totalprice, settotalprice] = useState(0)
     const [totalamount, settotalamount] = useState(0)
+    const [fproddata, setfproddata] = useState([])
+    const [fprodname, setfprodname] = useState('')
+    const [ftotalprice, setftotalprice] = useState(0)
+    const [famount, setfamount] = useState(0)
+    const [fprice, setfprice] = useState(0)
+    const [floss, setfloss] = useState(0)
     const [lots, setlots] = useState([])
     const [lotsid, setlotsid] = useState('')
     const [selrows, setselrows] = useState([])
+    const [type, settype] = useState(false);
+
     const contextActions = () => (
         <>
             {/* <Button color='error' variant='contained' onClick={() => {
@@ -478,27 +524,51 @@ function Finalimport() {
         </>
     );
     const actions = () => (
-        <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline' }}>
-
-                <Autocomplete
-                    id="free-solo-demo"
-                    label='d'
-                    style={{ marginRight: 20, width: 200 }}
-                    onFocus={() => {
-                        axios.get('http://localhost:1024/products').then((resp) => {
-                            setsecondvaultdata(resp.data.products)
-                        })
-                    }}
-                    value={secondvaultname}
-                    onInputChange={(event, newInputValue) => {
-                        setsecondvaultname(newInputValue);
-                        search2(newInputValue)
-                    }}
-                    options={secondvaultdata.map((option) => option.name)}
-                    size='small'
-                    renderInput={(params) => <TextField {...params} label="الصنف" />}
-                />
+        <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'end', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ListItemButton style={{ marginRight: 20 }} onClick={() => {
+                    settype(!type);
+                    setsecondvaultdata([])
+                }}>
+                    {type ? <CheckBox /> : <CheckBoxOutlineBlank />}
+                    <ListItemText style={{ marginLeft: 5 }} primary="وزن؟" />
+                </ListItemButton>
+                {type == false ?
+                    <Autocomplete
+                        id="free-solo-demo"
+                        label='d'
+                        style={{ marginRight: 20, width: 200 }}
+                        onFocus={() => {
+                            axios.get('http://localhost:1024/products').then((resp) => {
+                                setsecondvaultdata(resp.data.products)
+                            })
+                        }}
+                        value={secondvaultname}
+                        onInputChange={(event, newInputValue) => {
+                            setsecondvaultname(newInputValue);
+                        }}
+                        options={secondvaultdata.map((option) => option.name)}
+                        size='small'
+                        renderInput={(params) => <TextField {...params} label="الصنف" />}
+                    /> :
+                    <Autocomplete
+                        id="free-solo-demo"
+                        label='d'
+                        style={{ marginRight: 20, width: 200 }}
+                        onFocus={() => {
+                            axios.get('http://localhost:1024/producttypes').then((resp) => {
+                                setsecondvaultdata(resp.data.products)
+                            })
+                        }}
+                        value={secondvaultname}
+                        onInputChange={(event, newInputValue) => {
+                            setsecondvaultname(newInputValue);
+                        }}
+                        options={secondvaultdata.map((option) => option.name)}
+                        size='small'
+                        renderInput={(params) => <TextField {...params} label="نوع الصنف" />}
+                    />
+                }
 
                 <TextField
                     style={{ marginRight: 20 }}
@@ -557,10 +627,11 @@ function Finalimport() {
                         setlotsid('')
                         setrows([])
                     }}
-                    endIcon={<Refresh />}>Reset</Button>
+                    endIcon={<Refresh />}>Reset
+                </Button>
+
+
             </div>
-
-
         </div>
     );
 
@@ -647,7 +718,7 @@ function Finalimport() {
                             size='small'
                             renderInput={(params) => <TextField {...params} label="العميل" />}
                         />
-                        <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { confirmsel() }} color='success'>تأكيد</Button>
+                        <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { confirmsel() }} color='secondary'>بحث</Button>
 
                         <TextField
                             style={{ marginRight: 20 }}
@@ -657,13 +728,16 @@ function Finalimport() {
                             id="expenses"
                             label="التاريخ"
                             type="date"
+                            color={date1}
+                            focused={date1 !== 'primary'}
                             value={newexpenses}
-                            onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
+                            onChange={(e) => {
+                                setnewexpenses(e.currentTarget.value)
+                                setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }}
                             variant="outlined"
-                            onDoubleClick={() => { }}
                         />
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { editsubmit() }} color='success'>تأكيد</Button>
-                        <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { searchrefid() }} color='warning'>بحث</Button>
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => {
                             setsubmit(true)
                             axios.post('http://localhost:1024/deletefinalimport', { refid: refid }).then((resp) => {
@@ -716,7 +790,6 @@ function Finalimport() {
                     }}
                     selectableRowsComponent={Checkbox}
                     columns={columns}
-                    selectableRows
                     data={rows}
                     onRowDoubleClicked={(data) => {
                         const index = rows.findIndex(x => x.id == data.id)
@@ -736,7 +809,7 @@ function Finalimport() {
                         paginationPerPage={100}
                         highlightOnHover
                         fixedHeader
-                        fixedHeaderScrollHeight='100px'
+                        fixedHeaderScrollHeight='400px'
                         selectableRowsHighlight
                         direction="rtl"
                         columns={[
@@ -793,6 +866,10 @@ function Finalimport() {
             <Dialog open={editrn} onClose={() => { seteditrn(false) }}>
                 <DialogTitle>تعديل</DialogTitle>
                 <DialogContent>
+                    <ListItemButton disabled style={{ marginRight: 20 }}>
+                        {newdata.type == 1 ? <CheckBox /> : <CheckBoxOutlineBlank />}
+                        <ListItemText style={{ marginLeft: 5 }} primary="وزن؟" />
+                    </ListItemButton>
                     <TextField
                         autoFocus
                         margin="dense"

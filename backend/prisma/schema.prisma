@@ -13,6 +13,7 @@ model inventoryproducts {
   code        Float?   @default(0)
   name        String   @unique
   quantity    Float    @default(0)
+  famount     Float    @default(0)
   wayofmesure Float    @default(0)
   price       Float    @default(0)
   net         Float    @default(0)
@@ -107,19 +108,20 @@ model workerpayout {
 }
 
 model fridgeproducts {
-  id         Int      @id @default(autoincrement())
-  refid      String
-  from       String
-  fromid     Float
-  toid       Float
-  to         String
-  amount     Float
-  totalprice Float
-  price      Float
-  return     Float    @default(0)
-  remaining  Float
-  managed    Boolean
-  time       DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  refid       String
+  from        String
+  fromid      Float
+  toid        Float
+  to          String
+  type        Int      @default(0)
+  amount      Float
+  totalprice  Float
+  price       Float
+  return      Float    @default(0)
+  remaining   Float
+  managed     Boolean
+  time        DateTime @default(now())
 }
 
 model productoutcomereturn {
@@ -165,6 +167,12 @@ model expenses {
 model expensescategory {
   id   Int    @id @default(autoincrement())
   name String
+}
+
+model producttypes {
+  id     Int    @id @default(autoincrement())
+  name   String
+  amount Float  @default(0)
 }
 
 model expensescategory2 {
@@ -248,10 +256,14 @@ model transaction {
 }
 
 model users {
-  id       Int    @id @default(autoincrement())
-  email    String @unique(map: "Users_email_key")
-  username String
-  password String
+  id          Int      @id @default(autoincrement())
+  email       String   @unique(map: "Users_email_key")
+  username    String
+  password    String
+  accesstoken String
+  profile     String
+  date        DateTime @default(now())
+  ip          String
 }
 
 model vault {
@@ -283,4 +295,22 @@ model wtransaction {
   aprice2  Float
   amount   Float    @default(0)
   time     DateTime @default(now())
+}
+
+model finalproductexports {
+  id          Int      @id @default(autoincrement())
+  refid       String?
+  productid   Float
+  clientid    Float
+  productname String
+  clientname  String
+  totalprice  Float
+  price       Float
+  amount      Float
+  return      Float    @default(0)
+  returnid    String?
+  remaining   Float    @default(0)
+  payed       Boolean
+  payedamount Float    @default(0)
+  time        DateTime @default(now())
 }

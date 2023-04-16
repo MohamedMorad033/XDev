@@ -2,7 +2,10 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import cors from 'cors'
+import { createHash, createHmac, randomBytes } from 'crypto';
 const app = express('');
+
+
 app.use(express.json({ limit: '50mb' }));
 app.use(cors())
 app.use(express.static('files'))
@@ -23,6 +26,15 @@ const clog = (d) => {
 }
 app.get('/ping', async (req, res) => {
     res.json({ 'Status': 200 })
+});
+app.post('/pinga', async (req, res) => {
+    const { AccesToken } = req.body
+    const att = await prisma.users.findMany({
+        where: {
+            accesstoken: AccesToken
+        }
+    })
+    res.json({ 'status': att.length == 1 ? 200 : 400 })
 });
 app.all('/*', function (req, res, next) {
     next()
@@ -47,7 +59,6 @@ function maybeRtlize(text) {
         return text.split(' ').reverse().join(' ')
     }
 }
-clog(maybeRtlize('شركه pet للبانت'))
 const fixtext = (text) => {
     const embeddingLevels = bidi.getEmbeddingLevels(text, "rtl");
     let newText = text.split("");
@@ -86,7 +97,6 @@ const getflips = (text) => {
 
     return flips.length
 }
-clog(getflips('شركه pp ميم'))
 var invoice = {
     shipping: {
         name: "John Doe",
@@ -200,7 +210,110 @@ var invoice = {
 };
 
 
+app.post('/print/producttypessum', async (req, res) => {
+    let doc = new pdfkit({ size: "A4", margin: 20 });
+    invoice.items = await prisma.producttypes.findMany({})
+    const invoicenum = Math.floor(Math.random() * 1000000)
+    const rowsperpage = 35
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
+    clog(pages)
+    const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
+    doc.registerFont(`Tajawal-Light`, customFont);
+    var index1 = 0
+    for (let index = 0; index < pages; index++) {
+        //draw header
+        doc
+            .image("newlogo.png", 20, 45, { width: 200 })
+            .fillColor("#444444")
+            .fontSize(10)
+            .text("B2B Corp.", 200, 50, { align: "right" })
+            .text("kom hamada", 200, 65, { align: "right" })
+            .text("egypt, behira , 22821", 200, 80, { align: "right" })
+            .moveDown();
 
+
+        // draw detaild
+        doc
+            .fillColor("#444444")
+            .fontSize(20)
+            .text("Wheights Report", 20, 100);
+
+        generateHr(doc, 125);
+
+
+        const customerInformationTop = 125;
+
+        doc
+            .fontSize(10)
+            .font("Helvetica")
+            .text("Report Number:", 20, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text('WR' + invoicenum, 120, customerInformationTop + 15)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(formatDate(new Date()), 120, customerInformationTop + 30)
+            .font("Helvetica")
+            .text("Page Number : ", 20, customerInformationTop + 45)
+            .font("Helvetica-Bold")
+            .text(
+                index + 1,
+                120,
+                customerInformationTop + 45
+            )
+        generateHr(doc, 192);
+
+
+
+
+        //draw table
+        let i;
+        const invoiceTableTop = 195;
+
+        doc.font("Tajawal-Light");
+        doc
+            .fontSize(10)
+            .text(maybeRtlize('م'), 20, invoiceTableTop, {})
+            .text(maybeRtlize('الاسم'), 50, invoiceTableTop, {})
+            .text(maybeRtlize('الكميه'), 490, invoiceTableTop, { width: 90, align: "right" })
+        generateHr(doc, invoiceTableTop + 10);
+        for (i = 1; i <= rowsperpage; i++) {
+            if (index1 >= invoice.items.length) {
+                clog('end')
+            } else {
+                const item = invoice.items[index1];
+                var position = invoiceTableTop + (i) * 15;
+                doc
+                    .fontSize(10)
+                    .text(index1 + 1, 20, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.name), 50, position, {})
+                    .text(item.amount, 490, position, { width: 90, align: "right" });
+                generateHr(doc, invoiceTableTop + 10);
+                generateHr(doc, position + 10);
+                index1++
+                clog(index1)
+            }
+        }
+        doc
+            .fontSize(10)
+            .text(
+                "Thank you for your business.",
+                50,
+                770,
+                { align: "center", width: 500 }
+            );
+        if (index < pages - 1) {
+            doc.addPage()
+        }
+    }
+    doc.end();
+    const date = await new Date()
+
+    clog(date.toJSON())
+    const file = 'WR' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
+    doc.pipe(fs.createWriteStream('files/' + file));
+    res.json({ 'Status': 200, file })
+});
 
 app.post('/print/productssum', async (req, res) => {
     let doc = new pdfkit({ size: "A4", margin: 20 });
@@ -262,14 +375,14 @@ app.post('/print/productssum', async (req, res) => {
         let i;
         const invoiceTableTop = 195;
 
-        doc.font("Helvetica-Bold");
+        doc.font("Tajawal-Light");
         doc
             .fontSize(10)
-            .text('id', 20, invoiceTableTop, { features: ['rtla'] })
-            .text('Item Name', 50, invoiceTableTop, { features: ['rtla'] })
-            .text('Quantity', 490, invoiceTableTop, { width: 90, align: "right" });
+            .text(maybeRtlize('م'), 20, invoiceTableTop, {})
+            .text(maybeRtlize('الاسم'), 50, invoiceTableTop, {})
+            .text(maybeRtlize('الكميه بالمخزن'), 290, invoiceTableTop, { width: 90, align: "right" })
+            .text(maybeRtlize('الكميه بالثلاجه'), 490, invoiceTableTop, { width: 90, align: "right" });
         generateHr(doc, invoiceTableTop + 10);
-        doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
                 clog('end')
@@ -280,7 +393,8 @@ app.post('/print/productssum', async (req, res) => {
                     .fontSize(10)
                     .text(index1 + 1, 20, position, { features: ['rtla'] })
                     .text(maybeRtlize(item.name), 50, position, {})
-                    .text(item.quantity, 490, position, { width: 90, align: "right" });
+                    .text(item.quantity, 290, position, { width: 90, align: "right" })
+                    .text(item.famount, 490, position, { width: 90, align: "right" });
                 generateHr(doc, invoiceTableTop + 10);
                 generateHr(doc, position + 10);
                 index1++
@@ -414,7 +528,7 @@ app.post('/print/fridgesum', async (req, res) => {
 });
 
 app.post('/print/clientsum', async (req, res) => {
-    let doc = new pdfkit({ size: "A4", margin: 50 });
+    let doc = new pdfkit({ size: "A4", margin: 20 });
     invoice.items = await prisma.clients.findMany({})
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 35
@@ -426,10 +540,8 @@ app.post('/print/clientsum', async (req, res) => {
     for (let index = 0; index < pages; index++) {
         //draw header
         doc
-            .image("logo.png", 50, 45, { width: 50 })
+            .image("newlogo.png", 20, 45, { width: 200 })
             .fillColor("#444444")
-            .fontSize(20)
-            .text("B2B Corp.", 110, 57)
             .fontSize(10)
             .text("B2B Corp.", 200, 50, { align: "right" })
             .text("kom hamada", 200, 65, { align: "right" })
@@ -437,47 +549,35 @@ app.post('/print/clientsum', async (req, res) => {
             .moveDown();
 
 
-
         // draw detaild
         doc
             .fillColor("#444444")
             .fontSize(20)
-            .text("clients Summery", 50, 100);
+            .text("Clients Summery", 20, 100);
 
         generateHr(doc, 125);
 
-        const customerInformationTop = 140;
+
+        const customerInformationTop = 125;
 
         doc
             .fontSize(10)
-            .text("Report Number:", 50, customerInformationTop)
-            .font("Helvetica-Bold")
-            .text(invoicenum, 150, customerInformationTop)
             .font("Helvetica")
-            .text("Report Date:", 50, customerInformationTop + 15)
-            .text(formatDate(new Date()), 150, customerInformationTop + 15)
-            .text("Page Number : ", 50, customerInformationTop + 30)
+            .text("Report Number:", 20, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text('CS' + invoicenum, 120, customerInformationTop + 15)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(formatDate(new Date()), 120, customerInformationTop + 30)
+            .font("Helvetica")
+            .text("Page Number : ", 20, customerInformationTop + 45)
+            .font("Helvetica-Bold")
             .text(
                 index + 1,
-                150,
-                customerInformationTop + 30
+                120,
+                customerInformationTop + 45
             )
-
-        // .font("Helvetica-Bold")
-        // .text(invoice.shipping.name, 300, customerInformationTop)
-        // .font("Helvetica")
-        // .text(invoice.shipping.address, 300, customerInformationTop + 15)
-        // .text(
-        //     invoice.shipping.city +
-        //     ", " +
-        //     invoice.shipping.state +
-        //     ", " +
-        //     invoice.shipping.country,
-        //     300,
-        //     customerInformationTop + 30
-        // )
-        // .moveDown();
-
         generateHr(doc, 192);
 
 
@@ -490,11 +590,11 @@ app.post('/print/clientsum', async (req, res) => {
         doc.font("Tajawal-Light");
         doc
             .fontSize(10)
-            .text('م', 50, invoiceTableTop, { features: ['rtla'] })
-            .text('الاسم', 80, invoiceTableTop, { features: ['rtla'] })
-            .text('مدين', 270, invoiceTableTop, { features: ['rtla'] })
-            .text('دائن', 400, invoiceTableTop, { features: ['rtla'] })
-            .text('الرصيد', 460, invoiceTableTop, { width: 90, align: "right" });
+            .text('م', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('الاسم', 50, invoiceTableTop, { features: ['rtla'] })
+            .text('عليه', 270, invoiceTableTop, { features: ['rtla'] })
+            .text('له', 400, invoiceTableTop, { features: ['rtla'] })
+            .text('الرصيد', 490, invoiceTableTop, { width: 90, align: "right" });
         generateHr(doc, invoiceTableTop + 10);
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
@@ -505,11 +605,11 @@ app.post('/print/clientsum', async (req, res) => {
                 var position = invoiceTableTop + (i) * 15;
                 doc
                     .fontSize(10)
-                    .text(index1 + 1, 50, position, { features: ['rtla'] })
-                    .text(maybeRtlize(item.name), 80, position, {})
-                    .text(item.payment, 270, position, { width: 90 })
-                    .text(item.expense, 400, position, { width: 90 })
-                    .text(item.payment - item.expense, 460, position, { width: 90, align: "right" });
+                    .text(index1 + 1, 20, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.name), 50, position, {})
+                    .text(item.payment.toFixed(2), 270, position, { width: 90 })
+                    .text(item.expense.toFixed(2), 400, position, { width: 90 })
+                    .text((item.payment - item.expense).toFixed(2), 490, position, { width: 90, align: "right" });
                 generateHr(doc, invoiceTableTop + 10);
                 generateHr(doc, position + 10);
                 index1++
@@ -539,16 +639,34 @@ app.post('/print/clientsum', async (req, res) => {
 
 
 app.post('/print/lots', async (req, res) => {
-    const { rows } = req.body
+    const { rows, rows2 } = req.body
     let doc = new pdfkit({ size: "A4", margin: 20, layout: 'landscape' });
     invoice.items = rows
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 21
-    const pages = Math.ceil(invoice.items.length / rowsperpage)
-    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
+    var impsum = rows2.reduce((acc, curr) => {
+        const objInAcc = acc.find((o) => o.toid == curr.toid && o.to == curr.to);
+        if (objInAcc) {
+            objInAcc.amount += curr.amount;
+            objInAcc.return += curr.return;
+            objInAcc.totalprice += curr.totalprice
+            objInAcc.from = 'اجمالي'
+            objInAcc.time = ''
+            objInAcc.refid = ''
+            objInAcc.price = 0
+        }
+        else {
+            curr.from = 'اجمالي'
+            acc.push(curr)
+        };
+        return acc;
+    }, []);
+    invoice.items = [...rows, ...impsum]
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
+
     for (let index = 0; index < pages; index++) {
         //draw header
         doc
@@ -616,11 +734,9 @@ app.post('/print/lots', async (req, res) => {
             .text('م', 20, invoiceTableTop, { features: ['rtla'] })
             .text('المورد', 45, invoiceTableTop, {})
             .text('الصنف', 185, invoiceTableTop, {})
-            .text('الكميه الابتدائيه', 330, invoiceTableTop, { features: ['rtla'] })
-            .text('الكميه الحالية', 410, invoiceTableTop, { features: ['rtla'] })
+            .text('الكميه', 330, invoiceTableTop, { features: ['rtla'] })
             .text('سعر القطعه', 480, invoiceTableTop, { features: ['rtla'] })
-            .text('السعر الكلي', 550, invoiceTableTop, { features: ['rtla'] })
-            .text('باقي الرصيد', 610, invoiceTableTop, { features: ['rtla'] })
+            .text('السعر الكلي', 610, invoiceTableTop, { features: ['rtla'] })
             .text('مرتجع؟', 670, invoiceTableTop, { features: ['rtla'] })
             .text('فاتوره', 710, invoiceTableTop, { features: ['rtla'] })
             .text('تاريخ الاستلام', 760, invoiceTableTop, { features: ['rtla'] });
@@ -640,16 +756,16 @@ app.post('/print/lots', async (req, res) => {
                     .text(maybeRtlize(item.to), 185, position, {})
                     .font("Helvetica-Bold")
                     .text(item.amount.toFixed(3), 330, position, { features: ['rtla'] })
-                    .text(item.remaining.toFixed(3), 410, position, { features: ['rtla'] })
                     .text(item.price.toFixed(3), 480, position, { features: ['rtla'] })
-                    .text((item.amount * item.price).toFixed(3), 550, position, { features: ['rtla'] })
-                    .text((item.price * item.remaining).toFixed(3), 610, position, { features: ['rtla'] })
+                    .text((item.amount * item.price).toFixed(3), 610, position, { features: ['rtla'] })
                     .text(item.type == 1 ? "'Y" : "'N", 670, position, { features: ['rtla'] })
                     .text(item.refid, 710, position, { features: ['rtla'] })
                     .text(item.time.split('T')[0], 760, position, { features: ['rtla'] });
                 linelandscape(doc, invoiceTableTop + 11);
-                linelandscape(doc, position + 11);
                 index1++
+                if (item.from !== 'اجمالي') {
+                    linelandscape(doc, position + 11);
+                }
                 clog(index1)
             }
         }
@@ -675,16 +791,51 @@ app.post('/print/lots', async (req, res) => {
 });
 
 app.post('/print/exports', async (req, res) => {
-    const { rows } = req.body
+    const { rows, rows2 } = req.body
     let doc = new pdfkit({ size: "A4", margin: 20, layout: 'landscape' });
-    invoice.items = rows
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 21
-    const pages = Math.ceil(invoice.items.length / rowsperpage)
-    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
+    var impsum = rows2.reduce((acc, curr) => {
+        const objInAcc = acc.find((o) => o.productname == curr.productname && o.productid == curr.productid);
+        if (objInAcc) {
+            objInAcc.amount += curr.amount;
+            objInAcc.return = '';
+            objInAcc.totalprice += curr.totalprice
+            objInAcc.clientname = 'اجمالي'
+            objInAcc.time = ''
+            objInAcc.refid = ''
+            objInAcc.price = 0
+        }
+        else {
+            curr.clientname = 'اجمالي'
+            acc.push(curr)
+        };
+        return acc;
+    }, []);
+    var results = rows
+    results.sort((a, b) => {
+        return new Date(a.time) - new Date(b.time)
+    })
+    invoice.items = [...results]
+    invoice.items = invoice.items.concat(impsum)
+    for (let index = 0; index < invoice.items.length; index++) {
+        const element = invoice.items[index];
+        invoice.items[index].id = index
+    }
+    // const jsonContent = JSON.stringify(invoice.items);
+    // fs.writeFile('array.json', jsonContent, 'utf8', (err) => {
+    //     if (err) {
+    //       console.error(err);
+    //       return;
+    //     }
+    //     console.log('Array has been written to array.json');
+    //   });
+
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
+
     for (let index = 0; index < pages; index++) {
         //draw header
         doc
@@ -750,7 +901,7 @@ app.post('/print/exports', async (req, res) => {
         doc
             .fontSize(10)
             .text('م', 20, invoiceTableTop, { features: ['rtla'] })
-            .text('المورد', 45, invoiceTableTop, { features: ['rtla'] })
+            .text('العميل', 45, invoiceTableTop, { features: ['rtla'] })
             .text('الصنف', 185, invoiceTableTop, { features: ['rtla'] })
             .text('الكميه', 490, invoiceTableTop, { features: ['rtla'] })
             .text('سعر القطعه', 550, invoiceTableTop, { features: ['rtla'] })
@@ -772,14 +923,16 @@ app.post('/print/exports', async (req, res) => {
                     .text(maybeRtlize(item.clientname), 45, position)
                     .text(maybeRtlize(item.productname), 185, position)
                     .font("Helvetica-Bold")
-                    .text(item.amount.toFixed(3), 490, position, { features: ['rtla'] })
+                    .text(item.amount, 490, position, { features: ['rtla'] })
                     .text(item.price.toFixed(3), 550, position, { features: ['rtla'] })
                     .text((item.amount * item.price).toFixed(3), 620, position, { features: ['rtla'] })
                     .text(item.refid, 710, position, { features: ['rtla'] })
                     .text(item.time.split('T')[0], 760, position, { features: ['rtla'] });
                 linelandscape(doc, invoiceTableTop + 11);
-                linelandscape(doc, position + 11);
                 index1++
+                if (item.clientname !== 'اجمالي') {
+                    linelandscape(doc, position + 11);
+                }
                 clog(index1)
             }
         }
@@ -810,8 +963,6 @@ app.post('/print/fridgeimports', async (req, res) => {
     invoice.items = rows
     const invoicenum = Math.floor(Math.random() * 1000000)
     const rowsperpage = 21
-    const pages = Math.ceil(invoice.items.length / rowsperpage)
-    clog(pages)
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
@@ -827,14 +978,14 @@ app.post('/print/fridgeimports', async (req, res) => {
             objInAcc.refid = ''
             objInAcc.price = ''
         }
-        else acc.push(curr);
+        else {
+            curr.from = 'اجمالي'
+            acc.push(curr)
+        };
         return acc;
     }, []);
-    // for (let index = 0; index < impsum.length; index++) {
-    //     const item = impsum[index]
-    //     impsum[index].totalprice = ((item.amount - item.return) * item.price)
-    // }
     invoice.items = [...rows, ...impsum]
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
 
     for (let index = 0; index < pages; index++) {
         //draw header
@@ -909,7 +1060,7 @@ app.post('/print/fridgeimports', async (req, res) => {
             .text('سعر القطعه', 530, invoiceTableTop, { features: ['rtla'] })
             .text('السعر الكلي', 600, invoiceTableTop, { features: ['rtla'] })
             .text('فاتوره', 720, invoiceTableTop, { features: ['rtla'] })
-            .text('تاريخ الصرف', 770, invoiceTableTop, { features: ['rtla'] });
+            .text('تاريخ الاستلام', 760, invoiceTableTop, { features: ['rtla'] });
         linelandscape(doc, invoiceTableTop + 10);
         doc.font("Tajawal-Light");
         for (i = 1; i <= rowsperpage; i++) {
@@ -931,7 +1082,7 @@ app.post('/print/fridgeimports', async (req, res) => {
                     .text(item.price, 530, position, { features: ['rtla'] })
                     .text(item.totalprice.toFixed(3), 600, position, { features: ['rtla'] })
                     .text(item.refid, 720, position, { features: ['rtla'] })
-                    .text(item.time.split('T')[0], 770, position, { features: ['rtla'] });
+                    .text(item.time.split('T')[0], 760, position, { features: ['rtla'] });
                 linelandscape(doc, invoiceTableTop + 11);
 
                 index1++
@@ -1513,6 +1664,8 @@ app.post('/print/clientsummery', async (req, res) => {
     const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
     doc.registerFont(`Tajawal-Light`, customFont);
     var index1 = 0
+    var indexxxx = 0
+
     for (let index = 0; index < pages; index++) {
         //draw header
         doc
@@ -1582,7 +1735,6 @@ app.post('/print/clientsummery', async (req, res) => {
         let i;
         const invoiceTableTop = 180;
         doc.font("Tajawal-Light");
-        var indexxxx = 0
         var margin = 0
         for (i = 1; i <= rowsperpage; i++) {
             if (index1 >= invoice.items.length) {
@@ -1616,25 +1768,43 @@ app.post('/print/clientsummery', async (req, res) => {
                                     :
                                     iiii == 2 ?
                                         'مواد التعبأه المرتجعه'
-                                        :
-                                        'الرصيد'
+                                        : iiii == 3 ?
+                                            'الرصيد' :
+                                            'اجمالي الرصيد'
                             , 50, position + 20, { align: "right", features: ['rtla'] });
                     iiii++
                     generateHr(doc, position + 40);
                     margin = margin + 30
                     indexxxx = 0
                 } else {
-                    clog(item.clientname)
-                    doc
-                        .fontSize(10)
-                        .text(indexxxx == 0 ? iiii == 2 ? 'م' : 'م' : iiii == 2 ? indexxxx : indexxxx, 20, position, { features: ['rtla'] })
-                        .text(indexxxx == 0 ? iiii == 2 ? "الصنف" : "الصنف" : maybeRtlize(item.productname), 50, position)
-                        .text(indexxxx == 0 ? iiii == 2 ? "الكميه" : '' : iiii == 2 ? item.amount : "", 350, position, { width: 90, features: ['rtla'] })
-                        .text(indexxxx == 0 ? iiii == 2 ? "مرتجع" : '' : iiii == 2 ? item.return : "", 450, position, { width: 90, features: ['rtla'] })
-                        .text(indexxxx == 0 ? iiii == 2 ? 'اجمالى الكميه' : 'اجمالى الكميه' : iiii == 2 ? item.amount - item.return : item.amount, 490, position, { width: 90, align: "right", features: ['rtla'] });
-                    generateHr(doc, invoiceTableTop + 10);
-                    generateHr(doc, position + 10);
+                    clog({ iiii })
+                    if (iiii == 5 && indexxxx !== 0) {
+                        doc
+                            .fontSize(10)
+                            .text(indexxxx, 20, invoiceTableTop + (i - 1) * 15 + margin, { features: ['rtla'] })
+                            .text(maybeRtlize(item.product.toString()), 50, invoiceTableTop + (i - 1) * 15 + margin)
+                            .text(maybeRtlize(item.vmoney.toString()), 120, invoiceTableTop + (i - 1) * 15 + margin, {})
+                            .text(maybeRtlize(item.cmoney.toString()), 190, invoiceTableTop + (i - 1) * 15 + margin, {})
+                            .text(maybeRtlize(item.clientm.toString()), 260, invoiceTableTop + (i - 1) * 15 + margin, {})
+                            .text(maybeRtlize(item.vaultm.toString()), 330, invoiceTableTop + (i - 1) * 15 + margin, {})
+                            .text(maybeRtlize(item.totalc.toString()), 400, invoiceTableTop + (i - 1) * 15 + margin, {})
+                            .text(maybeRtlize(item.totalv.toString()), 470, invoiceTableTop + (i - 1) * 15 + margin, {})
+                            .text(maybeRtlize(item.balance.toString()), 490, invoiceTableTop + (i - 1) * 15 + margin, { width: 90, align: "right", features: ['rtla'] });
+                        generateHr(doc, invoiceTableTop + 10);
+                        generateHr(doc, invoiceTableTop + (i - 1) * 15 + margin + 10);
+                    } else if (iiii !== 5) {
+                        doc
+                            .fontSize(10)
+                            .text(indexxxx == 0 ? iiii == 2 ? 'م' : 'م' : iiii == 2 ? indexxxx : indexxxx, 20, position, { features: ['rtla'] })
+                            .text(indexxxx == 0 ? iiii == 2 ? "الصنف" : "الصنف" : maybeRtlize(item.productname), 50, position)
+                            .text(indexxxx == 0 ? iiii == 2 ? "الكميه" : '' : iiii == 2 ? item.amount : "", 350, position, { width: 90, features: ['rtla'] })
+                            .text(indexxxx == 0 ? iiii == 2 ? "مرتجع" : '' : iiii == 2 ? item.return : "", 450, position, { width: 90, features: ['rtla'] })
+                            .text(indexxxx == 0 ? iiii == 2 ? 'اجمالى الكميه' : 'اجمالى الكميه' : iiii == 2 ? item.amount - item.return : item.amount, 490, position, { width: 90, align: "right", features: ['rtla'] });
+                        generateHr(doc, invoiceTableTop + 10);
+                        generateHr(doc, position + 10);
+                    }
                     indexxxx++
+
                 }
                 index1++
                 clog(index1)
@@ -1661,382 +1831,326 @@ app.post('/print/clientsummery', async (req, res) => {
     res.json({ 'Status': 200, file })
 });
 
+app.post('/print/IRH', async (req, res) => {
+    const { rows, rows2 } = req.body
+    let doc = new pdfkit({ size: "A4", margin: 20, layout: 'landscape' });
+    invoice.items = rows
+    const invoicenum = Math.floor(Math.random() * 1000000)
+    const rowsperpage = 21
+    const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
+    doc.registerFont(`Tajawal-Light`, customFont);
+    var index1 = 0
+    var impsum = rows2.reduce((acc, curr) => {
+        const objInAcc = acc.find((o) => o.toid == curr.toid && o.to == curr.to);
+        if (objInAcc) {
+            objInAcc.amount += curr.amount;
+            objInAcc.return += curr.return;
+            objInAcc.totalprice += curr.totalprice
+            objInAcc.from = 'اجمالي'
+            objInAcc.time = ''
+            objInAcc.refid = ''
+            objInAcc.price = 0
+        }
+        else {
+            curr.from = 'اجمالي'
+            acc.push(curr)
+        };
+        return acc;
+    }, []);
+    invoice.items = [...rows, ...impsum]
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
 
+    for (let index = 0; index < pages; index++) {
+        //draw header
+        doc
+            .image("newlogo.png", 20, 45, { width: 200 })
+            .fillColor("#444444")
+            .fontSize(10)
+            .text("B2B Corp.", 200, 50, { align: "right" })
+            .text("kom hamada", 200, 65, { align: "right" })
+            .text("egypt, behira , 22821", 200, 80, { align: "right" })
+            .moveDown();
+
+
+        // draw detaild
+        doc
+            .fillColor("#444444")
+            .fontSize(20)
+            .text("Returned Products", 20, 100);
+
+        linelandscape(doc, 125);
+
+        const customerInformationTop = 140;
+
+        doc
+            .fontSize(10)
+            .text("Report Number:", 20, customerInformationTop)
+            .font("Helvetica-Bold")
+            .text('RP' + invoicenum, 120, customerInformationTop)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 15)
+            .text(formatDate(new Date()), 120, customerInformationTop + 15)
+            .text("Page Number : ", 20, customerInformationTop + 30)
+            .text(
+                index + 1,
+                120,
+                customerInformationTop + 30
+            )
+
+        // .font("Helvetica-Bold")
+        // .text(invoice.shipping.name, 300, customerInformationTop)
+        // .font("Helvetica")
+        // .text(invoice.shipping.address, 300, customerInformationTop + 15)
+        // .text(
+        //     invoice.shipping.city +
+        //     ", " +
+        //     invoice.shipping.state +
+        //     ", " +
+        //     invoice.shipping.country,
+        //     300,
+        //     customerInformationTop + 30
+        // )
+        // .moveDown();
+
+        linelandscape(doc, 192);
+
+
+
+
+        //draw table
+        let i;
+        const invoiceTableTop = 195;
+
+        doc.font("Tajawal-Light");
+        doc
+            .fontSize(10)
+            .text('م', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('المورد', 45, invoiceTableTop, {})
+            .text('الصنف', 185, invoiceTableTop, {})
+            .text('الكميه', 330, invoiceTableTop, { features: ['rtla'] })
+            .text('سعر القطعه', 480, invoiceTableTop, { features: ['rtla'] })
+            .text('السعر الكلي', 610, invoiceTableTop, { features: ['rtla'] })
+            .text('فاتوره', 710, invoiceTableTop, { features: ['rtla'] })
+            .text('تاريخ الاستلام', 760, invoiceTableTop, { features: ['rtla'] });
+        linelandscape(doc, invoiceTableTop + 10);
+        doc.font("Tajawal-Light");
+        for (i = 1; i <= rowsperpage; i++) {
+            if (index1 >= invoice.items.length) {
+                clog('end')
+            } else {
+                const item = invoice.items[index1];
+                var position = invoiceTableTop + (i) * 16;
+                doc
+                    .font("Tajawal-Light")
+                    .fontSize(10)
+                    .text(index1 + 1, 20, position, { features: ['rtla'] })
+                    .text(maybeRtlize(item.from), 45, position, {})
+                    .text(maybeRtlize(item.to), 185, position, {})
+                    .font("Helvetica-Bold")
+                    .text(item.amount.toFixed(3), 330, position, { features: ['rtla'] })
+                    .text(item.price.toFixed(3), 480, position, { features: ['rtla'] })
+                    .text((item.amount * item.price).toFixed(3), 610, position, { features: ['rtla'] })
+                    .text(item.refid, 710, position, { features: ['rtla'] })
+                    .text(item.time.split('T')[0], 760, position, { features: ['rtla'] });
+                linelandscape(doc, invoiceTableTop + 11);
+                index1++
+                if (item.from !== 'اجمالي') {
+                    linelandscape(doc, position + 11);
+                }
+                clog(index1)
+            }
+        }
+        doc
+            .fontSize(10)
+            .text(
+                "Thank you for your business.",
+                160,
+                560,
+                { align: "center", width: 500 }
+            );
+        if (index < pages - 1) {
+            doc.addPage()
+        }
+    }
+    doc.end();
+    const date = new Date()
+
+    clog(date.toJSON())
+    const file = 'RP' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
+    doc.pipe(fs.createWriteStream('files/' + file));
+    res.json({ 'Status': 200, file })
+});
 
 app.post('/print/clientadvance', async (req, res) => {
-    var rows = []
-    const { clientname } = req.body
-    var vaultt = await prisma.clients.findMany({
-        where: {
-            name: clientname
-        }
-    })
-    clog(vaultt)
-    var summeryarray = [];
-    if (vaultt.length < 1) {
-        res.status(200).json({ "status": 200, "error": "not found" })
-        return
-    }
-    const vault = vaultt[0]
-    // await prisma.vault.update({
-    //     where: {
-    //         id: vault.id
-    //     },
-    //     data: {
-    //         value: 0
-    //     }
-    // })
+    const { rows, rows2 } = req.body
+    let doc = new pdfkit({ size: "A4", margin: 20, layout: 'landscape' });
+    invoice.items = rows
+    const invoicenum = Math.floor(Math.random() * 1000000)
+    const rowsperpage = 22
+    const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
+    doc.registerFont(`Tajawal-Light`, customFont);
+    var index1 = 0
+    invoice.items = [...rows]
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
+
+    for (let index = 0; index < pages; index++) {
+        //draw header
+        doc
+            .image("newlogo.png", 20, 45, { width: 200 })
+            .fillColor("#444444")
+            .fontSize(10)
+            .text("B2B Corp.", 200, 50, { align: "right" })
+            .text("kom hamada", 200, 65, { align: "right" })
+            .text("egypt, behira , 22821", 200, 80, { align: "right" })
+            .moveDown();
 
 
-    // const ownertrans = await prisma.mtransaction.findMany({
-    //     where: {
-    //         toid: vault.id
-    //     }
-    // })
-    const clientstransactions = await prisma.clientvaulttransaction.findMany({
-        where: {
-            toid: vault.id
-        }
-    })
-    const vaultout = await prisma.autoproductexports.findMany({
-        where: {
-            clientid: vault.id
-        }
-    })
-    const vaultin = await prisma.fridgeproducts.findMany({
-        where: {
-            fromid: vault.id
-        }
-    })
-    const expenses = await prisma.clientm.findMany({
-        where: {
-            clientid: vault.id
-        }
-    })
-    const wtrans = await prisma.clientm.findMany({
-        where: {
-            clientid: vault.id
-        }
-    })
-    //money owners
-    // for (let index = 0; index < ownertrans.length; index++) {
-    //     const element = ownertrans[index];
-    //     if (element.way == 'in') {
-    //         summeryarray.push({
-    //             "refid": element.refid,
-    //             "vaultName": element.toname,
-    //             "OperatorName": element.fromname,
-    //             "Date": element.time.toISOString().toString().split('T')[0],
-    //             "Income": element.amount,
-    //             "Outcome": '',
-    //             "Category": 'ايراد من شريك'
-    //         })
-    //     } else {
-    //         summeryarray.push({
-    //             "refid": element.refid,
-    //             "vaultName": element.toname,
-    //             "OperatorName": element.fromname,
-    //             "Date": element.time.toISOString().toString().split('T')[0],
-    //             "Income": '',
-    //             "Outcome": element.amount,
-    //             "Category": 'منصرف لشريك'
-    //         })
-    //     }
+        // draw detaild
+        doc
+            .fillColor("#444444")
+            .fontSize(20)
+            .text("Client Advanced", 20, 100);
 
-    //     // const v = await prisma.vault.findUnique({
-    //     //     where: {
-    //     //         id: vault.id
-    //     //     }
-    //     // })
-    //     // await prisma.vault.update({
-    //     //     where: {
-    //     //         id: v.id
-    //     //     },
-    //     //     data: {
-    //     //         value: v.value + element.amount
-    //     //     }
-    //     // })
-    // }
-    //vault income transactions
-    for (let index = 0; index < vaultin.length; index++) {
-        const element = vaultin[index];
-        summeryarray.push({
-            "refid": element.refid,
-            "vaultName": element.to,
-            "OperatorName": element.from,
-            "Date": element.time.toISOString().toString().split('T')[0],
-            "Income": element.amount,
-            "Outcome": '-',
-            "price": element.price,
-            "Money": 0,
-            "Bonus": 0,
-            "Return": element.return,
-            "Totalamount": element.amount - element.return,
-            "TotalPrice": (element.amount - element.return) * element.price,
-            "Notes": 'وارد خام'
-        })
-    }
-    //vault outcome transactions
-    for (let index = 0; index < vaultout.length; index++) {
-        const element = vaultout[index];
-        summeryarray.push({
-            "refid": element.refid,
-            "vaultName": element.productname,
-            "OperatorName": element.clientname,
-            "Date": element.time.toISOString().toString().split('T')[0],
-            "Income": '-',
-            "Outcome": element.amount,
-            "price": element.price,
-            "Money": 0,
-            "Bonus": 0,
-            "Return": '-',
-            "Totalamount": element.amount,
-            "TotalPrice": element.amount * element.price,
-            "Notes": 'مواد تعبأه منصرفه'
-        })
-    }
-    //expenses outcome transactions
-    for (let index = 0; index < expenses.length; index++) {
-        const element = expenses[index];
-        if (element.way == 'out') {
-            summeryarray.push({
-                "refid": element.refid,
-                "vaultName": element.fromname,
-                "OperatorName": element.toname,
-                "Date": element.time.toISOString().toString().split('T')[0],
-                "Income": '',
-                "Outcome": '-',
-                "price": '-',
-                "Money": 0,
-                "Bonus": -element.amount,
-                "Return": '-',
-                "Totalamount": '-',
-                "TotalPrice": '-',
-                "Notes": 'مستحقات الى عميل/مورد'
-            })
-        } else {
-            summeryarray.push({
-                "refid": element.refid,
-                "vaultName": element.fromname,
-                "OperatorName": element.toname,
-                "Date": element.time.toISOString().toString().split('T')[0],
-                "Income": element.amount,
-                "Outcome": '-',
-                "price": '-',
-                "Money": 0,
-                "Bonus": element.amount,
-                "Return": '-',
-                "Totalamount": '-',
-                "TotalPrice": '-',
-                "Notes": 'مستحقات علي عميل/مورد'
-            })
+        linelandscape(doc, 125);
+
+        const customerInformationTop = 140;
+
+        doc
+            .fontSize(10)
+            .text("Report Number:", 20, customerInformationTop)
+            .font("Helvetica-Bold")
+            .text('CA' + invoicenum, 120, customerInformationTop)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 15)
+            .text(formatDate(new Date()), 120, customerInformationTop + 15)
+            .text("Page Number : ", 20, customerInformationTop + 30)
+            .text(
+                index + 1,
+                120,
+                customerInformationTop + 30
+            )
+
+        // .font("Helvetica-Bold")
+        // .text(invoice.shipping.name, 300, customerInformationTop)
+        // .font("Helvetica")
+        // .text(invoice.shipping.address, 300, customerInformationTop + 15)
+        // .text(
+        //     invoice.shipping.city +
+        //     ", " +
+        //     invoice.shipping.state +
+        //     ", " +
+        //     invoice.shipping.country,
+        //     300,
+        //     customerInformationTop + 30
+        // )
+        // .moveDown();
+
+        linelandscape(doc, 192);
+
+
+
+
+        //draw table
+        let i;
+        const invoiceTableTop = 195;
+
+        doc.font("Tajawal-Light");
+        doc
+            .fontSize(8)
+            .text('م', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('العميل', 40, invoiceTableTop, { features: ['rtla'] })
+            .text('الاسم', 165, invoiceTableTop, { features: ['rtla'] })
+            .text('وارد', 280, invoiceTableTop, { features: ['rtla'] })
+            .text('منصرف', 330, invoiceTableTop, { features: ['rtla'] })
+            .text('مرتجع', 380, invoiceTableTop, { features: ['rtla'] })
+            .text('اجمالي الكميه', 430, invoiceTableTop, { features: ['rtla'] })
+            .text('اجمالي المبلغ', 480, invoiceTableTop, { features: ['rtla'] })
+            .text('تحويلات', 530, invoiceTableTop, { features: ['rtla'] })
+            .text('مستحقات', 580, invoiceTableTop, { features: ['rtla'] })
+            .text('العمليه', 630, invoiceTableTop, { features: ['rtla'] })
+            .text('الرصيد', 720, invoiceTableTop, { features: ['rtla'] })
+            .text('التاريخ', 780, invoiceTableTop, { features: ['rtla'] })
+        linelandscape(doc, invoiceTableTop + 10);
+        doc.font("Tajawal-Light");
+        for (i = 1; i <= rowsperpage; i++) {
+            if (index1 >= invoice.items.length) {
+                clog('end')
+            } else {
+                const item = invoice.items[index1];
+                var position = invoiceTableTop + (i) * 15;
+                doc
+                    .font("Tajawal-Light")
+                    .fontSize(8)
+                    .text(item.id, 20, position)
+                    .text(item.OperatorName ? maybeRtlize(item.OperatorName) : item.OperatorName, 40, position)
+                    .text(item.vaultName ? maybeRtlize(item.vaultName) : item.vaultName, 165, position)
+                    .font("Helvetica-Bold")
+                    .text(item.Income, 280, position)
+                    .text(item.Outcome, 330, position, { features: ['rtla'] })
+                    .text(item.Return, 380, position, { features: ['rtla'] })
+                    .text(isNaN(Number(item.Totalamount)) ? item.Totalamount : item.Totalamount.toFixed(2), 430, position, { features: ['rtla'] })
+                    .text(isNaN(Number(item.TotalPrice)) ? item.TotalPrice : item.TotalPrice.toFixed(2), 480, position, { features: ['rtla'] })
+                    .text(item.Money, 530, position, { features: ['rtla'] })
+                    .text(item.Bonus, 580, position, { features: ['rtla'] })
+                    .font("Tajawal-Light")
+                    .text(item.Notes, 630, position, { features: ['rtla'] })
+                    .font("Helvetica-Bold")
+                    .text(item.Balance, 720, position, { features: ['rtla'] })
+                    .text(item.Date, 780, position, { features: ['rtla'] });
+                linelandscape(doc, invoiceTableTop + 11);
+
+                index1++
+                if (item.from !== 'اجمالي') {
+                    linelandscape(doc, position + 11);
+                }
+                clog(index1)
+            }
+        }
+        doc
+            .fontSize(10)
+            .text(
+                "Thank you for your business.",
+                160,
+                560,
+                { align: "center", width: 500 }
+            );
+        if (index < pages - 1) {
+            doc.addPage()
         }
     }
-    //workers outcome transactions
-    for (let index = 0; index < wtrans.length; index++) {
-        const element = wtrans[index];
-        summeryarray.push({
-            "refid": element.refid,
-            "vaultName": element.fromname,
-            "OperatorName": element.toname,
-            "Date": element.time.toISOString().toString().split('T')[0],
-            "Income": '',
-            "Outcome": element.amount,
-            "Outcome": '-',
-            "Money": 0,
-            "Bonus": 0,
-            "Notes": ''
-        })
-    }
-    //clientstransactions transactions
-    for (let index = 0; index < clientstransactions.length; index++) {
-        const element = clientstransactions[index];
-        if (element.way == 'out') {
-            summeryarray.push({
-                "refid": element.refid,
-                "vaultName": element.fromname,
-                "OperatorName": element.toname,
-                "Date": element.time.toISOString().toString().split('T')[0],
-                "Income": '',
-                "Outcome": '-',
-                "price": '-',
-                "Money": -element.amount,
-                "Bonus": 0,
-                "Return": '-',
-                "Totalamount": '-',
-                "TotalPrice": '-',
-                "Notes": 'منصرف الى عميل/مورد'
-            })
-        } else {
-            summeryarray.push({
-                "refid": element.refid,
-                "vaultName": element.fromname,
-                "OperatorName": element.toname,
-                "Date": element.time.toISOString().toString().split('T')[0],
-                "Income": element.amount,
-                "Outcome": '-',
-                "price": '-',
-                "Money": element.amount,
-                "Bonus": 0,
-                "Return": '-',
-                "Totalamount": '-',
-                "TotalPrice": '-',
-                "Notes": 'وارد من عميل/مورد'
-            })
-        }
-    }
-    summeryarray.sort((a, b) => {
-        return new Date(a.Date) - new Date(b.Date)
-    })
-    let val = 0;
-    for (let index = 0; index < summeryarray.length; index++) {
-        const element = summeryarray[index];
-        summeryarray[index].id = index + 1;
-        val = val - element.Outcome;
-        val = val + element.Income;
-        summeryarray[index].Value = val;
-    }
-    rows = summeryarray
-    // let doc = new pdfkit({ size: "A4", margin: 20, layout: 'portrait' });
-    // invoice.items = rows
-    // const invoicenum = Math.floor(Math.random() * 1000000)
-    // const rowsperpage = 35
-    // const pages = Math.ceil(invoice.items.length / rowsperpage)
-    // clog(pages)
-    // const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
-    // doc.registerFont(`Tajawal-Light`, customFont);
-    // var index1 = 0
-    // for (let index = 0; index < pages; index++) {
-    //     //draw header
-    //     doc
-    //         .image("newlogo.png", 20, 45, { width: 200 })
-    //         .fillColor("#444444")
-    //         .fontSize(10)
-    //         .text("B2B Corp.", 200, 50, { align: "right" })
-    //         .text("kom hamada", 200, 65, { align: "right" })
-    //         .text("egypt, behira , 22821", 200, 80, { align: "right" })
-    //         .moveDown();
+    doc.end();
+    const date = await new Date()
 
-
-
-    //     // draw detaild
-    //     doc
-    //         .fillColor("#444444")
-    //         .fontSize(20)
-    //         .text("vault Summery", 20, 100);
-
-    //     generateHr(doc, 125);
-
-    //     const customerInformationTop = 130;
-
-    //     doc
-    //         .fontSize(10)
-    //         .font("Helvetica")
-    //         .text("vault Name : ", 20, customerInformationTop)
-    //         .font("Tajawal-Light")
-    //         .text(
-    //             rows.length > 1 ? rows[0].vaultName.toString() : 'Empty',
-    //             120,
-    //             customerInformationTop,
-    //             { features: ['rtla'] }
-    //         )
-    //         .font("Helvetica")
-    //         .text("Report Number:", 20, customerInformationTop + 15)
-    //         .font("Helvetica-Bold")
-    //         .text('VS' + invoicenum, 120, customerInformationTop + 15)
-    //         .font("Helvetica")
-    //         .text("Report Date:", 20, customerInformationTop + 30)
-    //         .text(formatDate(new Date()), 120, customerInformationTop + 30)
-    //         .text("Page Number : ", 20, customerInformationTop + 45)
-    //         .text(
-    //             index + 1,
-    //             120,
-    //             customerInformationTop + 45
-    //         )
-
-
-    //     // .font("Helvetica-Bold")
-    //     // .text(invoice.shipping.name, 300, customerInformationTop)
-    //     // .font("Helvetica")
-    //     // .text(invoice.shipping.address, 300, customerInformationTop + 15)
-    //     // .text(
-    //     //     invoice.shipping.city +
-    //     //     ", " +
-    //     //     invoice.shipping.state +
-    //     //     ", " +
-    //     //     invoice.shipping.country,
-    //     //     300,
-    //     //     customerInformationTop + 30
-    //     // )
-    //     // .moveDown();
-
-    //     generateHr(doc, 192);
-
-
-
-
-    //     //draw table
-    //     let i;
-    //     const invoiceTableTop = 195;
-
-    //     doc.font("Tajawal-Light");
-    //     doc
-    //         .fontSize(10)
-    //         .text('م', 20, invoiceTableTop, { features: ['rtla'] })
-    //         .text('فاتوره', 55, invoiceTableTop, { features: ['rtla'] })
-    //         .text('العمليه', 95, invoiceTableTop, { features: ['rtla'] })
-    //         .text('المعامل', 195, invoiceTableTop, { features: ['rtla'] })
-    //         .text('وارد', 340, invoiceTableTop, { features: ['rtla'] })
-    //         .text('منصرف', 400, invoiceTableTop, { features: ['rtla'] })
-    //         .text('الرصيد', 460, invoiceTableTop, { features: ['rtla'] })
-    //         .text('تاريخ العمليه', 510, invoiceTableTop, { features: ['rtla'], align: 'right' });
-    //     generateHr(doc, invoiceTableTop + 10);
-    //     doc.font("Tajawal-Light");
-    //     for (i = 1; i <= rowsperpage; i++) {
-    //         if (index1 >= invoice.items.length) {
-    //             clog('end')
-    //         } else {
-    //             const item = invoice.items[index1];
-    //             var position = invoiceTableTop + (i) * 16;
-    //             doc
-    //                 .font("Tajawal-Light")
-    //                 .fontSize(10)
-    //                 .text(index1 + 1, 20, position, {})
-    //                 .text(item.refid, 55, position, {})
-    //                 .text(fixtext(item.Category), 95, position, { features: ['ltra'] })
-    //                 .text(fixtext(item.OperatorName), 195, position, { features: ['ltra'] })
-    //                 .font("Helvetica-Bold")
-    //                 .text(Number(item.Income) == 0 ? '' : Number(item.Income).toFixed(2).toString().split('.')[1] == '00' ? Number(item.Income) : Number(item.Income).toFixed(2), 340, position, {})
-    //                 .text(Number(item.Outcome) == 0 ? '' : Number(item.Outcome).toFixed(2).toString().split('.')[1] == '00' ? Number(item.Outcome) : Number(item.Outcome).toFixed(2), 400, position, {})
-    //                 .text(Number(item.Value).toFixed(2).toString().split('.')[1] == '00' ? Number(item.Value) : Number(item.Value).toFixed(2), 460, position, {})
-    //                 .text(item.Date, 510, position, { align: 'right' });
-    //             generateHr(doc, invoiceTableTop + 11);
-    //             generateHr(doc, position + 11);
-    //             index1++
-    //             clog(index1)
-    //         }
-    //     }
-    //     doc
-    //         .fontSize(10)
-    //         .text(
-    //             "Thank you for your business.",
-    //             50,
-    //             800,
-    //             { align: "center", width: 500 }
-    //         );
-    //     if (index < pages - 1) {
-    //         doc.addPage()
-    //     }
-    // }
-    // doc.end();
-    // const date = await new Date()
-
-    // clog(date.toJSON())
-    // const file = 'VS' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
-    // doc.pipe(fs.createWriteStream('files/' + file));
-    res.json({ 'Status': 200, rows })
+    clog(date.toJSON())
+    const file = 'CA' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
+    doc.pipe(fs.createWriteStream('files/' + file));
+    res.json({ 'Status': 200, file })
 });
 app.post('/clientadvance', async (req, res) => {
+    const pin = true;
+    const cpin = true;
+
+    const pout = true;
+    const cpout = true;
+
+    const fin = true;
+    const cfin = true;
+
+    const ex = true;
+    const cex = true;
+
+    const min = true;
+    const cmin = true;
+
+    const mout = true;
+    const cmout = true;
+
+    const ccmin = true;
+    const cccmin = true;
+
+    const ccout = true;
+    const cccout = true;
+
     var rows = []
     var balance = 0;
     var cmoney = 0
@@ -2060,6 +2174,12 @@ app.post('/clientadvance', async (req, res) => {
             toid: vault.id
         }
     })
+    const productin = await prisma.productincome.findMany({
+        where: {
+            fromid: vault.id,
+            type: 0
+        }
+    })
     const vaultout = await prisma.autoproductexports.findMany({
         where: {
             clientid: vault.id
@@ -2067,7 +2187,8 @@ app.post('/clientadvance', async (req, res) => {
     })
     const vaultin = await prisma.fridgeproducts.findMany({
         where: {
-            fromid: vault.id
+            fromid: vault.id,
+            type: 0
         }
     })
     const expenses = await prisma.clientm.findMany({
@@ -2078,6 +2199,17 @@ app.post('/clientadvance', async (req, res) => {
     const wtrans = await prisma.clientm.findMany({
         where: {
             clientid: vault.id
+        }
+    })
+    const returns = await prisma.productincome.findMany({
+        where: {
+            type: 1,
+            fromid: vault.id
+        }
+    })
+    const inreturn = await prisma.productoutcomereturn.findMany({
+        where: {
+            fromid: vault.id
         }
     })
     //vault income transactions
@@ -2093,6 +2225,7 @@ app.post('/clientadvance', async (req, res) => {
             "price": element.price,
             "Money": 0,
             "Bonus": 0,
+            "border": true,
             "Return": element.return,
             "Totalamount": element.amount - element.return,
             "TotalPrice": (element.amount - element.return) * element.price,
@@ -2112,6 +2245,7 @@ app.post('/clientadvance', async (req, res) => {
             "Outcome": element.amount,
             "price": element.price,
             "Money": 0,
+            "border": true,
             "Bonus": 0,
             "Return": '-',
             "Totalamount": element.amount,
@@ -2127,8 +2261,8 @@ app.post('/clientadvance', async (req, res) => {
         if (element.way == 'in') {
             summeryarray.push({
                 "refid": element.refid,
-                "vaultName": element.fromname,
-                "OperatorName": element.toname,
+                "vaultName": 'مستحقات',
+                "OperatorName": element.clientname,
                 "Date": element.time.toISOString().toString().split('T')[0],
                 "Income": '-',
                 "Outcome": '-',
@@ -2136,6 +2270,7 @@ app.post('/clientadvance', async (req, res) => {
                 "Money": 0,
                 "Bonus": element.amount,
                 "Return": '-',
+                "border": true,
                 "Totalamount": '-',
                 "TotalPrice": '-',
                 "Notes": 'مستحقات الى عميل/مورد'
@@ -2144,12 +2279,13 @@ app.post('/clientadvance', async (req, res) => {
         } else {
             summeryarray.push({
                 "refid": element.refid,
-                "vaultName": element.fromname,
-                "OperatorName": element.toname,
+                "vaultName": 'مستحقات',
+                "OperatorName": element.clientname,
                 "Date": element.time.toISOString().toString().split('T')[0],
                 "Income": '-',
                 "Outcome": '-',
                 "price": '-',
+                "border": true,
                 "Money": 0,
                 "Bonus": -element.amount,
                 "Return": '-',
@@ -2171,6 +2307,7 @@ app.post('/clientadvance', async (req, res) => {
             "Income": '',
             "TotalPrice": '-',
             "Outcome": '-',
+            "border": true,
             "Money": 0,
             "Bonus": 0,
             "Notes": ''
@@ -2192,6 +2329,7 @@ app.post('/clientadvance', async (req, res) => {
                 "Money": -element.amount,
                 "Bonus": 0,
                 "Return": '-',
+                "border": true,
                 "Totalamount": '-',
                 "TotalPrice": '-',
                 "Notes": 'منصرف الى عميل/مورد'
@@ -2206,6 +2344,7 @@ app.post('/clientadvance', async (req, res) => {
                 "Income": '-',
                 "Outcome": '-',
                 "price": '-',
+                "border": true,
                 "Money": element.amount,
                 "Bonus": 0,
                 "Return": '-',
@@ -2216,6 +2355,66 @@ app.post('/clientadvance', async (req, res) => {
             cmoney = cmoney + element.amount
         }
     }
+    for (let index = 0; index < productin.length; index++) {
+        const element = productin[index];
+        summeryarray.push({
+            "refid": element.refid,
+            "vaultName": element.to,
+            "OperatorName": element.from,
+            "Date": element.time.toISOString().toString().split('T')[0],
+            "Income": element.amount,
+            "Outcome": '-',
+            "price": element.price,
+            "Money": 0,
+            "Bonus": 0,
+            "border": true,
+            "Return": 0,
+            "Totalamount": element.amount,
+            "TotalPrice": element.amount * element.price,
+            "Notes": 'وارد مخزن'
+        })
+        cmoney = cmoney + (element.amount * element.price)
+    }
+    for (let index = 0; index < returns.length; index++) {
+        const element = returns[index];
+        summeryarray.push({
+            "refid": element.refid,
+            "vaultName": element.to,
+            "OperatorName": element.from,
+            "Date": element.time.toISOString().toString().split('T')[0],
+            "Income": element.amount,
+            "Outcome": '-',
+            "price": element.price,
+            "Money": 0,
+            "Bonus": 0,
+            "border": true,
+            "Return": 0,
+            "Totalamount": element.amount,
+            "TotalPrice": element.amount * element.price,
+            "Notes": 'مرتجع مبيعات'
+        })
+        cmoney = cmoney + (element.amount * element.price)
+    }
+    for (let index = 0; index < inreturn.length; index++) {
+        const element = inreturn[index];
+        summeryarray.push({
+            "refid": element.refid,
+            "vaultName": element.to,
+            "OperatorName": element.from,
+            "Date": element.time.toISOString().toString().split('T')[0],
+            "Income": element.amount,
+            "Outcome": '-',
+            "price": element.price,
+            "Money": 0,
+            "Bonus": 0,
+            "border": true,
+            "Return": 0,
+            "Totalamount": element.amount,
+            "TotalPrice": element.amount * element.price,
+            "Notes": 'مرتجع مشتريات'
+        })
+        cmoney = cmoney - (element.amount * element.price)
+    }
     summeryarray.sort((a, b) => {
         return new Date(a.Date) - new Date(b.Date)
     })
@@ -2223,14 +2422,18 @@ app.post('/clientadvance', async (req, res) => {
         const element = summeryarray[index];
         summeryarray[index].id = index + 1;
         balance = balance + Number(element.Bonus) + Number(element.Money);
-        if (element.TotalPrice !== '-' && element.Notes == 'وارد خام') {
+        if (element.TotalPrice !== '-' && (element.Notes == 'وارد خام' || element.Notes == 'وارد مخزن' || element.Notes == 'مرتجع مبيعات')) {
             balance = balance + Number(element.TotalPrice)
+        }
+        if (element.TotalPrice !== '-' && element.Notes == 'مرتجع مشتريات') {
+            balance = balance - Number(element.TotalPrice)
         }
         summeryarray[index].Balance = balance.toFixed(3);
     }
     sumarray.push({
         'id': sumarray.length + 1,
         'product': 'اجمالي الرصيد',
+        "border": true,
         clientm,
         vaultm,
         cmoney,
@@ -2246,6 +2449,7 @@ app.post('/clientadvance', async (req, res) => {
         cmoney: 'وارد',
         clientm: 'مرتجع',
         vaultm: 'اجمالي الخام',
+        "border": true,
         totalc: 'وارد التصفيه',
         totalv: 'اجمالي المبلغ',
         balance: 'الرصيد',
@@ -2266,18 +2470,14 @@ app.post('/clientadvance', async (req, res) => {
     })
     const imports = await prisma.fridgeproducts.findMany({
         where: {
-            fromid: client[0].id
-        }
-    })
-    const returns = await prisma.productincome.findMany({
-        where: {
-            type: 1,
-            fromid: client[0].id
+            fromid: client[0].id,
+            type: 0
         }
     })
 
 
-    var impsum = imports.reduce((acc, curr) => {
+
+    var impsum = imports.concat(productin).reduce((acc, curr) => {
         const objInAcc = acc.find((o) => o.toid == curr.toid && o.to == curr.to);
         if (objInAcc) {
             objInAcc.amount += curr.amount;
@@ -2400,6 +2600,7 @@ app.post('/clientadvance', async (req, res) => {
             clientm: element.return,
             vaultm: element.imp - element.return,
             totalc: element.ret,
+            "border": false,
             totalv: element.totalprice,
             balance: element.diff
         })
@@ -2829,6 +3030,163 @@ app.post('/print/vaultclienttransactions', async (req, res) => {
     doc.pipe(fs.createWriteStream('files/' + file));
     res.json({ 'Status': 200, file })
 });
+app.post('/print/moneyownertransactions', async (req, res) => {
+    const { rows } = req.body
+    let doc = new pdfkit({ size: "A4", margin: 20, layout: 'portrait' });
+    var index1 = 0
+    var newobj = null;
+    var add = 0;
+    var sub = 0;
+    var newrows = rows
+    for (let index = 0; index < newrows.length; index++) {
+        const element = newrows[index];
+        newrows[index].id = index + 1
+        if (element.way == 'out') {
+            newrows[index].sub = element.amount
+            newrows[index].add = ''
+            sub = sub + element.amount
+        } else {
+            newrows[index].add = element.amount
+            newrows[index].sub = ''
+            add = add + element.amount
+        }
+    }
+    newobj = {
+        'id': 'اجمالى',
+        "refid": '',
+        "toname": '',
+        "fromname": '',
+        "time": new Date().toISOString().toString().split('T')[0],
+        add,
+        sub,
+    }
+    invoice.items = [...newrows, newobj]
+    const invoicenum = Math.floor(Math.random() * 1000000)
+    const rowsperpage = 35
+    const pages = Math.ceil(invoice.items.length / rowsperpage)
+    clog(pages)
+    const customFontt = fs.readFileSync(`Tajawal-Bold.ttf`);
+    doc.registerFont(`Tajawal-Bold`, customFontt);
+    const customFont = fs.readFileSync(`Tajawal-Light.ttf`);
+    doc.registerFont(`Tajawal-Light`, customFont);
+    for (let index = 0; index < pages; index++) {
+        //draw header
+        doc
+            .image("newlogo.png", 20, 45, { width: 200 })
+            .fillColor("#444444")
+            .fontSize(10)
+            .text("B2B Corp.", 200, 50, { align: "right" })
+            .text("kom hamada", 200, 65, { align: "right" })
+            .text("egypt, behira , 22821", 200, 80, { align: "right" })
+            .moveDown();
+
+
+        // draw detaild
+        doc
+            .fillColor("#444444")
+            .fontSize(20)
+            .text("Investor Transactions", 20, 100);
+
+        generateHr(doc, 125);
+
+
+        const customerInformationTop = 125;
+
+        doc
+            .fontSize(10)
+            .font("Helvetica")
+            .font("Tajawal-Bold")
+            .text(
+                rows.length > 0 ? rows[0].Name : 'Empty',
+                120,
+                customerInformationTop,
+                { features: ['rtla'] }
+            )
+            .font("Helvetica")
+            .text("Report Number:", 20, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text('IT' + invoicenum, 120, customerInformationTop + 15)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(formatDate(new Date()), 120, customerInformationTop + 30)
+            .font("Helvetica")
+            .text("Page Number : ", 20, customerInformationTop + 45)
+            .font("Helvetica-Bold")
+            .text(
+                index + 1,
+                120,
+                customerInformationTop + 45
+            )
+        generateHr(doc, 192);
+
+
+
+
+        //draw table
+        let i;
+        const invoiceTableTop = 195;
+
+        doc.font("Tajawal-Bold");
+        doc
+            .fontSize(10)
+            .text('م', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('فاتوره', 45, invoiceTableTop, { features: ['rtla'] })
+            .text('الشريك', 105, invoiceTableTop, { features: ['rtla'] })
+            .text('الخزينه', 205, invoiceTableTop, { features: ['rtla'] })
+            .text('وارد', 345, invoiceTableTop, { features: ['rtla'] })
+            .text('منصرف', 430, invoiceTableTop, { features: ['rtla'] })
+            .text('التاريخ', 540, invoiceTableTop, { features: ['rtla'], align: 'right' });
+        generateHr(doc, invoiceTableTop + 10);
+        doc.font("Tajawal-Bold");
+        for (i = 1; i <= rowsperpage; i++) {
+            if (index1 >= invoice.items.length) {
+                clog('end')
+            } else {
+                const item = invoice.items[index1];
+                var position = invoiceTableTop + (i) * 16;
+                doc
+                    .font("Tajawal-Bold")
+                    .fontSize(10)
+                    .text(item.id, 20, position)
+                    .text(maybeRtlize(item.toname), 100, position)
+                    .text(maybeRtlize(item.fromname), 200, position)
+                    .text(maybeRtlize(item.refid), 45, position, { features: ['rtla'] })
+                    .font("Helvetica-Bold")
+                    .text(item.add, 345, position, { features: ['rtla'] })
+                    .text(item.sub, 430, position, { features: ['rtla'] })
+                    .text(item.time.toString().split('T')[0], 520, position, { features: ['rtla'], align: 'right' });
+                generateHr(doc, invoiceTableTop + 11);
+
+                index1++
+                if (item.id !== 'اجمالى') {
+                    generateHr(doc, position + 11);
+                } else {
+                    generateHr(doc, position - 4);
+                }
+                clog(index1)
+            }
+        }
+        doc
+            .fontSize(10)
+            .text(
+                "Thank you for your business.",
+                50,
+                770,
+                { align: "center", width: 500 }
+            );
+        if (index < pages - 1) {
+            doc.addPage()
+        }
+    }
+    doc.end();
+    const date = await new Date()
+
+    clog(date.toJSON())
+    const file = 'IT' + invoicenum + '_' + date.toJSON().split('T')[0] + '.pdf';
+    doc.pipe(fs.createWriteStream('files/' + file));
+    res.json({ 'Status': 200, file })
+});
 
 const generatepages = (doc, invoice) => {
 }
@@ -3017,11 +3375,43 @@ function formatDate(date) {
 
 
 
+function generateAccessToken() {
+    const randomBytess = randomBytes(32).toString('hex');
+    const timestamp = Date.now();
+    const accessToken = createHmac('sha256', randomBytess).update(timestamp.toString()).digest('hex');
+    return accessToken;
+}
 
 
 
 
 
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body
+    const ip = req.ip;
+    const accessToken = generateAccessToken();
+    const hash = createHash('md5').update(password).digest('hex');
+    const account = await prisma.users.findMany({
+        where: {
+            email: email.toString(),
+            password: hash
+        }
+    })
+    if (account.length < 1) {
+        res.status(200).json({ "status": 400 })
+        return
+    }
+    const logindetails = await prisma.users.update({
+        where: {
+            id: account[0].id
+        },
+        data: {
+            ip: ip,
+            accesstoken: accessToken
+        }
+    })
+    res.status(200).json({ "status": 200, logindetails })
+})
 
 
 
@@ -3065,8 +3455,29 @@ app.post('/searchfridge', async (req, res) => {
 
 
 
+app.post('/addproducttype', async (req, res) => {
+    const { name, amount } = req.body
+    const newproduct = await prisma.producttypes.create({
+        data: {
+            name: name,
+            amount: Number(amount),
+        }
+    })
+    res.status(200).json({ "status": 200, newproduct })
+})
+app.post('/searchproducttypes', async (req, res) => {
+    const { searchtext } = req.body
+    clog(searchtext)
+    const foundproduts = await prisma.producttypes.findMany({
+        where: {
+            name: {
+                contains: searchtext
+            }
+        }
+    })
 
-
+    res.status(200).json({ "status": 200, foundproduts })
+})
 
 
 
@@ -3131,14 +3542,14 @@ app.post('/editproduct', async (req, res) => {
             id: Number(selid)
         },
     })
-    // const lotupdate = await prisma.products.updateMany({
-    //     where: {
-    //         to: prod.name
-    //     },
-    //     data: {
-    //         to: name
-    //     }
-    // })
+    const lotupdate = await prisma.products.updateMany({
+        where: {
+            to: prod.name
+        },
+        data: {
+            to: name
+        }
+    })
     const importupdate = await prisma.productincome.updateMany({
         where: {
             to: prod.name
@@ -3148,6 +3559,22 @@ app.post('/editproduct', async (req, res) => {
         }
     })
     const fridgeupdate = await prisma.fridgeproducts.updateMany({
+        where: {
+            to: prod.name
+        },
+        data: {
+            to: name
+        }
+    })
+    const finalexp = await prisma.finalproductexports.updateMany({
+        where: {
+            productname: prod.name
+        },
+        data: {
+            productname: name
+        }
+    })
+    const outcomderet = await prisma.productoutcomereturn.updateMany({
         where: {
             to: prod.name
         },
@@ -3654,8 +4081,8 @@ app.post('/edittransaction', async (req, res) => {
             refid: refid.toString()
         }
     })
-    clog(deltrans.refid, transss[0].refid)
     if (transss.length > 0 && transss[0].refid !== deltrans.refid) {
+        clog(deltrans.refid, transss[0].refid)
         clog('refid match error in vault trans edit aborting now')
         res.status(200).json({ "status": 400, "error": "refid is used", "field": "refid" })
         return
@@ -4283,8 +4710,6 @@ app.post('/editclientmtransaction', async (req, res) => {
     } else {
         res.status(404).json({ "status": 404 })
     }
-
-    wtransaction
 
     res.status(200).json({ "status": 200 })
 })
@@ -6335,6 +6760,58 @@ app.post('/searchproducthistorygeneral', async (req, res) => {
         res.status(200).json({ "status": 200, results })
     }
 })
+app.post('/searchproductoutcomereturnhistorygeneral', async (req, res) => {
+    const { client, refid, product, date, fdate } = req.body
+    clog(req.body)
+    const time = date == '' ? new Date() : new Date(date);
+    const ftime = fdate == '' ? new Date() : new Date(fdate);
+    clog(new Date(date))
+    if (refid) {
+        var results = await prisma.productoutcomereturn.findMany({
+            where: {
+                refid: refid.toString(),
+                to: {
+                    contains: product
+                },
+                from: {
+                    contains: client
+                },
+                time: {
+                    lte: time,
+                    gte: ftime
+                }
+            },
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
+        clog({ results: results.length })
+        res.status(200).json({ "status": 200, results })
+    } else {
+        var results = await prisma.productoutcomereturn.findMany({
+            where: {
+                refid: {
+                    contains: refid
+                },
+                to: {
+                    contains: product
+                },
+                from: {
+                    contains: client
+                },
+                time: {
+                    lte: time,
+                    gte: ftime
+                }
+            }
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
+        clog({ results: results.length })
+        res.status(200).json({ "status": 200, results })
+    }
+})
 app.post('/searchproducthistoryexactbyclient', async (req, res) => {
     const { searchtext } = req.body
     clog(searchtext)
@@ -6425,7 +6902,58 @@ app.post('/searchcvtransgeneral', async (req, res) => {
     }
 })
 
-
+app.post('/searchmtransgeneral', async (req, res) => {
+    const { client, refid, vault, date, fdate } = req.body
+    clog(req.body)
+    const time = date == '' ? new Date() : new Date(date);
+    const ftime = fdate == '' ? new Date() : new Date(fdate);
+    clog(new Date(date))
+    if (refid) {
+        var results = await prisma.mtransaction.findMany({
+            where: {
+                refid: refid.toString(),
+                toname: {
+                    contains: vault
+                },
+                fromname: {
+                    contains: client
+                },
+                time: {
+                    lte: time,
+                    gte: ftime
+                }
+            },
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
+        clog({ results: results.length })
+        res.status(200).json({ "status": 200, results })
+    } else {
+        var results = await prisma.mtransaction.findMany({
+            where: {
+                refid: {
+                    contains: refid
+                },
+                toname: {
+                    contains: vault
+                },
+                fromname: {
+                    contains: client
+                },
+                time: {
+                    lte: time,
+                    gte: ftime
+                }
+            }
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
+        clog({ results: results.length })
+        res.status(200).json({ "status": 200, results })
+    }
+})
 
 
 app.get('/productoutcome', async (req, res) => {
@@ -7158,13 +7686,14 @@ app.get('/fridgeproducts', async (req, res) => {
     res.json({ 'status': 200, products })
 })
 app.post('/searchfridgehistorygeneral', async (req, res) => {
-    const { client, refid, product, date, fdate } = req.body
+    const { client, refid, product, date, fdate, type } = req.body
     clog(req.body)
     const time = date == '' ? new Date() : new Date(date);
     const ftime = fdate == '' ? new Date() : new Date(fdate);
+    const typ = type ? 1 : 0
     clog(new Date(date))
     if (refid) {
-        const results = await prisma.fridgeproducts.findMany({
+        var results = await prisma.fridgeproducts.findMany({
             where: {
                 refid: refid.toString(),
                 to: {
@@ -7177,12 +7706,16 @@ app.post('/searchfridgehistorygeneral', async (req, res) => {
                     lte: time,
                     gte: ftime
                 },
+                type: typ
             }
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
         })
         clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
     } else {
-        const results = await prisma.fridgeproducts.findMany({
+        var results = await prisma.fridgeproducts.findMany({
             where: {
                 refid: {
                     contains: refid
@@ -7197,7 +7730,11 @@ app.post('/searchfridgehistorygeneral', async (req, res) => {
                     lte: time,
                     gte: ftime
                 },
+                type: typ
             }
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
         })
         clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
@@ -7510,19 +8047,51 @@ app.post('/deletefinalimport', async (req, res) => {
     clog(imports)
     for (let index = 0; index < imports.length; index++) {
         const element = imports[index];
-        const selection2 = await prisma.clients.findUnique({
-            where: {
-                id: element.fromid
-            }
-        })
-        const updateclient = await prisma.clients.update({
-            where: {
-                id: selection2.id
-            },
-            data: {
-                expense: Number(selection2.expense - element.totalprice)
-            }
-        })
+        if (element.type == 1) {
+
+            const prod = await prisma.producttypes.findMany({
+                where: {
+                    id: element.toid
+                }
+            })
+            await prisma.producttypes.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    amount: prod[0].amount - (element.amount - element.return),
+                }
+            })
+        }
+        if (element.type == 0) {
+
+            const prod = await prisma.inventoryproducts.findMany({
+                where: {
+                    id: element.toid
+                }
+            })
+            await prisma.inventoryproducts.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    famount: prod[0].famount - (element.amount - element.return),
+                }
+            })
+            const selection2 = await prisma.clients.findUnique({
+                where: {
+                    id: element.fromid
+                }
+            })
+            const updateclient = await prisma.clients.update({
+                where: {
+                    id: selection2.id
+                },
+                data: {
+                    expense: Number(selection2.expense - element.totalprice)
+                }
+            })
+        }
         const newimport = await prisma.fridgeproducts.delete({
             where: {
                 id: element.id
@@ -7544,19 +8113,51 @@ app.post('/editfinalimport', async (req, res) => {
     clog(imports)
     for (let index = 0; index < imports.length; index++) {
         const element = imports[index];
-        const selection2 = await prisma.clients.findUnique({
-            where: {
-                id: element.fromid
-            }
-        })
-        const updateclient = await prisma.clients.update({
-            where: {
-                id: selection2.id
-            },
-            data: {
-                expense: Number(selection2.expense - element.totalprice)
-            }
-        })
+        if (element.type == 1) {
+
+            const prod = await prisma.producttypes.findMany({
+                where: {
+                    id: element.toid
+                }
+            })
+            await prisma.producttypes.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    amount: prod[0].amount - (element.amount - element.return),
+                }
+            })
+        }
+        if (element.type == 0) {
+
+            const prod = await prisma.inventoryproducts.findMany({
+                where: {
+                    id: element.toid
+                }
+            })
+            await prisma.inventoryproducts.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    famount: prod[0].famount - (element.amount - element.return),
+                }
+            })
+            const selection2 = await prisma.clients.findUnique({
+                where: {
+                    id: element.fromid
+                }
+            })
+            const updateclient = await prisma.clients.update({
+                where: {
+                    id: selection2.id
+                },
+                data: {
+                    expense: Number(selection2.expense - element.totalprice)
+                }
+            })
+        }
         const newimport = await prisma.fridgeproducts.delete({
             where: {
                 id: element.id
@@ -7567,68 +8168,128 @@ app.post('/editfinalimport', async (req, res) => {
     for (let index = 0; index < rows.length; index++) {
         const element = rows[index];
         const amount = Number(element.amount - element.return)
-        const selection1 = await prisma.inventoryproducts.findMany({
-            where: {
-                name: element.to
-            }
-        })
-        const selection2 = await prisma.clients.findMany({
-            where: {
-                name: element.from
-            }
-        })
-        const linksel = await prisma.plink.findUnique({
-            where: {
-                bigid: selection1[0].id
-            }
-        })
-        const updateclient = await prisma.clients.update({
-            where: {
-                id: selection2[0].id
-            },
-            data: {
-                expense: Number(selection2[0].expense + element.totalprice)
-            }
-        })
-        const newimport = await prisma.fridgeproducts.create({
-            data: {
-                from: selection2[0].name,
-                amount: Number(element.amount),
-                fromid: selection2[0].id,
-                toid: selection1[0].id,
-                price: Number(element.price),
-                to: selection1[0].name,
-                totalprice: Number(element.totalprice),
-                refid: refid.toString(),
-                time: invoicetime,
-                remaining: amount,
-                return: Number(element.return),
-                managed: true
-            }
-        })
-        if (linksel) {
-            const secproduct = await prisma.inventoryproducts.findUnique({
+
+
+        // const linksel = await prisma.plink.findUnique({
+        //     where: {
+        //         bigid: selection1[0].id
+        //     }
+        // })
+        if (element.type == 1) {
+            const selection1 = await prisma.producttypes.findMany({
                 where: {
-                    id: linksel.smallid
+                    name: element.to
                 }
             })
-            const secimport = await prisma.fridgeproducts.create({
+            const selection2 = await prisma.clients.findMany({
+                where: {
+                    name: element.from
+                }
+            })
+            const prod = await prisma.producttypes.findMany({
+                where: {
+                    name: element.to
+                }
+            })
+            const createprod = await prisma.producttypes.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    amount: prod[0].amount + (Number(element.amount) - Number(element.return)),
+                }
+            })
+            const newimport = await prisma.fridgeproducts.create({
                 data: {
                     from: selection2[0].name,
-                    amount: Number(element.amount * linksel.amount),
+                    amount: Number(element.amount),
                     fromid: selection2[0].id,
-                    toid: secproduct.id,
-                    price: 0,
-                    to: secproduct.name,
-                    totalprice: 0,
+                    toid: selection1[0].id,
+                    price: Number(element.price),
+                    to: selection1[0].name,
+                    totalprice: Number(element.totalprice),
                     refid: refid.toString(),
                     time: invoicetime,
-                    remaining: Number(amount * linksel.amount),
-                    return: Number(element.return * linksel.amount),
-                    managed: false
+                    remaining: amount,
+                    return: Number(element.return),
+                    managed: true,
+                    type: 1
                 }
             })
         }
+        if (element.type == 0) {
+            const selection1 = await prisma.inventoryproducts.findMany({
+                where: {
+                    name: element.to
+                }
+            })
+            const selection2 = await prisma.clients.findMany({
+                where: {
+                    name: element.from
+                }
+            })
+            const updateclient = await prisma.clients.update({
+                where: {
+                    id: selection2[0].id
+                },
+                data: {
+                    expense: Number(selection2[0].expense + element.totalprice)
+                }
+            })
+            const prod = await prisma.inventoryproducts.findMany({
+                where: {
+                    name: element.to
+                }
+            })
+            const createprod = await prisma.inventoryproducts.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    famount: prod[0].famount + (Number(element.amount) - Number(element.return)),
+                }
+            })
+            const newimport = await prisma.fridgeproducts.create({
+                data: {
+                    from: selection2[0].name,
+                    amount: Number(element.amount),
+                    fromid: selection2[0].id,
+                    toid: selection1[0].id,
+                    price: Number(element.price),
+                    to: selection1[0].name,
+                    totalprice: Number(element.totalprice),
+                    refid: refid.toString(),
+                    time: invoicetime,
+                    remaining: amount,
+                    return: Number(element.return),
+                    managed: true
+                }
+            })
+        }
+
+        // if (linksel) {
+        //     const secproduct = await prisma.inventoryproducts.findUnique({
+        //         where: {
+        //             id: linksel.smallid
+        //         }
+        //     })
+        //     const secimport = await prisma.fridgeproducts.create({
+        //         data: {
+        //             from: selection2[0].name,
+        //             amount: Number(element.amount * linksel.amount),
+        //             fromid: selection2[0].id,
+        //             toid: secproduct.id,
+        //             price: 0,
+        //             to: secproduct.name,
+        //             totalprice: 0,
+        //             refid: refid.toString(),
+        //             time: invoicetime,
+        //             remaining: Number(amount * linksel.amount),
+        //             return: Number(element.return * linksel.amount),
+        //             managed: false
+        //         }
+        //     })
+        // }
     }
     res.status(200).json({ "status": 200 })
 })
@@ -7636,7 +8297,136 @@ app.post('/editfinalimport', async (req, res) => {
 
 
 
+app.post('/editfinalimportlot', async (req, res) => {
+    const { lotid, newprice, newamount, newreturn } = req.body
+    clog(req.body)
+    clog(7)
+    const imports = await prisma.fridgeproducts.findMany({
+        where: {
+            id: lotid
+        }
+    })
+    clog(imports)
+    for (let index = 0; index < imports.length; index++) {
+        const element = imports[index];
+        if (element.type == 1) {
 
+            const prod = await prisma.producttypes.findMany({
+                where: {
+                    id: element.toid
+                }
+            })
+            await prisma.producttypes.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    amount: prod[0].amount - (element.amount - element.return),
+                }
+            })
+        }
+        if (element.type == 0) {
+
+            const prod = await prisma.inventoryproducts.findMany({
+                where: {
+                    id: element.toid
+                }
+            })
+            await prisma.inventoryproducts.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    famount: prod[0].famount - (element.amount - element.return),
+                }
+            })
+            const selection2 = await prisma.clients.findUnique({
+                where: {
+                    id: element.fromid
+                }
+            })
+            const updateclient = await prisma.clients.update({
+                where: {
+                    id: selection2.id
+                },
+                data: {
+                    expense: Number(selection2.expense - element.totalprice)
+                }
+            })
+        }
+        const amount = Number(newamount - newreturn)
+        if (element.type == 1) {
+            const selection1 = await prisma.producttypes.findMany({
+                where: {
+                    name: element.to
+                }
+            })
+            const selection2 = await prisma.clients.findMany({
+                where: {
+                    name: element.from
+                }
+            })
+            const prod = await prisma.producttypes.findMany({
+                where: {
+                    name: element.to
+                }
+            })
+            const createprod = await prisma.producttypes.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    amount: prod[0].amount + (amount),
+                }
+            })
+        }
+        if (element.type == 0) {
+            const selection1 = await prisma.inventoryproducts.findMany({
+                where: {
+                    name: element.to
+                }
+            })
+            const selection2 = await prisma.clients.findMany({
+                where: {
+                    name: element.from
+                }
+            })
+            const updateclient = await prisma.clients.update({
+                where: {
+                    id: selection2[0].id
+                },
+                data: {
+                    expense: Number(selection2[0].expense + (Number(newamount) - Number(newreturn)) * Number(newprice))
+                }
+            })
+            const prod = await prisma.inventoryproducts.findMany({
+                where: {
+                    name: element.to
+                }
+            })
+            const createprod = await prisma.inventoryproducts.updateMany({
+                where: {
+                    id: prod[0].id
+                },
+                data: {
+                    famount: prod[0].famount + (amount),
+                }
+            })
+        }
+    }
+    const editinvoice = await prisma.fridgeproducts.update({
+        where: {
+            id: lotid
+        },
+        data: {
+            amount: Number(newamount),
+            price: Number(newprice),
+            totalprice: (Number(newamount) - Number(newreturn)) * Number(newprice),
+            return: Number(newreturn)
+        }
+    })
+    res.status(200).json({ "status": 200, newdata: editinvoice })
+})
 
 
 
@@ -8417,12 +9207,42 @@ app.post('/editexportlot', async (req, res) => {
     })
     res.status(200).json({ "status": 200, newdata: editinvoice })
 })
-app.post('/editfinalimportlot', async (req, res) => {
-    const { lotid, newprice, newamount, newreturn } = req.body
+
+
+
+
+app.post('/editimportreturnlot', async (req, res) => {
+    const { lotid, newprice, newamount } = req.body
     clog(req.body)
-    const invoice = await prisma.fridgeproducts.findUnique({
+    const invoice = await prisma.productoutcomereturn.findUnique({
         where: {
             id: lotid
+        }
+    })
+    const invprod = await prisma.inventoryproducts.findUnique({
+        where: {
+            id: invoice.toid
+        }
+    })
+    const updinvprod = await prisma.inventoryproducts.update({
+        where: {
+            id: invprod.id
+        },
+        data: {
+            quantity: invprod.quantity + invoice.amount - Number(newamount)
+        }
+    })
+    clog({ invoice })
+    const editinvoice = await prisma.productoutcomereturn.update({
+        where: {
+            id: lotid
+        },
+        data: {
+            price: Number(newprice),
+            totalprice: Number(newprice * newamount),
+            remainigtotal: Number(newprice * invoice.remainigtotal),
+            amount: Number(newamount),
+            remaining: invoice.remaining - invoice.amount + Number(newamount)
         }
     })
     const client = await prisma.clients.findUnique({
@@ -8430,29 +9250,26 @@ app.post('/editfinalimportlot', async (req, res) => {
             id: invoice.fromid
         }
     })
-    const updateinvoice = await prisma.clients.update({
+    const clientupdate = await prisma.clients.update({
         where: {
-            id: client.id
+            id: invoice.fromid
         },
         data: {
-            expense: client.expense - invoice.totalprice + (Number(newamount) - Number(newreturn)) * Number(newprice)
+            expense: Number(client.expense) + Number(invoice.totalprice)
         }
     })
-    clog({ invoice })
-    const editinvoice = await prisma.fridgeproducts.update({
+    const clientupdateagain = await prisma.clients.update({
         where: {
-            id: lotid
+            id: invoice.fromid
         },
         data: {
-            price: Number(newprice),
-            totalprice: (Number(newamount) - Number(newreturn)) * Number(newprice),
-            amount: Number(newamount),
-            remaining: (Number(newamount) - Number(newreturn)),
-            return: Number(newreturn)
+            expense: Number(clientupdate.expense) - Number(editinvoice.price * editinvoice.amount)
         }
     })
+
     res.status(200).json({ "status": 200, newdata: editinvoice })
 })
+
 
 
 
@@ -8541,7 +9358,7 @@ app.post('/searchproductexportgeneral', async (req, res) => {
     const ftime = fdate == '' ? new Date() : new Date(fdate);
     clog(new Date(date))
     if (refid) {
-        const results = await prisma.autoproductexports.findMany({
+        var results = await prisma.autoproductexports.findMany({
             where: {
                 refid: refid.toString(),
                 productname: {
@@ -8556,10 +9373,13 @@ app.post('/searchproductexportgeneral', async (req, res) => {
                 }
             }
         })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
         clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
     } else {
-        const results = await prisma.autoproductexports.findMany({
+        var results = await prisma.autoproductexports.findMany({
             where: {
                 refid: {
                     contains: refid
@@ -8575,6 +9395,9 @@ app.post('/searchproductexportgeneral', async (req, res) => {
                     gte: ftime
                 }
             }
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
         })
         clog({ results: results.length })
         res.status(200).json({ "status": 200, results })
@@ -8786,8 +9609,38 @@ app.post('/expensescheckrefid', async (req, res) => {
 
 
 
+app.get('/producttypes', async (req, res) => {
+    const products = await prisma.producttypes.findMany({})
+    res.status(200).json({ 'status': 200, products })
+})
+app.post('/editproducttypes', async (req, res) => {
+    const { name, selid, amount } = req.body
+    clog(req.body)
+    const prod = await prisma.producttypes.findUnique({
+        where: {
+            id: Number(selid)
+        },
+    })
+    const fridgeupdate = await prisma.fridgeproducts.updateMany({
+        where: {
+            to: prod.name
+        },
+        data: {
+            to: name
+        }
+    })
+    const editedproduct = await prisma.producttypes.update({
+        where: {
+            id: Number(selid)
+        },
+        data: {
+            name: name,
+            amount: Number(amount),
+        }
+    })
 
-
+    res.status(200).json({ "status": 200, editedproduct })
+})
 
 
 
@@ -9223,6 +10076,294 @@ app.post('/productincomereturndelete', async (req, res) => {
 
 
 
+
+
+//final export
+
+app.post('/finalexportproducts', async (req, res) => {
+    const { rows, refid, clientname, time } = req.body
+
+
+    const autoexports = await prisma.finalproductexports.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+
+    for (let i = 0; i < autoexports.length; i++) {
+        const element = autoexports[i];
+        const prod = await prisma.inventoryproducts.findUnique({
+            where: {
+                id: element.productid
+            }
+        })
+        const updprod = await prisma.inventoryproducts.update({
+            where: {
+                id: prod.id
+            },
+            data: {
+                famount: prod.famount + element.amount
+            }
+        })
+        const client = await prisma.clients.findUnique({
+            where: {
+                id: element.clientid
+            }
+        })
+        const clientupdate = await prisma.clients.update({
+            where: {
+                id: client.id
+            },
+            data: {
+                payment: client.payment - (Number(element.price) * Number(element.amount))
+            }
+        })
+        await prisma.finalproductexports.delete({
+            where: {
+                id: element.id
+            }
+        })
+    }
+
+
+    for (let i = 0; i < rows.length; i++) {
+        const element = rows[i];
+        const product = await prisma.inventoryproducts.findMany({
+            where: {
+                name: element.productname
+            }
+        })
+        const client = await prisma.clients.findMany({
+            where: {
+                name: clientname
+            }
+        })
+        const clientupdate = await prisma.clients.update({
+            where: {
+                id: client[0].id
+            },
+            data: {
+                payment: client[0].payment + (Number(element.price) * Number(element.amount))
+            }
+        })
+        const newinvprod = await prisma.inventoryproducts.update({
+            where: {
+                id: product[0].id
+            },
+            data: {
+                famount: product[0].famount - element.amount
+            }
+        })
+        const newautoexp = await prisma.finalproductexports.create({
+            data: {
+                refid: refid.toString(),
+                productid: product[0].id,
+                clientid: client[0].id,
+                productname: product[0].name,
+                clientname: client[0].name,
+                totalprice: Number(element.price) * Number(element.amount),
+                price: Number(element.price),
+                amount: Number(element.amount),
+                return: 0,
+                returnid: '0',
+                remaining: Number(element.amount),
+                payed: false,
+                payedamount: 0,
+                time: new Date(time),
+            }
+        })
+    }
+
+
+    res.status(200).json({ "status": 200 })
+})
+app.post('/finalexportrefid', async (req, res) => {
+    const { refid } = req.body
+    var used = false
+    const newexport = await prisma.finalproductexports.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+    clog({ refid, count: newexport.length, editing: newexport.length > 0, used: false })
+    res.status(200).json({ "status": 200, rows: newexport, refid, count: newexport.length, editing: newexport.length > 0, used: false })
+
+})
+app.post('/searchfridgeamountexact', async (req, res) => {
+    const { searchtext } = req.body
+    clog(searchtext)
+    const prod = await prisma.inventoryproducts.findMany({
+        where: {
+            name: searchtext
+        }
+    })
+    var sum = 0
+    sum = prod.length > 0 ? prod[0].famount : 0
+    console.log({ prod, sum })
+    res.status(200).json({ "status": 200, sum })
+})
+app.post('/finalexportdelete', async (req, res) => {
+    const { refid } = req.body
+    clog("final product export delete with refid of " + refid)
+    const autoexports = await prisma.finalproductexports.findMany({
+        where: {
+            refid: refid.toString()
+        }
+    })
+
+    for (let i = 0; i < autoexports.length; i++) {
+        const element = autoexports[i];
+        const prod = await prisma.inventoryproducts.findUnique({
+            where: {
+                id: element.productid
+            }
+        })
+        const updprod = await prisma.inventoryproducts.update({
+            where: {
+                id: prod.id
+            },
+            data: {
+                famount: prod.famount + element.amount
+            }
+        })
+        const client = await prisma.clients.findUnique({
+            where: {
+                id: element.clientid
+            }
+        })
+        const clientupdate = await prisma.clients.update({
+            where: {
+                id: client.id
+            },
+            data: {
+                payment: client.payment - (Number(element.price) * Number(element.amount))
+            }
+        })
+        await prisma.finalproductexports.delete({
+            where: {
+                id: element.id
+            }
+        })
+    }
+    res.status(200).json({ "status": 200 })
+})
+app.post('/searchfinalexportgeneral', async (req, res) => {
+    const { client, refid, product, date, fdate } = req.body
+    clog(req.body)
+    const time = date == '' ? new Date() : new Date(date);
+    const ftime = fdate == '' ? new Date() : new Date(fdate);
+    clog(new Date(date))
+    if (refid) {
+        var results = await prisma.finalproductexports.findMany({
+            where: {
+                refid: refid.toString(),
+                productname: {
+                    contains: product
+                },
+                clientname: {
+                    contains: client
+                },
+                time: {
+                    lte: time,
+                    gte: ftime
+                }
+            }
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
+        clog({ results: results.length })
+        res.status(200).json({ "status": 200, results })
+    } else {
+        var results = await prisma.finalproductexports.findMany({
+            where: {
+                refid: {
+                    contains: refid
+                },
+                productname: {
+                    contains: product
+                },
+                clientname: {
+                    contains: client
+                },
+                time: {
+                    lte: time,
+                    gte: ftime
+                }
+            }
+        })
+        results.sort((a, b) => {
+            return new Date(a.time) - new Date(b.time)
+        })
+        clog({ results: results.length })
+        res.status(200).json({ "status": 200, results })
+    }
+})
+app.post('/editFinalexportlot', async (req, res) => {
+    const { lotid, newprice, newamount } = req.body
+    clog(req.body)
+    const invoice = await prisma.finalproductexports.findUnique({
+        where: {
+            id: lotid
+        }
+    })
+    const invprod = await prisma.inventoryproducts.findUnique({
+        where: {
+            id: invoice.productid
+        }
+    })
+    const client = await prisma.clients.findUnique({
+        where: {
+            id: invoice.clientid
+        }
+    })
+    const updinvprod = await prisma.inventoryproducts.update({
+        where: {
+            id: invprod.id
+        },
+        data: {
+            famount: invprod.famount + invoice.amount
+        }
+    })
+    const updclient = await prisma.clients.update({
+        where: {
+            id: client.id
+        },
+        data: {
+            payment: client.payment - (invoice.price * invoice.amount)
+        }
+    })
+    clog({ invoice })
+    const editinvoice = await prisma.finalproductexports.update({
+        where: {
+            id: lotid
+        },
+        data: {
+            price: Number(newprice),
+            totalprice: Number(newprice * newamount),
+            amount: Number(newamount),
+            remaining: Number(newamount)
+        }
+    })
+    const newinvprod = await prisma.inventoryproducts.update({
+        where: {
+            id: invprod.id
+        },
+        data: {
+            famount: updinvprod.famount - Number(newamount)
+        }
+    })
+    const newclient = await prisma.clients.update({
+        where: {
+            id: updclient.id
+        },
+        data: {
+            payment: updclient.payment + Number(newprice * newamount)
+        }
+    })
+    res.status(200).json({ "status": 200, newdata: editinvoice })
+})
+
 const resetworkers = async () => {
     const wp = await prisma.workerpayout.findMany({})
     await prisma.workers.updateMany({
@@ -9267,7 +10408,7 @@ const resetworkers = async () => {
     }
     clog('finished')
 }
-const rrrr = async () => {
+const resetclients = async () => {
     await prisma.clients.updateMany({
         data: {
             payment: 0,
@@ -9276,12 +10417,7 @@ const rrrr = async () => {
     })
     clog('clients reset')
     const income = await prisma.productincome.findMany({})
-    const fridgereset = await prisma.fridgeproducts.updateMany({
-        data: {
-            price: 0,
-            totalprice: 0
-        }
-    })
+    const fridge = await prisma.fridgeproducts.findMany({})
     clog('income invoices started with amount of : ' + income.length);
     for (let index = 0; index < income.length; index++) {
         const element = income[index];
@@ -9300,6 +10436,23 @@ const rrrr = async () => {
         })
     }
     clog('income done')
+    for (let index = 0; index < fridge.length; index++) {
+        const element = fridge[index];
+        const cl = await prisma.clients.findUnique({
+            where: {
+                id: element.fromid
+            }
+        })
+        const ucl = await prisma.clients.update({
+            where: {
+                id: element.fromid
+            },
+            data: {
+                expense: cl.expense + ((element.amount - element.return) * element.price)
+            }
+        })
+    }
+    clog('fridge done')
     const clientvaulttransaction = await prisma.clientvaulttransaction.findMany({})
     clog('clientvaulttransaction invoices started with amount of : ' + clientvaulttransaction.length);
     for (let index = 0; index < clientvaulttransaction.length; index++) {
@@ -9309,14 +10462,25 @@ const rrrr = async () => {
                 id: element.toid
             }
         })
-        const ucl = await prisma.clients.update({
-            where: {
-                id: element.toid
-            },
-            data: {
-                payment: cl.payment + element.amount
-            }
-        })
+        if (element.way == 'in') {
+            const clientupdate = await prisma.clients.update({
+                where: {
+                    id: cl.id
+                },
+                data: {
+                    expense: cl.expense + Number(element.amount)
+                }
+            })
+        } else if (element.way == 'out') {
+            const clientupdate = await prisma.clients.update({
+                where: {
+                    id: cl.id
+                },
+                data: {
+                    payment: cl.payment + Number(element.amount)
+                }
+            })
+        }
     }
     clog('clientvaulttransaction done')
 
@@ -9352,6 +10516,7 @@ const rrrr = async () => {
 }
 const dd = async () => {
     const mm = await prisma.mtransaction.findMany({})
+    await prisma.moneyowner.updateMany({ data: { payed: 0, payment: 0, value: 0, money: 0 } })
     for (let index = 0; index < mm.length; index++) {
         const element = mm[index];
         const c = await prisma.moneyowner.findUnique({
@@ -9359,66 +10524,122 @@ const dd = async () => {
                 id: element.fromid
             }
         })
-        await prisma.moneyowner.update({
-            where: {
-                id: element.fromid
-            },
-            data: {
-                payment: c.payment + element.amount
-            }
-        })
-    }
-    clog('done')
-}
-
-const calc_fridge = async () => {
-    const fridgein = await prisma.fridgeproducts.findMany({})
-    await prisma.products.deleteMany({})
-    for (let index = 0; index < fridgein.length; index++) {
-        const element = fridgein[index];
-        const prod = await prisma.products.findMany({
-            where: {
-                fromid: element.toid
-            }
-        })
-        if (!prod.length > 0) {
-            const createprod = await prisma.products.create({
+        if (element.way == 'in') {
+            await prisma.moneyowner.update({
+                where: {
+                    id: element.fromid
+                },
                 data: {
-                    fromid: element.toid,
-                    toid: element.toid,
-                    amount: 0,
-                    from: element.to,
-                    to: element.to,
-                    price: 0,
-                    invoiceid: Math.floor(Math.random() * 10000),
-                    refid: '',
-                    totalprice: 0,
-                    remainigtotal: 0,
-                    remaining: 0,
-                    type: 0,
+                    payment: c.payment + element.amount
+                }
+            })
+        }
+        if (element.way == 'out') {
+            await prisma.moneyowner.update({
+                where: {
+                    id: element.fromid
+                },
+                data: {
+                    payed: c.payed + element.amount
                 }
             })
         }
     }
+    clog('done')
+}
+const calc_fridge = async () => {
+    const fridgein = await prisma.fridgeproducts.findMany({})
+    await prisma.inventoryproducts.updateMany({
+        data: {
+            famount: 0
+        }
+    })
     for (let index = 0; index < fridgein.length; index++) {
         const element = fridgein[index];
-        const prod = await prisma.products.findMany({
+        const prod = await prisma.inventoryproducts.findMany({
             where: {
-                fromid: element.toid
+                id: element.toid
             }
         })
-        const createprod = await prisma.products.updateMany({
+        const createprod = await prisma.inventoryproducts.updateMany({
             where: {
-                toid: prod[0].toid
+                id: prod[0].id
             },
             data: {
-                amount: prod[0].amount + element.amount - element.return,
+                famount: prod[0].famount + element.amount - element.return,
             }
         })
     }
     clog('recalculate fridge done')
 }
 
+const resetinvintory = async () => {
+    await prisma.inventoryproducts.updateMany({
+        data: {
+            quantity: 0
+        }
+    })
+    const imports = await prisma.productincome.findMany({})
+    const exports = await prisma.autoproductexports.findMany({})
+    const returns = await prisma.productoutcomereturn.findMany({})
+    for (let index = 0; index < imports.length; index++) {
+        const element = imports[index];
+        const prod = await prisma.inventoryproducts.findUnique({
+            where: {
+                id: element.toid
+            }
+        })
+        await prisma.inventoryproducts.update({
+            where: {
+                id: element.toid
+            },
+            data: {
+                quantity: prod.quantity + element.amount
+            }
+        })
+    }
+    console.log('imports done')
+    for (let index = 0; index < exports.length; index++) {
+        const element = exports[index];
+        const prod = await prisma.inventoryproducts.findUnique({
+            where: {
+                id: element.productid
+            }
+        })
+        await prisma.inventoryproducts.update({
+            where: {
+                id: element.productid
+            },
+            data: {
+                quantity: prod.quantity - element.amount
+            }
+        })
+    }
+    console.log('exports done')
+    for (let index = 0; index < returns.length; index++) {
+        const element = returns[index];
+        const prod = await prisma.inventoryproducts.findUnique({
+            where: {
+                id: element.toid
+            }
+        })
+        await prisma.inventoryproducts.update({
+            where: {
+                id: element.toid
+            },
+            data: {
+                quantity: prod.quantity - element.amount
+            }
+        })
+    }
+    console.log('income return done')
+}
+
+
+// resetinvintory()
+// resetclients()
+// dd()
+// calc_fridge()
 app.listen(1024, () =>
     clog(`b2b app listening on port ${1024}!`),
 );

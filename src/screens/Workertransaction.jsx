@@ -22,8 +22,8 @@ import Autocomplete from '@mui/material/Autocomplete'
 import DataTable, { createTheme } from 'react-data-table-component';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -183,56 +183,13 @@ function Workertransaction() {
             }
         })
     }
-
-    const createnew = () => {
-        if (!name) {
-            alert('name cannot be empty')
-            return
-        }
-        if (newcode === '') {
-            alert('please enter a code')
-            return
-        }
-        setloadrn(true)
-        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
-            if (resp.data.status == 200) {
-                console.log(resp.data)
-                setloadrn(false)
-                seteditrn(false)
-                seteditrn2(false)
-                setfirstvaultname(resp.data.newclient.name)
-                setnewcode(newcode + 1)
-            } else {
-                setloadrn(false)
-                alert('failed')
-            }
-        })
-    }
-    const createnew2 = () => {
-        if (!name) {
-            alert('name cannot be empty')
-            return
-        }
-        if (newcode === '') {
-            alert('please enter a code')
-            return
-        }
-        setloadrn(true)
-        axios.post('http://localhost:1024/addvault', { value: payments, name: name, code: newcode }).then((resp) => {
-            if (resp.data.status == 200) {
-                console.log(resp.data)
-                setloadrn(false)
-                seteditrn(false)
-                seteditrn2(false)
-                setsecondvaultname(resp.data.newclient.name)
-                setnewcode(newcode + 1)
-            } else {
-                setloadrn(false)
-                alert('failed')
-            }
-        })
-    }
+    const [date1, setdate1] = useState('primary')
+    const [date2, setdate2] = useState('primary')
     const createnewtransaction = () => {
+        if (date1 !== 'primary') {
+            alert('date is invalid')
+            return
+        }
         if (!firstvaultname) {
             alert('name cannot be empty')
             return
@@ -249,7 +206,6 @@ function Workertransaction() {
             alert('amount cannot be empty')
             return
         }
-
         setloadrn(true)
         axios.post('http://localhost:1024/addwTransaction', { amount: expenses, refid: refid.toString(), fromname: firstvaultname, toname: secondvaultname, date: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
@@ -434,8 +390,13 @@ function Workertransaction() {
                             label="التاريخ"
                             type="date"
                             style={{ margin: 10, width: 200 }}
+                            color={date1}
+                            focused={date1 !== 'primary'}
                             value={newexpenses}
-                            onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
+                            onChange={(e) => {
+                                setnewexpenses(e.currentTarget.value)
+                                setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }}
                             variant="outlined"
                         />
                         <Button disabled={false} variant='contained' onClick={() => { createnewtransaction() }}>تأكيد</Button>

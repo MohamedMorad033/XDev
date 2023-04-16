@@ -22,8 +22,8 @@ import Autocomplete from '@mui/material/Autocomplete'
 import DataTable, { createTheme } from 'react-data-table-component';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -170,8 +170,8 @@ function Productincomereturn() {
     const [newloadrn, setnewloadrn] = useState(false)
     const [searchload, setsearchload] = useState(false)
     const [searchtext, setsearchtext] = useState('')
-    const [rows, setrows] = useState([
-    ]);
+    const [date1, setdate1] = useState('primary')
+    const [rows, setrows] = useState([]);
     const [editrn, seteditrn] = useState(false)
     const [editrn2, seteditrn2] = useState(false)
     const search1 = (text) => {
@@ -204,6 +204,10 @@ function Productincomereturn() {
     const [newamount, setnewamount] = useState('0')
 
     const createnew = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (!name) {
             alert('name cannot be empty')
             return
@@ -232,6 +236,10 @@ function Productincomereturn() {
     const componentRef = useRef();
 
     const createnewexport = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (!rows) {
             alert('data cannot be empty')
             return
@@ -272,6 +280,10 @@ function Productincomereturn() {
 
 
     const editsubmit = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (!rows) {
             alert('data cannot be empty')
             return
@@ -565,8 +577,13 @@ function Productincomereturn() {
                             id="expenses"
                             label="التاريخ"
                             type="date"
+                            color={date1}
+                            focused={date1 !== 'primary'}
                             value={newexpenses}
-                            onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
+                            onChange={(e) => {
+                                setnewexpenses(e.currentTarget.value)
+                                setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }}
                             variant="outlined"
                         />
                         <Button disabled={submit} style={{ marginRight: 20 }} variant='contained' onClick={() => { editsubmit() }} color='success'>تأكيد</Button>

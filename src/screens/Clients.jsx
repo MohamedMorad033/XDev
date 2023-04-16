@@ -39,8 +39,8 @@ const mesures = [
 const ExpandedComponent = ({ data }) => <pre>{JSON.stringify(data, null, 2)}</pre>;
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -185,8 +185,13 @@ function Clients() {
     const contextActions = () => (
         <>
             <Button color='error' variant='contained' onClick={() => { }}>delete</Button>
-            <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => { setprt(true) }}>print</Button>
-        </>
+            <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
+                axios.post('http://localhost:1024/print/clientsum', {}).then((resp) => {
+                    setTimeout(() => {
+                        window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
+                    }, 500);
+                })
+            }}> print</Button>        </>
     );
     const actions = () => (
         <div style={{ width: '100%', alignItems: 'center', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
@@ -499,7 +504,6 @@ function Clients() {
                         setrefreshloading(true);
                         axios.get('http://localhost:1024/clients').then((resp) => { setrows(resp.data.clients); setrefreshloading(false) })
                     }} endIcon={<Refresh />}>Refresh</Button>
-                    <Button style={{ marginRight: 20 }} variant='contained' color='success' onClick={() => { setprt(true) }}>Print</Button>
                 </div>
             </div>
             <div style={{ width: '100%' }}>

@@ -32,8 +32,8 @@ import DataTable, { createTheme } from 'react-data-table-component';
 import { FormControlLabel, FormGroup } from '@mui/material';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -104,7 +104,7 @@ function Poutcome() {
     const [g, sg] = useState(true)
     const [h, sh] = useState(true)
     const [i, si] = useState(true)
-    const [filter, setfilter] = useState(true)
+    const [filter, setfilter] = useState(false)
 
     const types = [
         {
@@ -300,7 +300,7 @@ function Poutcome() {
                 setloadrn(false)
                 alert('failed')
             }
-        }).catch(e => { alert(e.message) ;setloadrn(false) })
+        }).catch(e => { alert(e.message); setloadrn(false) })
     }
     const searchprod = () => {
         setloadrn(true);
@@ -383,19 +383,7 @@ function Poutcome() {
 
     const [totalprice, settotalprice] = useState(0)
     const [totalamount, settotalamount] = useState(0)
-
     const [selectableRows, setselectedRows] = useState()
-
-    const contextActions = () => (
-        <>
-            <Button color='error' variant='contained' onClick={() => { }}>delete</Button>
-            <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
-                axios.post('http://localhost:1024/print/lots', { rows: selectableRows }).then((resp) => {
-                    window.open('localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
-                })
-            }}>print</Button>
-        </>
-    );
     const [refid, setrefid] = useState()
 
     const downloadFile = ({ data, fileName, fileType }) => {
@@ -447,7 +435,7 @@ function Poutcome() {
         { icon: <SaveIcon onClick={(e) => { exportToCsv(e) }} />, name: 'Save' },
         {
             icon: <PrintIcon onClick={(e) => {
-                axios.post('http://localhost:1024/print/exports', { rows: rows }).then((resp) => {
+                axios.post('http://localhost:1024/print/exports', { rows: rows, rows2: rows }).then((resp) => {
                     setTimeout(() => {
                         window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                     }, 500);

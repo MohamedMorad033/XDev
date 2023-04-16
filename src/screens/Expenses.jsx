@@ -38,8 +38,8 @@ const mesures = [
 const ExpandedComponent = ({ data }) => <pre>{JSON.stringify(data, null, 2)}</pre>;
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -198,6 +198,34 @@ function Expenses() {
     const [edittransdate, setedittransdate] = useState('')
     const [editname, seteditname] = useState()
     const editsubmit = () => {
+        if (date2 !== 'primary') {
+            alert('date is invalid')
+            return
+        }
+        if (name === '') {
+            alert('name cannot be empty')
+            return
+        }
+        if (secondvaultname === '') {
+            alert('vault cannot be ampty')
+            return
+        }
+        if (selected === '') {
+            alert('please select a type')
+            return
+        }
+        if (esel1 === '') {
+            alert('please select a type')
+            return
+        }
+        if (esel2 === '') {
+            alert('please select a type')
+            return
+        }
+        if (expenses === '') {
+            alert('please enter an amount')
+            return
+        }
         setloadrn(true)
         axios.post('http://localhost:1024/editexpenses', { name, expenses, code, secondvaultname, selected, esel1, esel2, edittransdate }).then((resp) => {
             if (resp.data.status == 200) {
@@ -213,6 +241,10 @@ function Expenses() {
         })
     }
     const createnew = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (!newname) {
             alert('name cannot be empty')
             return
@@ -340,7 +372,8 @@ function Expenses() {
     );
     const [esel1, setesel1] = useState('')
     const [esel2, setesel2] = useState('')
-
+    const [date1, setdate1] = useState('primary')
+    const [date2, setdate2] = useState('primary')
     const actions = () => (
         <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
             <div style={{ display: 'flex', alignItems: 'baseline' }}>
@@ -377,7 +410,12 @@ function Expenses() {
                     type="date"
                     value={transdate}
                     disabled={loadrn}
-                    onChange={(e) => { settransdate(e.currentTarget.value) }}
+                    color={date1}
+                    focused={date1 !== 'primary'}
+                    onChange={(e) => {
+                        settransdate(e.currentTarget.value)
+                        setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                    }}
                     variant="outlined"
                 />
 
@@ -718,7 +756,12 @@ function Expenses() {
                             style={{ margin: 5 }}
                             value={edittransdate}
                             disabled={loadrn}
-                            onChange={(e) => { setedittransdate(e.currentTarget.value) }}
+                            color={date2}
+                            focused={date2 !== 'primary'}
+                            onChange={(e) => {
+                                setedittransdate(e.currentTarget.value)
+                                setdate2(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }}
                             variant="outlined"
                         />
                         <TextField

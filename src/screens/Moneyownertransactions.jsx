@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import Button from '@mui/material/Button';
@@ -19,11 +19,21 @@ import logo from './../static/b2b.png'
 import Refresh from '@mui/icons-material/RefreshRounded'
 import Typography from '@mui/material/Typography';
 import Autocomplete from '@mui/material/Autocomplete'
+import Box from '@mui/material/Box';
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import FileCopyIcon from '@mui/icons-material/FileCopyOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import PrintIcon from '@mui/icons-material/Print';
+import ShareIcon from '@mui/icons-material/Share';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import DataTable, { createTheme } from 'react-data-table-component';
+import { FormControlLabel, FormGroup } from '@mui/material';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -84,49 +94,104 @@ updatetheme(localStorage.getItem('Theme'))
 function Moneyownertransactions() {
 
 
-
+    const [date, setdate] = useState(new Date().toISOString().split('T')[0])
+    const [a, sa] = useState(true)
+    const [b, sb] = useState(true)
+    const [c, sc] = useState(true)
+    const [d, sd] = useState(true)
+    const [e, se] = useState(true)
+    const [f, sf] = useState(true)
+    const [g, sg] = useState(true)
+    const [h, sh] = useState(true)
+    const [i, si] = useState(true)
     const columns = [
         {
             name: 'م',
             selector: row => row.id,
             sortable: true,
-            width : '100px'
+            width: '100px',
+            omit: !a
         },
         {
             name: 'فاتوره؟',
             selector: row => row.refid,
             sortable: true,
+            omit: !b
         },
         {
             name: 'وارد/منصرف',
             selector: row => row.way == 'in' ? 'وارد' : "منصرف",
             sortable: true,
+            omit: !c
         },
         {
             name: 'الشريك',
             selector: row => row.fromname,
             sortable: true,
-            size: 20
+            size: 20,
+            omit: !d
         },
         {
             name: 'الخزينه',
             selector: row => row.toname,
             sortable: true,
-
+            omit: !e
         },
         {
             name: 'المبلغ',
             selector: row => row.amount,
             sortable: true,
+            omit: !f
         },
         {
             name: 'تاريخ',
             selector: row => row.time.split('T')[0],
-            sortable: true
+            sortable: true,
+            omit: !g
         }
     ];
 
+    const [vaultname, setvaultname] = useState('')
+    const [clientname, setclientname] = useState('')
+    const [vaultdata, setvaultdata] = useState([])
+    const [clientdata, setclientdata] = useState([])
 
+    const downloadFile = ({ data, fileName, fileType }) => {
+        const blob = new Blob([data], { type: fileType })
+
+        const a = document.createElement('a')
+        a.download = fileName
+        a.href = window.URL.createObjectURL(blob)
+        const clickEvt = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        })
+        a.dispatchEvent(clickEvt)
+        a.remove()
+    }
+
+    const exportToCsv = e => {
+        var data = []
+        // Headers for each column
+        let headers = ["id", "refid", "from", "fromid", "toid", "to", "remainigtotal", "amount", "remaining", "totalprice", "price", "type", "time"]
+
+        // Convert users data to a csv
+        let usersCsv = rows.reduce((acc, row) => {
+            const { id, refid, from, fromid, toid, to, remainigtotal, amount, remaining, totalprice, price, type, time } = row
+            acc.push([id, refid, from, fromid, toid, to, remainigtotal, amount, remaining, totalprice, price, type, time.split("T")[0]].join(','))
+            return acc
+        }, [])
+        data.push(headers.join(','))
+        data.push(...usersCsv)
+        var BOM = "\uFEFF";
+        var csvContent = BOM + data.join('\n');
+        downloadFile({
+            data: csvContent,
+            fileName: 'Product_Imports.csv',
+            fileType: 'text/csv;charset=utf-8',
+        })
+    }
 
     const [dark_theme_en, set_dark_theme_en] = useState('light')
     const [AccesToken, setAccesToken] = useState([]);
@@ -184,6 +249,9 @@ function Moneyownertransactions() {
             }
         })
     }
+    const [newprice, setnewprice] = useState('0')
+    const [newamount, setnewamount] = useState('0')
+    const [data, setdata] = useState(new Date().toISOString().split('T')[0])
 
     const createnew = () => {
         if (!name) {
@@ -248,6 +316,10 @@ function Moneyownertransactions() {
     const [edittransdate, setedittransdate] = useState()
 
     const createnewtransaction = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (refiderr == 'error' | refiderr == 'warning') {
             alert('refid is used')
             setrefiderr('error')
@@ -292,40 +364,7 @@ function Moneyownertransactions() {
     const [prt, setprt] = useState(false)
 
 
-    const contextActions = () => (
-        <>
-            <Button color='error' variant='contained' onClick={() => {
-
-                axios.post('http://localhost:1024/deleteMoneyownertransactions', { selectedRows }).then((resp) => {
-                    if (resp.data.status == 200) {
-                        console.log(resp.data)
-                        setfirstvaultname('')
-                        setsecondvaultname('')
-                        setexpenses(0)
-                        axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
-                    } else {
-                        setloadrn(false)
-                        alert('failed')
-                    }
-                })
-
-            }}>delete</Button>
-            <Button color='success' style={{ marginRight: 20 }} variant='contained' onClick={() => {
-                setprt(true); setTimeout(() => {
-                    window.print()
-                }, 200);
-            }}>print</Button>
-        </>
-    );
-    const actions = () => (
-        <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
-
-
-
-        </div>
-    );
     const [selectedRows, setselectedRows] = useState([])
-    const [data, setdata] = useState('')
     const [newdata, setnewdata] = useState({})
 
     const [refreshloading, setrefreshloading] = useState(false)
@@ -343,7 +382,15 @@ function Moneyownertransactions() {
     const [editrefid, seteditrefid] = useState('')
     const [refiderr, setrefiderr] = useState('primary')
     const [editrefiderr, seteditrefiderr] = useState('primary')
-
+    const generalsearch = (vlt, cln, rfd, dat, fdt) => {
+        setsearchload(true);
+        axios.post('http://localhost:1024/searchmtransgeneral', { vault: cln, client: vlt, refid: rfd, date: dat, fdate: fdt }).then((resp) => {
+            if (resp.data.status == 200) {
+                setrows(resp.data.results)
+                setsearchload(false)
+            }
+        })
+    }
 
     const searchrefid = (refid) => {
         axios.post('http://localhost:1024/searchrefidmownertransaction', { refid: refid.toString() }).then((resp) => {
@@ -358,302 +405,298 @@ function Moneyownertransactions() {
             }
         })
     }
+    const [filter, setfilter] = useState(false)
+    const [srefid, setsrefid] = useState('')
+    const [svaultdata, setsvaultdata] = useState([])
+    const [sclientdata, setsclientdata] = useState([])
+    const [sclient, setsclient] = useState('')
+    const [svault, setsvault] = useState('')
+    const [date1, setdate1] = useState('primary')
+    const [date2, setdate2] = useState('primary')
+    const [fdate, setfdate] = useState(new Date().toISOString().split('T')[0])
+    const actions = [
+        { icon: <FilterAltIcon onClick={() => { setfilter(!filter) }} />, name: 'Filter' },
+        { icon: <SaveIcon onClick={(e) => { exportToCsv(e) }} />, name: 'Save' },
+        {
+            icon: <PrintIcon onClick={(e) => {
+                axios.post('http://localhost:1024/print/moneyownertransactions', { rows: rows }).then((resp) => {
+                    setTimeout(() => {
+                        window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
+                    }, 500);
+                })
+            }} />, name: 'Print'
+        },
+        { icon: <ShareIcon />, name: 'Share' },
+    ];
     return (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Modal open={prt} onClose={() => { setprt(false) }}>
-                <div style={{ height: '100%', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div style={{ width: '100%' }}>
-                        <div className='NavContainer' style={{ position: 'sticky', top: 0, backgroundColor: '#eee' }}>
-                            <div>
-                                <img onClick={(e) => {
-                                    e.preventDefault();
-                                    window.location.href = 'http://localhost:3000/';
-                                }} src={logo} width={65.61} height={40} style={{ marginLeft: 5 }} />
-                            </div>
-                            <div style={{ marginRight: 20 }}>
-                                <h4>فاتوره تحويلات الخزنه</h4>
-                            </div>
-                        </div>
-                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                            <DataTable
-                                dense
-                                direction="rtl"
-                                columns={columns}
-                                data={selectedRows}
-                            />
-                            <div style={{ display: 'flex', width: '100%', justifyContent: 'start' }}>
-                                <Typography color={'#000'} style={{ margin: 50 }}>
-                                    اجمالي المبلغ : {totalamount}
-                                </Typography>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </Modal>
-            <div style={{ width: '100%' }}>
-
-
-
-
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+        <div style={{ width: '100%', flexDirection: 'row', display: 'flex', alignItems: 'flex-start' }}>
+            <SpeedDial
+                ariaLabel="SpeedDial basic example"
+                sx={{ position: 'absolute', bottom: 16, right: 16 }}
+                icon={<SpeedDialIcon />}
+            >
+                {actions.map((action) => (
+                    <SpeedDialAction
+                        key={action.name}
+                        icon={action.icon}
+                        tooltipTitle={action.name}
+                    />
+                ))}
+            </SpeedDial>
+            <div hidden={filter} style={{
+                width: '30%',
+                height: window.innerHeight - 46,
+                borderRightColor: '#000',
+                borderRightWidth: 1,
+                borderRightStyle: 'solid',
+                backgroundColor: '#8888882b',
+                padding: 10,
+                transition: "all .2s",
+                opacity: filter ? "0" : "1",
+                transition: "all .2s",
+                visibility: filter ? "hidden" : "visible",
+            }}>
+                <div>
                     <TextField
+                        autoFocus
                         margin="dense"
-                        label="فاتوره"
-                        type="number"
-                        value={refid}
-                        style={{ margin: 10, width: 150 }}
+                        id="code"
                         size='small'
+                        type="number"
+                        value={srefid}
+                        style={{ marginBottom: 10 }}
+                        fullWidth
                         onChange={(e) => {
-                            setrefid(e.currentTarget.value)
-                            searchrefid(e.currentTarget.value)
+                            setsrefid(e.currentTarget.value)
+                            generalsearch(sclient, svault, e.currentTarget.value, new Date(date), new Date(fdate))
                         }}
                         variant="outlined"
-                        color={refiderr}
-                        focused={refiderr !== 'primary'}
-                    />
-                    <Select
-                        variant='outlined'
-                        value={newsel}
-                        size='small'
-                        style={{ margin: 10, width: 300 }}
-                        onChange={(e) => { setnewsel(e.target.value) }}
-                    >
-                        {mesures.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    <Autocomplete
-                        id="free-solo-demo"
-                        includeInputInList
-                        freeSolo
-                        style={{ marginRight: 20, width: 200 }}
-                        value={firstvaultname}
-                        onInputChange={(event, newInputValue) => {
-                            setfirstvaultname(newInputValue);
-                            search1(newInputValue)
-                        }}
-                        onFocus={() => {
-                            axios.get('http://localhost:1024/moneyowner').then((resp) => {
-                                if (resp.data.status == 200) {
-                                    setfirstvaultdata(resp.data.vault)
-                                }
-                            })
-                        }}
-                        onDoubleClick={() => { seteditrn(true); getcode() }}
-                        options={firstvaultdata.map((option) => option.name)}
-                        renderInput={(params) => <TextField {...params} label="الشريك" />}
-                        size='small'
+                        label='الرقم المرجعى'
                     />
                     <Autocomplete
                         id="free-solo-demo"
                         label='d'
-                        style={{ marginRight: 20, width: 200 }}
-
-                        freeSolo
-                        value={secondvaultname}
-
-                        onInputChange={(event, newInputValue) => {
-                            setsecondvaultname(newInputValue);
-                            search2(newInputValue)
-
-                        }}
+                        style={{ marginBottom: 10 }}
+                        fullWidth
                         onFocus={() => {
-                            axios.get('http://localhost:1024/Vault').then((resp) => {
-                                if (resp.data.status == 200) {
-                                    setsecondvaultdata(resp.data.vault)
-                                }
+                            axios.get('http://localhost:1024/moneyowner').then((resp) => {
+                                setsvaultdata(resp.data.vault)
                             })
                         }}
-                        options={secondvaultdata.map((option) => option.name)}
+                        freeSolo
+                        value={sclient}
+                        onInputChange={(event, newInputValue) => {
+                            setsclient(newInputValue);
+                            generalsearch(newInputValue, svault, srefid, new Date(date), new Date(fdate))
+                        }}
+                        options={svaultdata.map((option) => option.name)}
                         size='small'
-
+                        renderInput={(params) => <TextField {...params} label="الشريك" />}
+                    />
+                    <Autocomplete
+                        id="free-solo-demo"
+                        label='d'
+                        style={{ marginBottom: 10 }}
+                        fullWidth
+                        onFocus={() => {
+                            axios.get('http://localhost:1024/vault').then((resp) => {
+                                setsclientdata(resp.data.vault)
+                            })
+                        }}
+                        freeSolo
+                        value={svault}
+                        onInputChange={(event, newInputValue) => {
+                            setsvault(newInputValue);
+                            generalsearch(sclient, newInputValue, srefid, new Date(date), new Date(fdate))
+                        }}
+                        options={sclientdata.map((option) => option.name)}
+                        size='small'
                         renderInput={(params) => <TextField {...params} label="الخزينه" />}
-                        onDoubleClick={() => { seteditrn2(true); getcode() }}
                     />
                     <TextField
-                        margin="dense"
-                        id="expenses"
-                        label="المبلغ"
-                        type="number"
-                        value={expenses}
-                        style={{ marginRight: 20, width: 200 }}
-                        size='small'
-                        onChange={(e) => { setexpenses(e.currentTarget.value) }}
-                        variant="outlined"
-                    />
-                    <TextField
-                        style={{ marginRight: 20, width: 200 }}
+                        style={{ marginBottom: 10 }}
                         autoFocus
                         margin="dense"
                         size='small'
-                        id="expenses"
-                        label="التاريخ"
+                        fullWidth
+                        id="date"
+                        label="من تاريخ"
                         type="date"
-                        value={transdate}
-                        onChange={(e) => { settransdate(e.currentTarget.value) }}
+                        value={fdate}
+                        onChange={(e) => {
+                            setfdate(e.currentTarget.value)
+                            if (new Date(date)) {
+                                console.log({ date, datee: new Date(date) })
+                                generalsearch(sclient, svault, srefid, new Date(date), new Date(e.currentTarget.value),)
+
+                            }
+                        }}
+                        onBlur={() => {
+                            if (!new Date(date)) {
+                                setfdate(new Date().toISOString().split('T')[0])
+                            }
+                        }}
                         variant="outlined"
+                        onDoubleClick={() => { }}
                     />
-                    <Button disabled={false} variant='contained' onClick={() => { createnewtransaction() }}>تأكيد</Button>
+                    <TextField
+                        style={{ marginBottom: 10 }}
+                        autoFocus
+                        margin="dense"
+                        size='small'
+                        fullWidth
+                        id="date"
+                        label="حتي تاريخ"
+                        type="date"
+                        value={date}
+                        onChange={(e) => {
+                            setdate(e.currentTarget.value)
+                            if (new Date(date)) {
+                                console.log({ date, datee: new Date(date) })
+                                generalsearch(sclient, svault, srefid, new Date(e.currentTarget.value), new Date(fdate))
 
-                    <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
-                        setrefreshloading(true);
-                        axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
-                    }} endIcon={<Refresh />}>Refresh</Button>
+                            }
+                        }}
+                        onBlur={() => {
+                            if (!new Date(date)) {
+                                setdate(new Date().toISOString().split('T')[0])
+                            }
+                        }}
+                        variant="outlined"
+                        onDoubleClick={() => { }}
+                    />
                 </div>
-
-
-
-
-
-
-                <DataTable
-                    pagination
-                    dense
-                    theme='newtheme'
-                    paginationPerPage={100}
-                    highlightOnHover
-                    pointerOnHover
-                    fixedHeader
-                    fixedHeaderScrollHeight='450px'
-                    selectableRowsHighlight
-                    direction="rtl"
-                    onSelectedRowsChange={(rows) => {
-                        setselectedRows(rows.selectedRows);
-                        setdata(rows);
-                        console.log(rows.selectedRows)
-                        var sum = 0
-                        var asum = 0
-                        rows.selectedRows.forEach(function (value, index, arry) {
-                            sum += value.totalprice;
-                        });
-                        rows.selectedRows.forEach(function (value, index, arry) {
-                            asum += value.amount;
-                        });
-                        settotalamount(asum)
-                        settotalprice(sum)
-                    }}
-                    selectableRowsComponent={Checkbox}
-                    columns={columns}
-                    selectableRows
-                    data={rows}
-                    onRowDoubleClicked={(data) => {
-                        setnewdata(data);
-                        settransfromname(data.fromname);
-                        settranstoname(data.toname);
-                        settransval(data.amount);
-                        setedittransdate(data.time.split('T')[0]);
-                        seteditrefid(data.refid)
-                        seteditway(data.way)
-                        setedittrans(true);
-                    }}
-                />
+                <div style={{ display: 'flex', width: '100%', flexDirection: 'row' }}>
+                    <Button disabled={searchload} style={{ flex: 1, marginRight: 5 }} variant='outlined' color='warning'
+                        onClick={() => {
+                            generalsearch(sclient, svault, srefid, new Date(date), new Date(fdate))
+                        }}>
+                        Search
+                    </Button>
+                    <Button disabled={searchload} style={{ flex: 1, marginLeft: 5, marginRight: 5 }} variant='outlined' color='primary'
+                        onClick={() => {
+                            setsclient('')
+                            setsvault('')
+                            setsrefid('')
+                            setdate(new Date().toISOString().split('T')[0])
+                            generalsearch('', '', '', new Date(), new Date('01-01-2000'))
+                        }}>
+                        All
+                    </Button>
+                    <Button disabled={searchload} style={{ flex: 1, marginLeft: 5 }} variant='outlined' color='error'
+                        onClick={() => {
+                            setsclient('')
+                            setsvault('')
+                            setsrefid('')
+                            setdate(new Date().toISOString().split('T')[0])
+                            setfdate(new Date().toISOString().split('T')[0])
+                            setrows([])
+                        }}>
+                        Reset
+                    </Button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'row', padding: 10 }}>
+                    <FormGroup style={{ flex: 1, alignItems: 'flex-end' }}>
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={e} onChange={(e) => { se(e.target.checked); }} />} label="الخزينه  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={f} onChange={(e) => { sf(e.target.checked); }} />} label="المبلغ  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={g} onChange={(e) => { sg(e.target.checked); }} />} label="التاريخ  ." />
+                    </FormGroup>
+                    <FormGroup style={{ flex: 1, alignItems: 'flex-end' }}>
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={a} onChange={(e) => { sa(e.target.checked); }} />} label="م  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={b} onChange={(e) => { sb(e.target.checked); }} />} label="فاتوره  ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={c} onChange={(e) => { sc(e.target.checked); }} />} label="وارد\منصرف ." />
+                        <FormControlLabel labelPlacement='start' control={<Checkbox checked={d} onChange={(e) => { sd(e.target.checked); }} />} label="الشريك  ." />
+                    </FormGroup>
+                </div>
+                <div style={{ display: 'flex', width: '100%', flexDirection: 'row' }}>
+                    <Button style={{ flex: 1, marginRight: 5 }} variant='outlined' color='success'
+                        onClick={() => {
+                            sf(true);
+                            sg(true);
+                            sh(true);
+                            si(true);
+                            sa(true);
+                            sb(true);
+                            sc(true);
+                            sd(true);
+                            se(true);
+                        }}>
+                        Select All
+                    </Button>
+                    <Button style={{ flex: 1, marginLeft: 5 }} variant='outlined' color='error'
+                        onClick={() => {
+                            sf(false);
+                            sg(false);
+                            sh(false);
+                            si(false);
+                            sa(false);
+                            sb(false);
+                            sc(false);
+                            sd(false);
+                            se(false);
+                        }}>
+                        Unselect All
+                    </Button>
+                </div>
             </div>
-            {/* <Dialog open={editrn}>
-                <DialogTitle>اضافه خزنه</DialogTitle>
-                <DialogContent>
-
-                    <TextField
-                        margin="dense"
-                        id="code"
-                        label="الكود"
-                        type="number"
-                        value={newcode}
-                        onChange={(e) => { setnewcode(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        margin="dense"
-                        id="name"
-                        label="اسم الخزنه"
-                        type="text"
-                        value={name}
-                        onChange={(e) => { setname(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        margin="dense"
-                        id="payments"
-                        label="الرصيد"
-                        type="number"
-                        value={payments}
-                        onChange={(e) => { setpayments(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => { seteditrn(false) }} >الغاء</Button>
-                    <Button disabled={loadrn} variant='contained' onClick={() => { createnew() }}>اضافه</Button>
-                </DialogActions>
-            </Dialog>
+            <div style={{ width: filter ? '100%' : '80%', minHeight: window.innerHeight - 46, display: 'flex', flexDirection: 'column' }} onClick={() => { setfilter(true) }}>
+                <Modal open={prt} onClose={() => { setprt(false) }}>
+                    <div style={{ height: '100%', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div style={{ width: '100%' }}>
+                            <div className='NavContainer' style={{ position: 'sticky', top: 0, backgroundColor: '#eee' }}>
+                                <div>
+                                    <img onClick={(e) => {
+                                        e.preventDefault();
+                                        window.location.href = 'http://localhost:3000/';
+                                    }} src={logo} width={65.61} height={40} style={{ marginLeft: 5 }} />
+                                </div>
+                                <div style={{ marginRight: 20 }}>
+                                    <h4>فاتوره تحويلات الخزنه</h4>
+                                </div>
+                            </div>
+                            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <DataTable
+                                    dense
+                                    direction="rtl"
+                                    columns={columns}
+                                    data={selectedRows}
+                                />
+                                <div style={{ display: 'flex', width: '100%', justifyContent: 'start' }}>
+                                    <Typography color={'#000'} style={{ margin: 50 }}>
+                                        اجمالي المبلغ : {totalamount}
+                                    </Typography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
+                <div style={{ width: '100%' }}>
 
 
-            <Dialog open={editrn2}>
-                <DialogTitle>اضافه خزنه</DialogTitle>
-                <DialogContent>
 
-                    <TextField
-                        margin="dense"
-                        id="code"
-                        label="الكود"
-                        type="number"
-                        value={newcode}
-                        onChange={(e) => { setnewcode(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        margin="dense"
-                        id="name"
-                        label="اسم الخزنه"
-                        type="text"
-                        value={name}
-                        onChange={(e) => { setname(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        margin="dense"
-                        id="payments"
-                        label="الرصيد"
-                        type="number"
-                        value={payments}
-                        onChange={(e) => { setpayments(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => { seteditrn2(false) }} >الغاء</Button>
-                    <Button disabled={loadrn} variant='contained' onClick={() => { createnew2() }}>اضافه</Button>
-                </DialogActions>
-            </Dialog> */}
-            <Dialog open={edittrans} onClose={() => { setedittrans(false) }}>
-                <DialogTitle>تعديل التحويل</DialogTitle>
-                <DialogContent>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
                         <TextField
                             margin="dense"
                             label="فاتوره"
                             type="number"
-                            value={editrefid}
-                            style={{ margin: 10, width: 300 }}
+                            value={refid}
+                            style={{ margin: 10, width: 150 }}
                             size='small'
-                            onChange={(e) => { seteditrefid(e.currentTarget.value) }}
+                            onChange={(e) => {
+                                setrefid(e.currentTarget.value)
+                                searchrefid(e.currentTarget.value)
+                            }}
                             variant="outlined"
-                            focused={editrefiderr !== 'primary'}
-                            color={editrefiderr}
+                            color={refiderr}
+                            focused={refiderr !== 'primary'}
                         />
                         <Select
                             variant='outlined'
-                            value={editway}
+                            value={newsel}
                             size='small'
                             style={{ margin: 10, width: 300 }}
-                            onChange={(e) => { seteditway(e.target.value) }}
+                            onChange={(e) => { setnewsel(e.target.value) }}
                         >
                             {mesures.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
@@ -665,126 +708,311 @@ function Moneyownertransactions() {
                             id="free-solo-demo"
                             includeInputInList
                             freeSolo
-                            style={{ margin: 10, width: 300 }}
-                            value={transfromname}
+                            style={{ marginRight: 20, width: 200 }}
+                            value={firstvaultname}
                             onInputChange={(event, newInputValue) => {
-                                settransfromname(newInputValue);
-                                axios.post('http://localhost:1024/searchmoneyowner', { searchtext: newInputValue }).then((resp) => {
-                                    if (resp.data.status == 200) {
-                                        settransfromdata(resp.data.foundproduts)
-                                    }
-                                })
+                                setfirstvaultname(newInputValue);
+                                search1(newInputValue)
                             }}
                             onFocus={() => {
                                 axios.get('http://localhost:1024/moneyowner').then((resp) => {
                                     if (resp.data.status == 200) {
-                                        settransfromdata(resp.data.vault)
+                                        setfirstvaultdata(resp.data.vault)
                                     }
                                 })
                             }}
-                            disabled={editloading}
-                            fullWidth
                             onDoubleClick={() => { seteditrn(true); getcode() }}
-                            options={transfromdata.map((option) => option.name)}
+                            options={firstvaultdata.map((option) => option.name)}
                             renderInput={(params) => <TextField {...params} label="الشريك" />}
                             size='small'
                         />
                         <Autocomplete
-                            fullWidth
                             id="free-solo-demo"
                             label='d'
-                            style={{ margin: 10, width: 300 }}
+                            style={{ marginRight: 20, width: 200 }}
+
                             freeSolo
-                            value={transtoname}
+                            value={secondvaultname}
 
                             onInputChange={(event, newInputValue) => {
-                                settranstoname(newInputValue);
-                                axios.post('http://localhost:1024/searchVault', { searchtext: newInputValue }).then((resp) => {
-                                    if (resp.data.status == 200) {
-                                        settranstodata(resp.data.foundproduts)
-                                    }
-                                })
+                                setsecondvaultname(newInputValue);
+                                search2(newInputValue)
+
                             }}
                             onFocus={() => {
                                 axios.get('http://localhost:1024/Vault').then((resp) => {
                                     if (resp.data.status == 200) {
-                                        settranstodata(resp.data.vault)
+                                        setsecondvaultdata(resp.data.vault)
                                     }
                                 })
                             }}
-                            options={transtodata.map((option) => option.name)}
+                            options={secondvaultdata.map((option) => option.name)}
                             size='small'
-                            disabled={editloading}
 
-                            renderInput={(params) => <TextField {...params} label="الخزنه" />}
+                            renderInput={(params) => <TextField {...params} label="الخزينه" />}
                             onDoubleClick={() => { seteditrn2(true); getcode() }}
                         />
                         <TextField
                             margin="dense"
-                            id="payments"
+                            id="expenses"
                             label="المبلغ"
                             type="number"
-                            value={transval}
-                            onChange={(e) => { settransval(e.currentTarget.value) }}
-                            style={{ margin: 10, width: 300 }}
-                            disabled={editloading}
-                            size={'small'}
+                            value={expenses}
+                            style={{ marginRight: 20, width: 200 }}
+                            size='small'
+                            onChange={(e) => { setexpenses(e.currentTarget.value) }}
                             variant="outlined"
                         />
                         <TextField
-                        style={{ margin: 10, width: 300 }}
-                        autoFocus
+                            style={{ marginRight: 20, width: 200 }}
+                            autoFocus
                             margin="dense"
                             size='small'
                             id="expenses"
                             label="التاريخ"
                             type="date"
-                            value={edittransdate}
-                            disabled={editloading}
-                            onChange={(e) => { setedittransdate(e.currentTarget.value) }}
+                            color={date1}
+                            focused={date1 !== 'primary'}
+                            value={transdate}
+                            onChange={(e) => {
+                                settransdate(e.currentTarget.value)
+                                setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }}
                             variant="outlined"
                         />
+                        <Button disabled={false} variant='contained' onClick={() => { createnewtransaction() }}>تأكيد</Button>
+
+                        <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
+                            setrefreshloading(true);
+                            axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => { setrows(resp.data.transaction); setrefreshloading(false); console.log(resp.data) })
+                        }} endIcon={<Refresh />}>Refresh</Button>
                     </div>
 
 
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => { setedittrans(false) }} >الغاء</Button>
-                    <Button variant='contained' onClick={async () => {
-                        seteditloading(true)
-                        axios.post('http://localhost:1024/editMoneyownertransactions', { newdata, transfromname, transtoname, transval, editrefid, edittransdate, way: editway }).then(resp => {
-                            if (resp.data.status == 200) {
-                                setedittrans(false);
-                                axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => {
+
+
+
+
+                    <DataTable
+                        pagination
+                        dense
+                        theme='newtheme'
+                        paginationPerPage={100}
+                        highlightOnHover
+                        pointerOnHover
+                        fixedHeader
+                        fixedHeaderScrollHeight='450px'
+                        selectableRowsHighlight
+                        direction="rtl"
+                        onSelectedRowsChange={(rows) => {
+                            setselectedRows(rows.selectedRows);
+                            setdata(rows);
+                            console.log(rows.selectedRows)
+                            var sum = 0
+                            var asum = 0
+                            rows.selectedRows.forEach(function (value, index, arry) {
+                                sum += value.totalprice;
+                            });
+                            rows.selectedRows.forEach(function (value, index, arry) {
+                                asum += value.amount;
+                            });
+                            settotalamount(asum)
+                            settotalprice(sum)
+                        }}
+                        selectableRowsComponent={Checkbox}
+                        columns={columns}
+                        selectableRows
+                        data={rows}
+                        onRowDoubleClicked={(data) => {
+                            setnewdata(data);
+                            settransfromname(data.fromname);
+                            settranstoname(data.toname);
+                            settransval(data.amount);
+                            setedittransdate(data.time.split('T')[0]);
+                            seteditrefid(data.refid)
+                            seteditway(data.way)
+                            setedittrans(true);
+                        }}
+                    />
+                </div>
+                <Dialog open={edittrans} onClose={() => { setedittrans(false) }}>
+                    <DialogTitle>تعديل التحويل</DialogTitle>
+                    <DialogContent>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <TextField
+                                margin="dense"
+                                label="فاتوره"
+                                type="number"
+                                value={editrefid}
+                                style={{ margin: 10, width: 300 }}
+                                size='small'
+                                onChange={(e) => { seteditrefid(e.currentTarget.value) }}
+                                variant="outlined"
+                                focused={editrefiderr !== 'primary'}
+                                color={editrefiderr}
+                            />
+                            <Select
+                                variant='outlined'
+                                value={editway}
+                                size='small'
+                                style={{ margin: 10, width: 300 }}
+                                onChange={(e) => { seteditway(e.target.value) }}
+                            >
+                                {mesures.map((option) => (
+                                    <MenuItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            <Autocomplete
+                                id="free-solo-demo"
+                                includeInputInList
+                                freeSolo
+                                style={{ margin: 10, width: 300 }}
+                                value={transfromname}
+                                onInputChange={(event, newInputValue) => {
+                                    settransfromname(newInputValue);
+                                    axios.post('http://localhost:1024/searchmoneyowner', { searchtext: newInputValue }).then((resp) => {
+                                        if (resp.data.status == 200) {
+                                            settransfromdata(resp.data.foundproduts)
+                                        }
+                                    })
+                                }}
+                                onFocus={() => {
+                                    axios.get('http://localhost:1024/moneyowner').then((resp) => {
+                                        if (resp.data.status == 200) {
+                                            settransfromdata(resp.data.vault)
+                                        }
+                                    })
+                                }}
+                                disabled={editloading}
+                                fullWidth
+                                onDoubleClick={() => { seteditrn(true); getcode() }}
+                                options={transfromdata.map((option) => option.name)}
+                                renderInput={(params) => <TextField {...params} label="الشريك" />}
+                                size='small'
+                            />
+                            <Autocomplete
+                                fullWidth
+                                id="free-solo-demo"
+                                label='d'
+                                style={{ margin: 10, width: 300 }}
+                                freeSolo
+                                value={transtoname}
+
+                                onInputChange={(event, newInputValue) => {
+                                    settranstoname(newInputValue);
+                                    axios.post('http://localhost:1024/searchVault', { searchtext: newInputValue }).then((resp) => {
+                                        if (resp.data.status == 200) {
+                                            settranstodata(resp.data.foundproduts)
+                                        }
+                                    })
+                                }}
+                                onFocus={() => {
+                                    axios.get('http://localhost:1024/Vault').then((resp) => {
+                                        if (resp.data.status == 200) {
+                                            settranstodata(resp.data.vault)
+                                        }
+                                    })
+                                }}
+                                options={transtodata.map((option) => option.name)}
+                                size='small'
+                                disabled={editloading}
+
+                                renderInput={(params) => <TextField {...params} label="الخزنه" />}
+                                onDoubleClick={() => { seteditrn2(true); getcode() }}
+                            />
+                            <TextField
+                                margin="dense"
+                                id="payments"
+                                label="المبلغ"
+                                type="number"
+                                value={transval}
+                                onChange={(e) => { settransval(e.currentTarget.value) }}
+                                style={{ margin: 10, width: 300 }}
+                                disabled={editloading}
+                                size={'small'}
+                                variant="outlined"
+                            />
+                            <TextField
+                                style={{ margin: 10, width: 300 }}
+                                autoFocus
+                                margin="dense"
+                                size='small'
+                                id="expenses"
+                                label="التاريخ"
+                                type="date"
+                                value={edittransdate}
+                                disabled={editloading}
+                                color={date2}
+                                focused={date2 !== 'primary'}
+                                onChange={(e) => {
+                                    setedittransdate(e.currentTarget.value)
+                                    setdate2(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                                }} variant="outlined"
+                            />
+                        </div>
+
+
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => { setedittrans(false) }} >الغاء</Button>
+                        <Button variant='contained' onClick={async () => {
+                            if (date2 !== 'primary') {
+                                alert('date is invalid')
+                                return
+                            }
+                            if (transfromname === '') {
+                                alert('client cannot be empty')
+                                return
+                            }
+                            if (transtoname === '') {
+                                alert('vault cannot be empty')
+                                return
+                            }
+                            if (editrefid === '') {
+                                alert('refid cannot be empty')
+                                return
+                            }
+                            if (transval === '') {
+                                alert('please enter an amount')
+                                return
+                            }
+                            seteditloading(true)
+                            axios.post('http://localhost:1024/editMoneyownertransactions', { newdata, transfromname, transtoname, transval, editrefid, edittransdate, way: editway }).then(resp => {
+                                if (resp.data.status == 200) {
+                                    setedittrans(false);
+                                    axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => {
+                                        seteditloading(false)
+                                        setrows(resp.data.transaction);
+                                    })
+                                    seteditloading(false)
+                                } else if (resp.data.status == 400) {
+                                    seteditloading(false)
+                                    seteditrefiderr('error')
+                                    axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => {
+                                        setrows(resp.data.transaction);
+                                    })
+                                } else {
+                                    seteditloading(false)
+                                    alert('failed')
+                                }
+                            }).catch(e => { alert(e.message) })
+                        }}>حفظ</Button>
+                        <Button variant='contained' onClick={async () => {
+                            seteditloading(true)
+                            axios.post('http://localhost:1024/deleteMoneyownertransaction', { id: newdata.id }).then(resp => {
+                                setedittrans(false); axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => {
                                     seteditloading(false)
                                     setrows(resp.data.transaction);
                                 })
-                                seteditloading(false)
-                            } else if (resp.data.status == 400) {
-                                seteditloading(false)
-                                seteditrefiderr('error')
-                                axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => {
-                                    setrows(resp.data.transaction);
-                                })
-                            } else {
-                                seteditloading(false)
-                                alert('failed')
-                            }
-                        }).catch(e => { alert(e.message) })
-                    }}>حفظ</Button>
-                    <Button variant='contained' onClick={async () => {
-                        seteditloading(true)
-                        axios.post('http://localhost:1024/deleteMoneyownertransaction', { id: newdata.id }).then(resp => {
-                            setedittrans(false); axios.get('http://localhost:1024/Moneyownertransactions').then((resp) => {
-                                seteditloading(false)
-                                setrows(resp.data.transaction);
                             })
-                        })
-                    }}
-                        color='error'
-                    >حذف</Button>
-                </DialogActions>
-            </Dialog>
+                        }}
+                            color='error'
+                        >حذف</Button>
+                    </DialogActions>
+                </Dialog>
+            </div>
         </div>
     )
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { DataGrid } from '@mui/x-data-grid';
+import { Space, Table, Tag, Input, InputNumber, Tooltip, Button, Form, message, Popconfirm, Modal } from 'antd';
 import axios from 'axios';
-import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -12,18 +11,73 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Select from '@mui/material/Select'
 import InputLabel from '@mui/material/InputLabel'
 import InputAdornment from '@mui/material/InputAdornment'
-import { Checkbox, InputGroup, NumericInput, Overlay } from '@blueprintjs/core';
-import Modal from '@mui/material/Modal'
+import { Checkbox, InputGroup, Overlay } from '@blueprintjs/core';
 import ReactToPrint from 'react-to-print';
 import logo from './../static/b2b.png'
 import Refresh from '@mui/icons-material/RefreshRounded'
 import Typography from '@mui/material/Typography';
 import Autocomplete from '@mui/material/Autocomplete'
+
+
 import DataTable, { createTheme } from 'react-data-table-component';
+const { Search } = Input;
+
+
+
+
+
+
+
+const NumericInput = (props) => {
+    const { value, onChange } = props;
+    const formatNumber = (value) => new Intl.NumberFormat().format(value);
+
+    const handleChange = (e) => {
+        const { value: inputValue } = e.target;
+        const reg = /^-?\d*(\.\d*)?$/;
+        if (reg.test(inputValue) || inputValue === '' || inputValue === '-') {
+            onChange(inputValue);
+        }
+    };
+
+    // '.' at the end or only '-' in the input box.
+    const handleBlur = () => {
+        let valueTemp = value;
+        if (value.charAt(value.length - 1) === '.' || value === '-') {
+            valueTemp = value.slice(0, -1);
+        }
+        onChange(valueTemp.replace(/0*(\d+)/, '$1'));
+    };
+    const title = value ? (
+        <span className="numeric-input-title">{value !== '-' ? formatNumber(Number(value)) : '-'}</span>
+    ) : (
+        'Input a number'
+    );
+    return (
+        <Tooltip trigger={['focus']} title={title} placement="topLeft" overlayClassName="numeric-input">
+            <Input
+                {...props}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="Input a number"
+                maxLength={16}
+
+            />
+        </Tooltip>
+    );
+};
+
+
+
+
+
+
+
+
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -111,37 +165,36 @@ function Products() {
     )
     const columns = [
         {
-            name: 'م',
-            selector: row => row.id,
-            sortable: true,
-            style: {
-                backgroundColor: 'rgba(255, 70, 70, 1)',
-                textAlign: 'center'
-            },
-            headerStyle: (selector, id) => {
-                return { textAlign: "center" };   // removed partial line here
-            },
-            width: "55px"                       // another for example
-
-
+            title: 'م',
+            dataIndex: "id",
+            key: "id",
+            sorter: (a, b) => a.id - b.id,
         },
         {
-            name: 'اسم الصنف',
-            selector: row => row.name,
+            title: 'اسم الصنف',
+            dataIndex: "name",
+            key: "name",
             sortable: true,
-            size: 20
-        },
-        {
-            name: 'الكمية',
-            selector: row => row.quantity,
-            sortable: true,
+            size: 20,
+            sorter: (a, b) => a.name - b.name,
 
         },
         {
-            name: 'وحده القياس',
-            selector: row => row.wayofmesure == 2 ? 'M' : row.wayofmesure == 0 ? 'Unit' : row.wayofmesure == 1 ? 'Kg' : 'M2',
+            title: 'الكمية بالمخزن',
+            dataIndex: "quantity",
+            key: "quantity",
             sortable: true,
+            sorter: (a, b) => a.quantity - b.quantity,
+
         },
+        {
+            title: 'الكمية بالثلاجه',
+            dataIndex: "famount",
+            key: "famount",
+            sortable: true,
+            sorter: (a, b) => a.famount - b.famount,
+
+        }
     ];
 
 
@@ -158,8 +211,6 @@ function Products() {
     const [code, setcode] = useState()
     const [selid, setselid] = useState()
     const [loadrn, setloadrn] = useState(false)
-
-    const [dark_theme_en, set_dark_theme_en] = useState('light')
     const [AccesToken, setAccesToken] = useState([]);
 
     // useEffect(() => {
@@ -188,43 +239,46 @@ function Products() {
     const [searchload, setsearchload] = useState(false)
     const [searchtext, setsearchtext] = useState('')
 
+    const onSearch = (value) => { setsearchtext(value); search(value) }
 
     const editsubmit = () => {
         setloadrn(true)
         axios.post('http://localhost:1024/editproduct', { name, price, amount, code, selid, sel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
+                message.success('Success')
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
                 axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
             } else {
                 setloadrn(false)
-                alert('failed')
+                message.error('Failed')
             }
         })
     }
     const createnew = () => {
         if (!newname) {
-            alert('name cannot be empty')
+            message.error('name cannot be empty')
             return
         }
         if (newamount === '') {
-            alert('please enter an amount')
+            message.error('please enter an amount')
             return
         }
         if (newcode === '') {
-            alert('please enter a code')
+            message.error('please enter a code')
             return
         }
         if (newprice === '') {
-            alert('please enter a price')
+            message.error('please enter a price')
             return
         }
         setloadrn(true)
         axios.post('http://localhost:1024/addproduct', { name: newname, price: newprice, amount: newamount, code: newcode, selectmode: newsel }).then((resp) => {
             if (resp.data.status == 200) {
                 console.log(resp.data)
+                message.success('Success')
                 setrows([])
                 setloadrn(false)
                 seteditrn(false)
@@ -235,9 +289,9 @@ function Products() {
                 axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
             } else {
                 setloadrn(false)
-                alert('failed')
+                message.error('Failed')
             }
-        })
+        }).catch(e => message.error(e.message))
     }
 
 
@@ -285,63 +339,6 @@ function Products() {
             }}> print</Button>
         </>
     );
-    const actions = () => (
-        <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'start', flexDirection: 'row' }}>
-            <TextField
-
-                vault
-                margin="dense"
-                id="code"
-                size='small'
-                type="number"
-                value={newcode}
-
-                style={{ width: 150, marginRight: 20, marginLeft: 20, color: '#fff' }}
-                onChange={(e) => {
-                    setnewcode(e.currentTarget.value)
-                }}
-
-                variant="outlined"
-                InputProps={{
-                    endAdornment: <InputAdornment style={{ color: '#000' }} position="end">كود الصنف</InputAdornment>,
-                }}
-                disabled
-            />
-            <TextField
-                style={{ marginRight: 20 }}
-                vault
-                margin="dense"
-                id="name"
-                size='small'
-                autoFocus
-                label="اسم الصنف"
-                type="text"
-                value={newname}
-                onChange={(e) => { setnewname(e.currentTarget.value) }}
-                variant="outlined"
-            />
-            <Select
-                style={{ marginRight: 20 }}
-                variant='outlined'
-                size='small'
-
-                label="Age"
-                value={newsel}
-                onChange={(e) => { setnewsel(e.target.value) }}
-            >
-                {mesures.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                    </MenuItem>
-                ))}
-            </Select>
-            <Button disabled={newloadrn} variant='contained' onClick={() => { createnew() }}>Create</Button>
-            <Button style={{ marginLeft: 20 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
-                setrefreshloading(true);
-                axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products); setrefreshloading(false) })
-            }} endIcon={<Refresh />}>Refresh</Button>
-        </div>
-    );
     const [totalprice, settotalprice] = useState(0)
     const [totalamount, settotalamount] = useState(0)
     const [selectedRows, setselectedRows] = useState([])
@@ -354,193 +351,161 @@ function Products() {
     const [refreshloading, setrefreshloading] = useState(false)
     return (
         <div style={{ width: '100%' }}>
-            <Modal open={prt} onClose={() => { setprt(false) }} >
-                <div style={{ padding: 20, width: '100%' }}>
-
-                    <div style={{ display: 'flex', width: '100%', backgroundColor: '#666' }}>
-                        <div class="view w-48 p-4-8" style={{ padding: 4, width: '10%' }}>
-                            <Typography variant='h5' color={'#fff'}>
-                                N.o
-                            </Typography>
-                        </div>
-                        <div class="view w-48 p-4-8" style={{ padding: 4, width: '48%' }}>
-                            <Typography variant='h5' color={'#fff'}>
-                                Product Name
-                            </Typography>
-                        </div>
-                        <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                            <Typography variant='h5' color={'#fff'}>
-                                Qty
-                            </Typography>
-                        </div>
-                        <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                            <Typography variant='h5' color={'#fff'}>
-                                Price
-                            </Typography>
-                        </div>
-                        <div class="view w-48 p-4-8" style={{ padding: 4, width: '18%' }}>
-                            <Typography variant='h5' color={'#fff'}>
-                                Date
-                            </Typography>
-                        </div>
-                    </div>
-                    {rows.map((index, i) => {
-                        return (
-                            <div style={{ display: 'flex', width: '100%', backgroundColor: '#eee' }}>
-                                <div class="view w-48 p-4-8" style={{ padding: 4, width: '10%' }}>
-                                    <Typography variant='h5' color={'#000'}>
-                                        {i + 1}
-                                    </Typography>
-                                </div>
-                                <div class="view w-48 p-4-8" style={{ padding: 4, width: '48%' }}>
-                                    <Typography variant='h5' color={'#000'}>
-                                        {index.name}
-                                    </Typography>
-                                </div>
-                                <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                    <Typography variant='h5' color={'#000'}>
-                                        {index.quantity}
-                                    </Typography>
-                                </div>
-                                <div class="view w-48 p-4-8" style={{ padding: 4, width: '17%' }}>
-                                    <Typography variant='h5' color={'#000'}>
-                                        {index.price}
-                                    </Typography>
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            </Modal>
             <div style={{ width: '100%', alignItems: 'baseline', display: 'flex', justifyContent: 'start', flexDirection: 'row' }}>
             </div>
             <div style={{ width: '100%', display: 'flex', marginTop: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', marginTop: 10, alignItems: 'baseline', width: '100%', justifyContent: 'end' }}>
-                    <TextField
-                        style={{ marginLeft: 20 }}
-                        vault
-                        margin="dense"
-                        id="search"
-                        label="search"
-                        type="text"
-                        value={searchtext}
-                        size='small'
-                        onChange={(e) => { setsearchtext(e.target.value); search(e.target.value) }}
-                        variant="outlined"
-                    />
-                    <Button style={{ margin: 20 }} disabled={searchload} variant='contained' color='error' onClick={() => {
-                        setsearchtext(''); axios.get('http://localhost:1024/products').then((resp) => { setrows(resp.data.products) })
-                    }}>Clear</Button>
+                <div style={{ display: 'flex', marginTop: 10, alignItems: 'baseline', width: '100%', justifyContent: 'space-between' }}>
+                    <div>
+                        <InputNumber
+                            style={{
+                                width: 200,
+                                margin: 10
+                            }}
+                            value={newamount}
+                            addonBefore='الكمية'
+                            min='0'
+                            max='100000000'
+                            onChange={setnewamount}
+                        />
+                        <Input
+                            style={{
+                                width: 200,
+                                margin: 10
+                            }}
+                            value={newname}
+                            addonBefore='الاسم'
+                            onChange={e => setnewname(e.target.value)}
+                        />
+                        <Button
+                            loading={newloadrn}
+                            style={{
+                                margin: 10
+                            }}
+                            type='primary'
+                            onClick={() => { createnew() }}>
+                            تأكيد
+                        </Button>
+
+                    </div>
+                    <div style={{ alignItems: 'center', display: 'flex' }}>
+
+                        <Search
+                            placeholder="search"
+                            allowClear
+                            onSearch={onSearch}
+                            style={{
+                                width: 200,
+                                margin: 10
+                            }}
+                        />
+                        <Button
+                            type='primary'
+                            onClick={() => {
+                                message.loading('Request Sent, Please Wait...', 2)
+                                axios.post('http://localhost:1024/print/productssum', {}).then((resp) => {
+                                    setTimeout(() => {
+                                        window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
+                                    }, 500);
+                                })
+                            }} >
+                            Print
+                        </Button>
+                    </div>
                 </div>
             </div>
             <div style={{ width: '100%' }}>
-                <DataTable
-                    pagination
-                    dense
-                    paginationPerPage={100}
-                    contextActions={contextActions()}
-                    actions={actions()}
-                    highlightOnHover
-                    pointerOnHover
-                    fixedHeader
-                    defaultSortFieldId={0}
-                    defaultSortAsc={true}
-                    fixedHeaderScrollHeight='700px'
-                    selectableRowsHighlight
-                    direction="rtl"
-                    onSelectedRowsChange={(rows) => {
-                        setselectedRows(rows.selectedRows);
-                        setdata(rows);
-                        console.log(rows.selectedRows)
-                        var sum = 0
-                        var asum = 0
-                        rows.selectedRows.forEach(function (value, index, arry) {
-                            sum += value.totalprice;
-                        });
-                        rows.selectedRows.forEach(function (value, index, arry) {
-                            asum += value.amount;
-                        });
-                        settotalamount(asum)
-                        settotalprice(sum)
-                    }}
-                    theme='newtheme'
-                    selectableRowsComponent={Checkbox}
-                    columns={columns}
-                    selectableRows
-                    data={rows}
-                    onRowDoubleClicked={(data) => { seteditrn(true); setelected(data); console.log(data); setcode(data.code); setamount(data.quantity); setname(data.name); setprice(data.price); setsel(mesures[data.wayofmesure].value); setselid(data.id) }}
-                />
-            </div>
-            <Dialog open={editrn}>
-                <DialogTitle>Edit A Product</DialogTitle>
-                <DialogContent>
 
-                    <TextField
-                        vault
-                        margin="dense"
-                        id="code"
-                        label="code"
-                        type="number"
-                        value={code}
-                        onChange={(e) => { setcode(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
-                    />
-                    <Select
-                        label="Way of Mesure"
-                        variant='standard'
-                        fullWidth
-                        value={sel}
-                        onChange={(e) => { setsel(e.target.value) }}
+                <Table
+                    dataSource={rows}
+                    size='small'
+                    columns={columns}
+                    direction='ltr'
+
+                    onRow={(record, rowIndex) => {
+                        return {
+                            onClick: (event) => { }, // click row
+                            onDoubleClick: (event) => {
+                                setelected(record);
+                                console.log(record);
+                                setcode(record.code);
+                                setamount(record.quantity);
+                                setname(record.name);
+                                setprice(record.price);
+                                setsel(mesures[record.wayofmesure].value);
+                                setselid(record.id)
+                                seteditrn(true);
+                            }, // double click row
+                            onContextMenu: (event) => { }, // right button click row
+                            onMouseEnter: (event) => { }, // mouse enter row
+                            onMouseLeave: (event) => { }, // mouse leave row
+                        };
+                    }}
+                />;
+            </div>
+            <Modal
+                title='Edit'
+                open={editrn}
+                centered
+                closable
+                maskClosable
+                width={400}
+                onCancel={() => { seteditrn(false); message.info('Canceled') }}
+                footer={[
+
+                    <Button
+                        type='default'
+                        loading={loadrn}
+                        onClick={() => { seteditrn(false); message.info('Canceled') }} >
+                        Cancel
+                    </Button>,
+                    <Button
+                        type='primary'
+                        loading={loadrn}
+                        onClick={() => { editsubmit() }}>
+                        Save
+                    </Button>,
+                    <Popconfirm
+                        title="Delete"
+                        style={{ zIndex: 9999 }}
+                        description="Are you sure to delete this product?"
+                        onConfirm={e => message.error('Failed')}
+                        onCancel={e => message.info('Canceled')}
+                        okText="Yes"
+                        cancelText="No"
                     >
-                        {mesures.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    <TextField
-                        vault
-                        margin="dense"
-                        id="name"
-                        label="product name"
-                        type="text"
-                        value={name}
-                        onChange={(e) => { setname(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        vault
-                        margin="dense"
-                        id="Amount"
-                        label="Amount"
-                        type="number"
-                        InputProps={{
-                            endAdornment: <InputAdornment position="end">{sel}</InputAdornment>,
+                        <Button
+                            loading={loadrn}
+                            type='default'
+                            danger
+                        >
+                            delete
+                        </Button>
+                    </Popconfirm>
+                ]}
+            >
+                <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', width: 300 }}>
+                    <InputNumber
+                        style={{
+                            width: '100%',
+                            margin: 10
                         }}
                         value={amount}
-                        onChange={(e) => { setamount(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
+                        addonBefore='الكمية'
+                        min='0'
+                        max='100000000'
+                        onChange={setamount}
                     />
-                    <TextField
-                        vault
-                        margin="dense"
-                        id="Price"
-                        label="Price"
-                        type="number"
-                        value={price}
-                        onChange={(e) => { setprice(e.currentTarget.value) }}
-                        fullWidth
-                        variant="standard"
+                    <Input
+                        style={{
+                            width: '100%',
+                            margin: 10
+                        }}
+                        value={name}
+                        addonBefore='الاسم'
+                        onChange={e => setname(e.target.value)}
                     />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => { seteditrn(false) }} >Cancel</Button>
-                    <Button disabled={loadrn} variant='contained' onClick={() => { editsubmit() }}>Save</Button>
-                </DialogActions>
-            </Dialog>
+                </div>
+            </Modal>
         </div>
 
     )

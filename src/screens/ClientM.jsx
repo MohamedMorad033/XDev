@@ -22,8 +22,8 @@ import DataTable, { createTheme } from 'react-data-table-component';
 import { Autocomplete } from '@mui/material';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -76,7 +76,7 @@ const updatetheme = (theme) => {
         }
         else {
             alert('error in theme manager')
-            localStorage.setItem('Theme','light')
+            localStorage.setItem('Theme', 'light')
         }
 }
 
@@ -337,6 +337,10 @@ function ClientM() {
     }
     const [edittext, setedittext] = useState('')
     const edittrans = () => {
+        if (date2 !== 'primary') {
+            alert('date is invalid')
+            return
+        }
         if (clientname === '') {
             alert('client cannot be empty')
             return
@@ -375,6 +379,8 @@ function ClientM() {
     const [selectedRows, setselectedRows] = useState([])
     const [prt, setprt] = useState(false)
     const [refid, setrefid] = useState()
+    const [date1, setdate1] = useState('primary')
+    const [date2, setdate2] = useState('primary')
     const submittrans = () => {
         if (firstvaultname === '') {
             alert('client cannot be empty')
@@ -394,6 +400,10 @@ function ClientM() {
         }
         if (text == '') {
             alert('please enter a note')
+            return
+        }
+        if (date1 !== 'primary') {
+            alert('date is invalid')
             return
         }
         setrefreshloading(true)
@@ -538,9 +548,13 @@ function ClientM() {
                         id="expenses"
                         label="التاريخ"
                         type="date"
+                        color={date1}
+                        focused={date1 !== 'primary'}
                         value={newexpenses}
-                        onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
-                        variant="outlined"
+                        onChange={(e) => {
+                            setnewexpenses(e.currentTarget.value)
+                            setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                        }} variant="outlined"
                     />
                     <Button disabled={refreshloading} style={{ margin: 10 }} variant='contained' onClick={() => { submittrans() }}>تأكيد</Button>
                     <Button style={{ margin: 10 }} disabled={refreshloading} variant='contained' color='warning' onClick={() => {
@@ -655,7 +669,12 @@ function ClientM() {
                         label="التاريخ"
                         type="date"
                         value={editdate}
-                        onChange={(e) => { seteditdate(e.currentTarget.value) }}
+                        color={date2}
+                        focused={date2 !== 'primary'}
+                        onChange={(e) => {
+                            seteditdate(e.currentTarget.value)
+                            setdate2(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                        }}
                         variant="outlined"
                     />
                 </DialogContent>

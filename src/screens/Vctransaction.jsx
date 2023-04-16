@@ -32,8 +32,8 @@ import DataTable, { createTheme } from 'react-data-table-component';
 import { FormControlLabel, FormGroup } from '@mui/material';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -401,6 +401,10 @@ function Vctransaction() {
         })
     }
     const edittrans = () => {
+        if (date2 !== 'primary') {
+            alert('date is invalid')
+            return
+        }
         if (clientname === '') {
             alert('client cannot be empty')
             return
@@ -414,11 +418,7 @@ function Vctransaction() {
             return
         }
         if (editamount === '') {
-            alert('please enter a expenses')
-            return
-        }
-        if (editdate === '') {
-            alert('please enter a expenses')
+            alert('please enter an amount')
             return
         }
         setloadrn(true)
@@ -447,7 +447,29 @@ function Vctransaction() {
     const [selectedRows, setselectedRows] = useState([])
     const [prt, setprt] = useState(false)
     const [refid, setrefid] = useState()
+    const [date1, setdate1] = useState('primary')
+    const [date2, setdate2] = useState('primary')
     const submittrans = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
+        if (refid == '') {
+            alert('refid cannot be empty')
+            return;
+        }
+        if (!firstvaultname) {
+            alert('name cannot be empty')
+            return
+        }
+        if (!secondvaultname) {
+            alert('name cannot be empty')
+            return
+        }
+        if (amount == '') {
+            alert('amount cannot be empty')
+            return;
+        }
         setrefreshloading(true)
         axios.post('http://localhost:1024/addvaultclienttransaction', { fromname: secondvaultname, toname: firstvaultname, amount: Number(amount), type: newsel, refid: refid.toString(), time: newexpenses }).then((resp) => {
             if (resp.data.status == 200) {
@@ -518,10 +540,10 @@ function Vctransaction() {
             }
         })
     }
-    const [filter, setfilter] = useState(true)
-    const [srefid, setsrefid] = useState('') 
-    const [svaultdata, setsvaultdata] = useState([]) 
-    const [sclientdata, setsclientdata] = useState([]) 
+    const [filter, setfilter] = useState(false)
+    const [srefid, setsrefid] = useState('')
+    const [svaultdata, setsvaultdata] = useState([])
+    const [sclientdata, setsclientdata] = useState([])
     const [sclient, setsclient] = useState('')
     const [svault, setsvault] = useState('')
     const [fdate, setfdate] = useState(new Date().toISOString().split('T')[0])
@@ -876,8 +898,13 @@ function Vctransaction() {
                             id="expenses"
                             label="التاريخ"
                             type="date"
+                            color={date1}
+                            focused={date1 !== 'primary'}
                             value={newexpenses}
-                            onChange={(e) => { setnewexpenses(e.currentTarget.value) }}
+                            onChange={(e) => {
+                                setnewexpenses(e.currentTarget.value)
+                                setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }}
                             variant="outlined"
                         />
                         <Button disabled={refreshloading} style={{ margin: 10 }} variant='contained' onClick={() => { submittrans() }}>تأكيد</Button>
@@ -1004,8 +1031,12 @@ function Vctransaction() {
                             label="التاريخ"
                             type="date"
                             value={editdate}
-                            onChange={(e) => { seteditdate(e.currentTarget.value) }}
-                            variant="outlined"
+                            color={date2}
+                            focused={date2 !== 'primary'}
+                            onChange={(e) => {
+                                seteditdate(e.currentTarget.value)
+                                setdate2(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                            }} variant="outlined"
                         />
                     </DialogContent>
                     <DialogActions>

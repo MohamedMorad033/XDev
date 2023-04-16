@@ -23,8 +23,8 @@ import Autocomplete from '@mui/material/Autocomplete'
 import DataTable, { createTheme } from 'react-data-table-component';
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -266,53 +266,10 @@ function WorkerPayout() {
         })
     }
     const [data, setdata] = useState('')
+    const [date1, setdate1] = useState('primary')
 
     const componentRef = useRef();
-
-    const createnewexport = () => {
-        if (!data) {
-            alert('data cannot be empty')
-            return
-        }
-        if (theirdvaultname === '') {
-            alert('please select a client')
-            return
-        }
-        if (newexpenses === '') {
-            alert('please enter an amount')
-            return
-        }
-        console.log(newdata)
-        axios.post('http://localhost:1024/addProductoutcome', { prodname: newdata.to, clientname: theirdvaultname, prodid: newdata.toid, amount: newexpenses, pricehistoryid: newdata.id }).then((resp) => {
-            if (resp.data.status == 200) {
-                console.log(resp.data)
-                setloadrn3(false)
-                seteditrn(false)
-            } else {
-                setloadrn(false)
-                alert('failed')
-            }
-        })
-    }
     const [selectedRows, setselectedRows] = useState([])
-    const searchprod = () => {
-        setloadrn(true);
-        axios.post('http://localhost:1024/searchproductoutcomeexact', { searchtext: secondvaultname }).then((resp) => {
-            if (resp.data.status == 200) {
-                setrows(resp.data.foundproduts)
-                var sum = 0
-                var asum = 0
-                resp.data.foundproduts.forEach(function (value, index, arry) {
-                    sum += value.totalprice;
-                });
-                resp.data.foundproduts.forEach(function (value, index, arry) {
-                    asum += value.amount;
-                });
-                settotalamount(asum)
-                settotalprice(sum)
-            }
-        })
-    }
     const searchclient = () => {
         setloadrn(true);
         axios.post('http://localhost:1024/searchworkerspaysbynameexact', { searchtext: firstvaultname }).then((resp) => {
@@ -439,6 +396,10 @@ function WorkerPayout() {
     const [newamount, setnewamount] = useState('0')
 
     const createpayout = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (!secondvaultname) {
             alert('select worker')
             return
@@ -487,6 +448,10 @@ function WorkerPayout() {
     const [newreturns, setnewreturns] = useState(0)
 
     const submitedit = () => {
+        if (date1 !== 'primary') {
+            alert('date is wrong')
+            return
+        }
         if (!theirdvaultname) {
             alert('select worker')
             return
@@ -563,7 +528,7 @@ function WorkerPayout() {
                 </div>
             </Modal>
             <div style={{ width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Autocomplete
                         id="free-solo-demo"
                         style={{ marginRight: 20, width: 200 }}
@@ -647,15 +612,16 @@ function WorkerPayout() {
                         id="free-solo-demo"
                         label='تاريخ'
                         type={'date'}
-                        style={{ marginRight: 20, width: 200, marginTop: 10 }}
-                        value={date}
-                        onChange={(newInputValue) => {
-                            setdate(newInputValue.target.value);
-                        }}
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
                         size='small'
+                        style={{ marginRight: 20, width: 200, marginTop: 10 }}
+                        color={date1}
+                        focused={date1 !== 'primary'}
+                        value={date}
+                        onChange={(e) => {
+                            setdate(e.currentTarget.value)
+                            setdate1(isNaN(Date.parse(new Date(e.currentTarget.value))) || new Date(e.currentTarget.value).getFullYear() > 5000 ? 'error' : 'primary')
+                        }}
+                        variant="outlined"
                     />
                     <Button disabled={loadrn4} variant='contained' onClick={() => { createpayout() }}>اضافه</Button>
 
