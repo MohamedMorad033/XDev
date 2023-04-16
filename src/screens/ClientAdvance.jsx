@@ -13,7 +13,6 @@ import Select from '@mui/material/Select'
 import InputLabel from '@mui/material/InputLabel'
 import InputAdornment from '@mui/material/InputAdornment'
 import { Checkbox, Overlay } from '@blueprintjs/core';
-import Modal from '@mui/material/Modal'
 import ReactToPrint from 'react-to-print';
 import logo from './../static/b2b.png'
 import Refresh from '@mui/icons-material/RefreshRounded'
@@ -21,11 +20,13 @@ import Typography from '@mui/material/Typography';
 import Autocomplete from '@mui/material/Autocomplete'
 
 import DataTable, { createTheme } from 'react-data-table-component';
+import { Modal, Switch } from 'antd';
+import { CheckOutlined, CloseOutlined } from '@mui/icons-material';
 
 const updatetheme = (theme) => {
     if (theme == 'dark') {
-        document.documentElement.style.setProperty('--firstcolor', '#23282e');
-        document.documentElement.style.setProperty('--seconscolor', '#16161e');
+        document.documentElement.style.setProperty('--firstcolor', '#0c0c0c');
+        document.documentElement.style.setProperty('--seconscolor', '#0c0c0c');
         document.documentElement.style.setProperty('--headercolor', '#23282e18'); createTheme('newtheme', {
 
             text: {
@@ -134,7 +135,12 @@ function ClientAdvance() {
         //     width: '100px'
         // },
         {
-            name: 'الصنف',
+            name: 'فاتوره',
+            selector: row => row.refid,
+            sortable: true,
+        },
+        {
+            name: 'الاسم',
             selector: row => row.vaultName,
             sortable: true,
             grow: 2,
@@ -403,12 +409,82 @@ function ClientAdvance() {
 
     const [newdata, setnewdata] = useState({})
 
-
+    const [modalview, setmodalview] = useState(false);
 
 
 
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Modal open={modalview} centered>
+                <div style={{ width: '100%', padding: 10, display: 'flex', justifyContent: 'space-between', flexDirection: 'row' }}>
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
+                            <span style={{ marginRight: 8 }}>عرض اضافه مخزن</span>
+                            <Switch
+                                title='عرض اضافه مخزن'
+                                checkedChildren={<CheckOutlined />}
+                                unCheckedChildren={<CloseOutlined />}
+                                defaultChecked
+                            />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
+                            <span style={{ marginRight: 8 }}>عرض الاصناف المنصرفه</span>
+                            <Switch
+                                title='عرض الاصناف المنصرفه'
+                                checkedChildren={<CheckOutlined />}
+                                unCheckedChildren={<CloseOutlined />}
+                                defaultChecked
+                            />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
+                            <span style={{ marginRight: 8 }}>عرض المستحقات</span>
+                            <Switch
+                                title='عرض المستحقات'
+                                checkedChildren={<CheckOutlined />}
+                                unCheckedChildren={<CloseOutlined />}
+                                defaultChecked
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
+                            <Switch
+                                title='حساب اضافه مخزن'
+                                checkedChildren={<CheckOutlined />}
+                                unCheckedChildren={<CloseOutlined />}
+                                defaultChecked
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                                حساب اضافه مخزن
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
+                            <Switch
+                                title='حساب الاصناف المنصرفه'
+                                checkedChildren={<CheckOutlined />}
+                                unCheckedChildren={<CloseOutlined />}
+                                defaultChecked
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                                حساب الاصناف المنصرفه
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 10 }}>
+                            <Switch
+                                title='حساب المستحقات'
+                                checkedChildren={<CheckOutlined />}
+                                unCheckedChildren={<CloseOutlined />}
+                                defaultChecked
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                                حساب المستحقات
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </Modal >
             <div style={{ flexDirection: 'row-reverse', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ width: '100%', alignItems: 'flex-end', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
                     <Autocomplete
@@ -434,7 +510,7 @@ function ClientAdvance() {
                         options={secondvaultdata.map((option) => option.name)}
                         size='small'
 
-                        renderInput={(params) => <TextField {...params} label="خزينه" />}
+                        renderInput={(params) => <TextField {...params} label="عميل" />}
                         onDoubleClick={() => { seteditrn2(true); getcode() }}
                     />
                     <Button style={{ margin: 10 }}
@@ -443,7 +519,7 @@ function ClientAdvance() {
                 </div>
                 <div>
                     <Button color='success' style={{ margin: 10 }} variant='contained' onClick={() => {
-                        axios.post('http://localhost:1024/print/ClientAdvance', { vaultname: rows[0].vaultName }).then((resp) => {
+                        axios.post('http://localhost:1024/print/clientadvance', { rows , rows2 }).then((resp) => {
                             setTimeout(() => {
                                 window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                             }, 500);
@@ -511,6 +587,12 @@ function ClientAdvance() {
                             grow: 2,
                         },
                         {
+                            name: 'العمليه',
+                            selector: row => row.border ? 'y' : 'n',
+                            sortable: true,
+                            grow: 2,
+                        },
+                        {
                             name: 'منصرف',
                             selector: row => row.vmoney,
                             sortable: true,
@@ -542,7 +624,7 @@ function ClientAdvance() {
                         },
                         {
                             name: 'الرصيد',
-                            selector: row => !isNaN(row.balance)? Number(row.balance).toFixed(2) : row.balance,
+                            selector: row => !isNaN(row.balance) ? Number(row.balance).toFixed(2) : row.balance,
                             sortable: true,
                         },
                     ]}
