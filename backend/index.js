@@ -1,4 +1,5 @@
 import express from 'express';
+// process.env.PRISMA_QUERY_ENGINE_BINARY = './prisma'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import cors from 'cors'
@@ -1992,7 +1993,9 @@ app.post('/print/clientadvance', async (req, res) => {
     var index1 = 0
     invoice.items = [...rows]
     const pages = Math.ceil(invoice.items.length / rowsperpage)
-
+    const pages2 = Math.ceil(rows2.length / rowsperpage)
+    const customFontt = fs.readFileSync(`Tajawal-Bold.ttf`);
+    doc.registerFont(`Tajawal-Bold`, customFontt);
     for (let index = 0; index < pages; index++) {
         //draw header
         doc
@@ -2118,6 +2121,127 @@ app.post('/print/clientadvance', async (req, res) => {
             doc.addPage()
         }
     }
+
+
+    index1 = 0
+    doc.addPage()
+
+    for (let index = 0; index < pages2; index++) {
+        //draw header
+        doc
+            .image("newlogo.png", 20, 45, { width: 200 })
+            .fillColor("#444444")
+            .fontSize(10)
+            .text("B2B Corp.", 200, 50, { align: "right" })
+            .text("kom hamada", 200, 65, { align: "right" })
+            .text("egypt, behira , 22821", 200, 80, { align: "right" })
+            .moveDown();
+
+
+        // draw detaild
+        doc
+            .fillColor("#444444")
+            .fontSize(20)
+            .text("Client Advanced", 20, 100);
+
+        linelandscape(doc, 125);
+
+        const customerInformationTop = 140;
+
+        doc
+            .fontSize(10)
+            .text("Report Number:", 20, customerInformationTop)
+            .font("Tajawal-Bold")
+            .text('CA' + invoicenum, 120, customerInformationTop)
+            .font("Helvetica")
+            .text("Report Date:", 20, customerInformationTop + 15)
+            .text(formatDate(new Date()), 120, customerInformationTop + 15)
+            .text("Page Number : ", 20, customerInformationTop + 30)
+            .text(
+                index + 1,
+                120,
+                customerInformationTop + 30
+            )
+
+        // .font("Helvetica-Bold")
+        // .text(invoice.shipping.name, 300, customerInformationTop)
+        // .font("Helvetica")
+        // .text(invoice.shipping.address, 300, customerInformationTop + 15)
+        // .text(
+        //     invoice.shipping.city +
+        //     ", " +
+        //     invoice.shipping.state +
+        //     ", " +
+        //     invoice.shipping.country,
+        //     300,
+        //     customerInformationTop + 30
+        // )
+        // .moveDown();
+
+        linelandscape(doc, 192);
+
+
+
+
+        //draw table
+        let i;
+        const invoiceTableTop = 195;
+
+        doc.font("Tajawal-Bold")
+        doc
+            .fontSize(8)
+            .text('م', 20, invoiceTableTop, { features: ['rtla'] })
+            .text('العمليه', 40, invoiceTableTop, { features: ['rtla'] })
+            .text('منصرف', 165, invoiceTableTop, { features: ['rtla'] })
+            .text('وارد', 280, invoiceTableTop, { features: ['rtla'] })
+            .text('مستحقات له', 380, invoiceTableTop, { features: ['rtla'] })
+            .text('مستحقات عليه', 480, invoiceTableTop, { features: ['rtla'] })
+            .text('اجمالي ما له', 580, invoiceTableTop, { features: ['rtla'] })
+            .text('اجمالي ما عليه', 680, invoiceTableTop, { features: ['rtla'] })
+            .text('الرصيد', 730, invoiceTableTop, { width: 90, align: "right", features: ['rtla'] })
+        linelandscape(doc, invoiceTableTop + 10);
+        doc.font("Tajawal-Bold")
+
+        var margin = 0
+        for (i = 1; i <= rowsperpage; i++) {
+            if (index1 >= rows2.length) {
+                clog('end')
+            } else {
+                const item = rows2[index1];
+                var position = invoiceTableTop + (i) * 15;
+                doc
+                    .font("Tajawal-Bold")
+                    .fontSize(8)
+                    .text(item.id, 20, invoiceTableTop + (i) * 15 + margin, { features: ['rtla'] })
+                    .text(maybeRtlize(item.product), 40, invoiceTableTop + (i) * 15 + margin)
+                    .text(!item.id ? maybeRtlize(item.vmoney) : item.vmoney, 165, invoiceTableTop + (i) * 15 + margin, {})
+                    .text(!item.id ? maybeRtlize(item.cmoney) : item.cmoney, 280, invoiceTableTop + (i) * 15 + margin, {})
+                    .text(!item.id ? maybeRtlize(item.clientm) : item.clientm, 380, invoiceTableTop + (i) * 15 + margin, {})
+                    .text(!item.id ? maybeRtlize(item.vaultm) : item.vaultm, 480, invoiceTableTop + (i) * 15 + margin, {})
+                    .text(!item.id ? maybeRtlize(item.totalc) : item.totalc, 580, invoiceTableTop + (i) * 15 + margin, {})
+                    .text(!item.id ? maybeRtlize(item.totalv) : item.totalv, 680, invoiceTableTop + (i) * 15 + margin, {})
+                    .text(!item.id ? maybeRtlize(item.balance) : item.balance ? item.balance.toFixed(2) : '0.00', 730, invoiceTableTop + (i) * 15 + margin, { width: 90, align: "right", features: ['rtla'] });
+                linelandscape(doc, invoiceTableTop + 11);
+
+                index1++
+                if (item.from !== 'اجمالي') {
+                    linelandscape(doc, position + 11);
+                }
+                clog(index1)
+            }
+        }
+        doc
+            .fontSize(10)
+            .text(
+                "Thank you for your business.",
+                160,
+                560,
+                { align: "center", width: 500 }
+            );
+        if (index < pages2 - 1) {
+            doc.addPage()
+        }
+    }
     doc.end();
     const date = await new Date()
 
@@ -2127,6 +2251,7 @@ app.post('/print/clientadvance', async (req, res) => {
     res.json({ 'Status': 200, file })
 });
 app.post('/clientadvance', async (req, res) => {
+    const { clientname , check} = req.body
     const pin = true;
     const cpin = true;
 
@@ -2155,7 +2280,7 @@ app.post('/clientadvance', async (req, res) => {
     var balance = 0;
     var cmoney = 0
     var vmoney = 0
-    const { clientname } = req.body
+    var checkstate = check? 1 : 0
     var vaultt = await prisma.clients.findMany({
         where: {
             name: clientname
@@ -2188,7 +2313,7 @@ app.post('/clientadvance', async (req, res) => {
     const vaultin = await prisma.fridgeproducts.findMany({
         where: {
             fromid: vault.id,
-            type: 0
+            type: checkstate
         }
     })
     const expenses = await prisma.clientm.findMany({
@@ -2471,7 +2596,7 @@ app.post('/clientadvance', async (req, res) => {
     const imports = await prisma.fridgeproducts.findMany({
         where: {
             fromid: client[0].id,
-            type: 0
+            type: checkstate
         }
     })
 
@@ -3762,6 +3887,33 @@ app.post('/editclients', async (req, res) => {
         data: {
             from: editedclient.name,
             fromid: editedclient.id
+        }
+    })
+    const editedincomereturn = await prisma.productoutcomereturn.updateMany({
+        where: {
+            fromid: editedclient.id
+        },
+        data: {
+            from: editedclient.name,
+            fromid: editedclient.id
+        }
+    })
+    const finalexp = await prisma.finalproductexports.updateMany({
+        where: {
+            clientid: editedclient.id
+        },
+        data: {
+            clientname: editedclient.name,
+            clientid: editedclient.id
+        }
+    })
+    const cm = await prisma.clientm.updateMany({
+        where: {
+            clientid: editedclient.id
+        },
+        data: {
+            clientname: editedclient.name,
+            clientid: editedclient.id
         }
     })
     res.status(200).json({ "status": 200, editedclient })

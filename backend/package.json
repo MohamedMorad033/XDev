@@ -23,5 +23,12 @@
     "pkg": "^5.8.1",
     "prisma": "^4.7.1",
     "twitter_cldr": "^2.2.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.21.0",
+    "@babel/core": "^7.21.4",
+    "@babel/plugin-transform-modules-commonjs": "^7.21.2",
+    "@babel/plugin-transform-runtime": "^7.21.4",
+    "@babel/preset-env": "^7.21.4"
   }
 }

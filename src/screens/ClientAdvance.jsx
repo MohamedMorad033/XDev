@@ -360,7 +360,7 @@ function ClientAdvance() {
     }
     const searchvault = () => {
         setloadrn(true);
-        axios.post('http://localhost:1024/clientadvance', { clientname: secondvaultname }).then((resp) => {
+        axios.post('http://localhost:1024/clientadvance', { clientname: secondvaultname , check}).then((resp) => {
             if (resp.data.Status == 200) {
                 setrows(resp.data.summeryarray)
                 setrows2(resp.data.sumarray)
@@ -411,7 +411,7 @@ function ClientAdvance() {
 
     const [modalview, setmodalview] = useState(false);
 
-
+    const [check, setcheck] = useState(false)
 
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -486,7 +486,8 @@ function ClientAdvance() {
 
             </Modal >
             <div style={{ flexDirection: 'row-reverse', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ width: '100%', alignItems: 'flex-end', display: 'flex', justifyContent: 'end', flexDirection: 'row' }}>
+                <div style={{ width: '100%', alignItems: 'center', display: 'flex', justifyContent: 'end', flexDirection: 'row'}}>
+                    <Checkbox label='أوزان؟' checked={check} onClick={() => { setcheck(!check) }} />
                     <Autocomplete
                         id="free-solo-demo"
                         label='d'
@@ -519,7 +520,7 @@ function ClientAdvance() {
                 </div>
                 <div>
                     <Button color='success' style={{ margin: 10 }} variant='contained' onClick={() => {
-                        axios.post('http://localhost:1024/print/clientadvance', { rows , rows2 }).then((resp) => {
+                        axios.post('http://localhost:1024/print/clientadvance', { rows, rows2 }).then((resp) => {
                             setTimeout(() => {
                                 window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                             }, 500);

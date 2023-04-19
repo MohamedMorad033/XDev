@@ -401,12 +401,15 @@ function Products() {
                         <Button
                             type='primary'
                             onClick={() => {
-                                message.loading('Request Sent, Please Wait...', 2)
+                                message.loading('Request Sent, Please Wait...', 2, () => message.success('Success'))
                                 axios.post('http://localhost:1024/print/productssum', {}).then((resp) => {
                                     setTimeout(() => {
                                         window.open('http://localhost:1024/' + resp.data.file, '_blank', 'noreferrer')
                                     }, 500);
                                 })
+                            }}
+                            style={{
+                                margin: 10
                             }} >
                             Print
                         </Button>
